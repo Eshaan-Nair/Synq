@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SYNQ</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        width: 300px;
+        background: #0f0f1a;
+        color: #cdd6f4;
+        font-family: monospace;
+        padding: 16px;
+      }
+      h1 { color: #6366f1; font-size: 18px; margin-bottom: 4px; }
+      p.sub { font-size: 11px; color: #6c7086; margin-bottom: 16px; }
+      label { font-size: 12px; color: #a6adc8; display: block; margin-bottom: 4px; }
+      input, select {
+        width: 100%;
+        padding: 8px;
+        background: #1e1e2e;
+        border: 1px solid #313244;
+        border-radius: 6px;
+        color: #cdd6f4;
+        font-family: monospace;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background: #6366f1;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 13px;
+        cursor: pointer;
+        margin-bottom: 8px;
+      }
+      button:hover { background: #4f46e5; }
+      button.secondary {
+        background: #1e1e2e;
+        border: 1px solid #313244;
+        color: #cdd6f4;
+      }
+      #status {
+        font-size: 11px;
+        color: #a6e3a1;
+        margin-top: 8px;
+        min-height: 16px;
+      }
+      #session-info {
+        background: #1e1e2e;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 11px;
+        margin-bottom: 12px;
+        border: 1px solid #313244;
+        display: none;
+      }
+      #session-info span { color: #6366f1; }
+    </style>
+  </head>
+  <body>
+    <h1>⚡ SYNQ</h1>
+    <p class="sub">Context Sovereignty Engine</p>
+
+    <div id="session-info">
+      Active: <span id="session-name">—</span><br />
+      Triples: <span id="triple-count">—</span>
+    </div>
+
+    <label>Project Name</label>
+    <input type="text" id="project-name" placeholder="e.g. SplitSmart" />
+
+    <label>Platform</label>
+    <select id="platform">
+      <option value="claude">Claude</option>
+      <option value="chatgpt">ChatGPT</option>
+      <option value="gemini">Gemini</option>
+    </select>
+
+    <button id="create-btn">▶ Start Session</button>
+    <button class="secondary" id="inject-btn">🧠 Inject Context Now</button>
+
+    <div id="status"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
