@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  neo4j:
+    image: neo4j:5.18
+    container_name: synq_neo4j
+    ports:
+      - "7474:7474"   # Neo4j Browser UI
+      - "7687:7687"   # Bolt protocol (app connects here)
+    environment:
+      - NEO4J_AUTH=neo4j/synqpassword123
+    volumes:
+      - neo4j_data:/data
+
+  mongodb:
+    image: mongo:7.0
+    container_name: synq_mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=synq
+      - MONGO_INITDB_ROOT_PASSWORD=synqpassword123
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  neo4j_data:
+  mongo_data:
