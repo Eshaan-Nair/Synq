@@ -9,15 +9,7 @@ export interface Triple {
 }
 
 export async function extractTriples(text: string): Promise<Triple[]> {
-  const response = await axios.post(
-    "https://api.anthropic.com/v1/messages",
-    {
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      messages: [
-        {
-          role: "user",
-          content: `Extract semantic triples from this AI conversation text.
+  const prompt = `Extract semantic triples from this AI conversation text.
 Return ONLY a valid JSON array of triples, no explanation.
 
 Each triple must have:
@@ -33,26 +25,36 @@ ${text}
 """
 
 Return format:
-[{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`,
-        },
-      ],
-    },
-    {
-      headers: {
-        "x-api-key": process.env.ANTHROPIC_API_KEY!,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const raw = response.data.content[0].text;
-  const clean = raw.replace(/```json|```/g, "").trim();
+[{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
 
   try {
-    return JSON.parse(clean) as Triple[];
-  } catch {
-    console.error("Triple extraction: failed to parse JSON response:", clean);
+    const response = await axios.post(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        model: "llama-3.1-8b-instant",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.1,
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const raw = response.data.choices[0].message.content;
+    const clean = raw.replace(/```json|```/g, "").trim();
+
+    try {
+      return JSON.parse(clean) as Triple[];
+    } catch {
+      console.error("Triple extraction: failed to parse JSON:", clean);
+      return [];
+    }
+  } catch (err: any) {
+    console.error("Extraction failed:", JSON.stringify(err?.response?.data, null, 2));
     return [];
   }
 }

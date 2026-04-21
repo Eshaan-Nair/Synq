@@ -1,7 +1,6 @@
 "use strict";
 // Service worker — handles all communication between
 // content script and the SYNQ backend
-Object.defineProperty(exports, "__esModule", { value: true });
 const BACKEND = "http://localhost:3001";
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

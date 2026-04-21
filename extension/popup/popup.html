@@ -39,17 +39,24 @@
         margin-bottom: 8px;
       }
       button:hover { background: #4f46e5; }
+      button:disabled {
+        background: #313244;
+        color: #6c7086;
+        cursor: not-allowed;
+      }
       button.secondary {
         background: #1e1e2e;
         border: 1px solid #313244;
         color: #cdd6f4;
       }
+      button.secondary:hover { background: #313244; }
       #status {
         font-size: 11px;
         color: #a6e3a1;
         margin-top: 8px;
         min-height: 16px;
       }
+      #status.error { color: #f38ba8; }
       #session-info {
         background: #1e1e2e;
         border-radius: 6px;
@@ -59,7 +66,19 @@
         border: 1px solid #313244;
         display: none;
       }
-      #session-info span { color: #6366f1; }
+      #session-info .label { color: #6c7086; }
+      #session-info .value { color: #6366f1; }
+      .divider {
+        border: none;
+        border-top: 1px solid #313244;
+        margin: 12px 0;
+      }
+      .hint {
+        font-size: 10px;
+        color: #45475a;
+        margin-bottom: 12px;
+        line-height: 1.5;
+      }
     </style>
   </head>
   <body>
@@ -67,21 +86,22 @@
     <p class="sub">Context Sovereignty Engine</p>
 
     <div id="session-info">
-      Active: <span id="session-name">—</span><br />
-      Triples: <span id="triple-count">—</span>
+      <div><span class="label">Active: </span><span class="value" id="session-name">—</span></div>
+      <div><span class="label">Triples: </span><span class="value" id="triple-count">—</span></div>
+      <div><span class="label">Session ID: </span><span class="value" id="session-id-display">—</span></div>
     </div>
 
     <label>Project Name</label>
     <input type="text" id="project-name" placeholder="e.g. SplitSmart" />
 
-    <label>Platform</label>
-    <select id="platform">
-      <option value="claude">Claude</option>
-      <option value="chatgpt">ChatGPT</option>
-      <option value="gemini">Gemini</option>
-    </select>
+    <p class="hint">
+      Finish your chat first, then type a name and press Capture Chat to save everything discussed.
+    </p>
 
-    <button id="create-btn">▶ Start Session</button>
+    <button id="capture-btn">📸 Capture Chat</button>
+
+    <hr class="divider" />
+
     <button class="secondary" id="inject-btn">🧠 Inject Context Now</button>
 
     <div id="status"></div>
