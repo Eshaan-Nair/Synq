@@ -1,7 +1,5 @@
 "use strict";
 // Content script — runs inside Claude/ChatGPT/Gemini tabs
-// Watches for AI responses and new chat events
-Object.defineProperty(exports, "__esModule", { value: true });
 function detectPlatform() {
     const host = window.location.hostname;
     if (host.includes("claude.ai"))
@@ -14,7 +12,7 @@ function detectPlatform() {
 }
 function getResponseSelector(platform) {
     switch (platform) {
-        case "claude": return ".font-claude-message";
+        case "claude": return ".font-claude-response";
         case "chatgpt": return "[data-message-author-role='assistant']";
         case "gemini": return ".response-content";
         default: return "[data-message-author-role='assistant']";
@@ -29,110 +27,78 @@ function getInputSelector(platform) {
     }
 }
 const platform = detectPlatform();
-let lastObservedText = "";
 let sessionId = null;
-let isInjecting = false;
 // Boot sequence
 async function init() {
     console.log(`🔵 SYNQ active on: ${platform}`);
-    // Load existing session
     const session = await getStoredSession();
     if (session) {
         sessionId = session.sessionId;
         console.log(`📦 SYNQ session loaded: ${session.projectName}`);
     }
-    // Start watching the page
-    observeResponses();
-    watchForNewChat();
     injectSidebarUI();
 }
-// Watch for AI responses using MutationObserver
-function observeResponses() {
+// Scrape ALL visible AI responses from current page at once
+async function captureCurrentChat(projectName) {
     const selector = getResponseSelector(platform);
-    const observer = new MutationObserver(() => {
-        const responseBlocks = document.querySelectorAll(selector);
-        if (responseBlocks.length === 0)
-            return;
-        const lastBlock = responseBlocks[responseBlocks.length - 1];
-        const text = lastBlock.textContent?.trim() || "";
-        // Only process if text is new and long enough to be meaningful
-        if (text === lastObservedText || text.length < 100)
-            return;
-        // Wait for streaming to finish (no change for 2 seconds)
-        debounceIngest(text);
-    });
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-    });
-}
-// Debounce so we wait for streaming to complete
-let debounceTimer;
-function debounceIngest(text) {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(async () => {
-        if (text === lastObservedText)
-            return;
-        lastObservedText = text;
-        await ingestText(text);
-    }, 2000); // 2s after last DOM change
-}
-// Send text to background → backend
-async function ingestText(text) {
-    if (!sessionId) {
-        console.warn("SYNQ: No active session. Create one in the popup.");
-        return;
+    const responseBlocks = document.querySelectorAll(selector);
+    if (responseBlocks.length === 0) {
+        return { success: false, triplesExtracted: 0, error: "No AI responses found on this page" };
     }
-    console.log("🧠 SYNQ ingesting response...");
+    // Combine all visible responses into one text
+    const fullText = Array.from(responseBlocks)
+        .map((el) => el.textContent?.trim() || "")
+        .filter((t) => t.length > 50)
+        .join("\n\n---\n\n");
+    if (!fullText) {
+        return { success: false, triplesExtracted: 0, error: "No meaningful content found" };
+    }
+    console.log(`🧠 SYNQ capturing ${responseBlocks.length} responses...`);
+    // Step 1 — create session
+    const sessionData = await sendMessage({
+        type: "CREATE_SESSION",
+        payload: { projectName, platform },
+    });
+    if (!sessionData?.sessionId) {
+        return { success: false, triplesExtracted: 0, error: "Failed to create session" };
+    }
+    sessionId = sessionData.sessionId;
+    // Step 2 — ingest the full text
     const result = await sendMessage({
         type: "INGEST_TEXT",
-        payload: { text, sessionId, platform },
+        payload: { text: fullText, sessionId, platform },
     });
-    if (result?.triplesExtracted) {
-        console.log(`✅ SYNQ extracted ${result.triplesExtracted} triples`);
-        showToast(`SYNQ captured ${result.triplesExtracted} facts`);
-    }
+    const count = result?.triplesExtracted || 0;
+    console.log(`✅ SYNQ captured ${count} triples`);
+    showToast(`✅ Captured ${count} facts from this chat`);
+    return { success: true, triplesExtracted: count, sessionId: sessionId ?? undefined };
 }
-// Detect when user opens a new chat
-function watchForNewChat() {
-    const observer = new MutationObserver(() => {
-        const url = window.location.href;
-        // Claude new chat URLs contain /new or have empty conversation
-        const isNewChat = url.includes("/new") ||
-            document.querySelectorAll(getResponseSelector(platform)).length === 0;
-        if (isNewChat && sessionId && !isInjecting) {
-            isInjecting = true;
-            setTimeout(() => {
-                injectContext();
-                isInjecting = false;
-            }, 1500); // wait for page to settle
-        }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-}
-// Fetch context and inject into the chat input
+// Inject stored context into current chat input manually
 async function injectContext() {
-    if (!sessionId)
+    if (!sessionId) {
+        showToast("⚠ No session loaded. Capture a chat first.");
         return;
+    }
     const data = await sendMessage({
         type: "GET_CONTEXT",
         payload: { sessionId },
     });
-    if (!data?.contextBlock || data.tripleCount === 0)
+    if (!data?.contextBlock || data.tripleCount === 0) {
+        showToast("⚠ No context found for this session.");
         return;
+    }
     const prompt = buildContextPrompt(data.contextBlock);
     const inputSelector = getInputSelector(platform);
     const input = document.querySelector(inputSelector);
-    if (!input)
+    if (!input) {
+        showToast("⚠ Could not find chat input.");
         return;
-    // Inject into the textarea
+    }
     input.focus();
     document.execCommand("insertText", false, prompt);
-    showToast(`🧠 SYNQ injected ${data.tripleCount} facts into new chat`);
+    showToast(`🧠 Injected ${data.tripleCount} facts into chat`);
     console.log("✅ SYNQ context injected");
 }
-// Format the context block into a usable prompt
 function buildContextPrompt(contextBlock) {
     return `[SYNQ CONTEXT — Previous Session Knowledge]
 The following facts were extracted from our previous conversations.
@@ -144,7 +110,7 @@ ${contextBlock}
 ---
 `;
 }
-// Inject a minimal sidebar UI via shadow DOM
+// Inject badge UI via shadow DOM
 function injectSidebarUI() {
     const host = document.createElement("div");
     host.id = "synq-sidebar-host";
@@ -187,14 +153,11 @@ function injectSidebarUI() {
     <div id="synq-badge">⚡ SYNQ</div>
     <div id="synq-toast"></div>
   `;
-    // Badge click opens popup
     shadow.getElementById("synq-badge")?.addEventListener("click", () => {
         showToast("Click the SYNQ extension icon to manage session");
     });
-    // expose toast globally within this script
     window.__synqShadow = shadow;
 }
-// Toast notification inside shadow DOM
 function showToast(message) {
     const shadow = window.__synqShadow;
     if (!shadow)
@@ -204,7 +167,6 @@ function showToast(message) {
     toast.style.opacity = "1";
     setTimeout(() => (toast.style.opacity = "0"), 3000);
 }
-// Helper — message passing to background worker
 function sendMessage(msg) {
     return new Promise((resolve) => {
         chrome.runtime.sendMessage(msg, resolve);
@@ -213,21 +175,17 @@ function sendMessage(msg) {
 async function getStoredSession() {
     return sendMessage({ type: "GET_SESSION" });
 }
-// Handle messages from popup directly
+// Handle messages from popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message.type === "CREATE_SESSION_FROM_POPUP") {
-        sendMessage({
-            type: "CREATE_SESSION",
-            payload: message.payload,
-        }).then((data) => {
-            sessionId = data.sessionId;
-            sendResponse(data);
+    if (message.type === "CAPTURE_CHAT") {
+        captureCurrentChat(message.payload.projectName).then((result) => {
+            sendResponse(result);
         });
         return true;
     }
     if (message.type === "INJECT_NOW") {
-        injectContext();
-        sendResponse({ ok: true });
+        injectContext().then(() => sendResponse({ ok: true }));
+        return true;
     }
 });
 init();
