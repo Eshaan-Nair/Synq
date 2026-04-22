@@ -31,14 +31,23 @@ function getInputSelector(platform: Platform): string {
 const platform = detectPlatform();
 let sessionId: string | null = null;
 
-// Boot sequence
 async function init() {
   console.log(`🔵 SYNQ active on: ${platform}`);
-  const session = await getStoredSession();
-  if (session) {
-    sessionId = session.sessionId;
-    console.log(`📦 SYNQ session loaded: ${session.projectName}`);
+
+  // Check if dashboard has set an active session via backend
+  const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
+  if (activeData?.activeSession) {
+    sessionId = activeData.activeSession._id;
+    console.log(`📦 SYNQ active session: ${activeData.activeSession.projectName}`);
+  } else {
+    // Fall back to chrome storage
+    const session = await getStoredSession();
+    if (session) {
+      sessionId = session.sessionId;
+      console.log(`📦 SYNQ session loaded: ${session.projectName}`);
+    }
   }
+
   injectSidebarUI();
 }
 

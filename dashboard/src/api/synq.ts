@@ -28,3 +28,8 @@ export async function fetchSessions() {
     }[];
   };
 }
+
+export async function setActiveSession(sessionId: string) {
+  const res = await axios.post(`${BASE}/api/context/active`, { sessionId });
+  return res.data;
+}

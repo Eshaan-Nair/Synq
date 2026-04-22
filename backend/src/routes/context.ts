@@ -97,4 +97,35 @@ router.get("/sessions", async (req: Request, res: Response) => {
   }
 });
 
+// In-memory active session store
+let activeSessionId: string | null = null;
+
+// POST /api/context/active
+// Dashboard sets the active session
+router.post("/active", (req: Request, res: Response) => {
+  const { sessionId } = req.body;
+  if (!sessionId) {
+    res.status(400).json({ error: "sessionId required" });
+    return;
+  }
+  activeSessionId = sessionId;
+  res.json({ success: true, activeSessionId });
+});
+
+// GET /api/context/active
+// Extension reads the active session
+router.get("/active", async (req: Request, res: Response) => {
+  if (!activeSessionId) {
+    res.json({ activeSession: null });
+    return;
+  }
+  try {
+    const session = await Session.findById(activeSessionId)
+      .select("_id projectName platform tripleCount");
+    res.json({ activeSession: session });
+  } catch {
+    res.json({ activeSession: null });
+  }
+});
+
 export default router;
