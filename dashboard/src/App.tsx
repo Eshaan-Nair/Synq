@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import GraphView from "./components/GraphView";
 import Timeline from "./components/Timeline";
-import { fetchGraph, fetchContext } from "./api/synq";
+import { fetchGraphBySession, fetchContext, fetchSessions } from "./api/synq";
 
 interface Node { id: string; type: string; }
 interface Link { source: string; target: string; relation: string; }
@@ -11,200 +11,306 @@ interface Triple {
   object: string; objectType: string;
   timestamp: string;
 }
+interface Session {
+  _id: string;
+  projectName: string;
+  platform: string;
+  tripleCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function App() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
   const [triples, setTriples] = useState<Triple[]>([]);
-  const [inputId, setInputId] = useState("");
-  const [activeTab, setActiveTab] = useState<"graph" | "timeline">("graph");
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const [activeTab, setActiveTab] = useState<"graph" | "history">("graph");
   const [loading, setLoading] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
 
-  const loadGraph = useCallback(async () => {
+  const loadSessions = useCallback(async () => {
     try {
-      const data = await fetchGraph();
-      setNodes(data.nodes);
-      setLinks(data.links);
-      setLastUpdated(new Date().toLocaleTimeString());
+      const data = await fetchSessions();
+      setSessions(data.sessions);
     } catch {
-      console.error("Could not reach backend");
+      console.error("Could not fetch sessions");
     }
   }, []);
 
-  const loadContext = useCallback(async (id: string) => {
-    if (!id) return;
+  const loadSession = useCallback(async (session: Session) => {
+    setActiveSession(session);
     setLoading(true);
     try {
-      const data = await fetchContext(id);
-      setTriples(data.triples || []);
+      const [graphData, contextData] = await Promise.all([
+        fetchGraphBySession(session._id),
+        fetchContext(session._id),
+      ]);
+      setNodes(graphData.nodes);
+      setLinks(graphData.links);
+      setTriples(contextData.triples || []);
     } catch {
-      console.error("Could not fetch context");
+      console.error("Could not load session");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Auto-refresh graph every 10 seconds
+  // Load sessions list on boot and every 10s
   useEffect(() => {
-    loadGraph();
-    const interval = setInterval(loadGraph, 10000);
+    loadSessions();
+    const interval = setInterval(loadSessions, 10000);
     return () => clearInterval(interval);
-  }, [loadGraph]);
+  }, [loadSessions]);
 
-  function handleLoadSession() {
-    loadContext(inputId);
-  }
+  // Auto load most recent session on first load
+  useEffect(() => {
+    if (sessions.length > 0 && !activeSession) {
+      loadSession(sessions[0]);
+    }
+  }, [sessions, activeSession, loadSession]);
 
   return (
     <div style={{
       display: "flex",
-      flexDirection: "column",
       height: "100vh",
       background: "#0f0f1a",
       color: "#cdd6f4",
       fontFamily: "monospace",
+      overflow: "hidden",
     }}>
 
-      {/* Header */}
+      {/* Left Sidebar — Session History */}
       <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "12px 24px",
-        borderBottom: "1px solid #313244",
+        width: "240px",
+        minWidth: "240px",
         background: "#1e1e2e",
-      }}>
-        <div>
-          <span style={{ color: "#6366f1", fontSize: "18px", fontWeight: "bold" }}>
-            ⚡ SYNQ
-          </span>
-          <span style={{ color: "#6c7086", fontSize: "12px", marginLeft: "12px" }}>
-            Knowledge Graph Dashboard
-          </span>
-        </div>
-
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input
-            value={inputId}
-            onChange={(e) => setInputId(e.target.value)}
-            placeholder="Paste Session ID..."
-            style={{
-              background: "#0f0f1a",
-              border: "1px solid #313244",
-              borderRadius: "6px",
-              color: "#cdd6f4",
-              padding: "6px 10px",
-              fontSize: "12px",
-              fontFamily: "monospace",
-              width: "220px",
-            }}
-          />
-          <button
-            onClick={handleLoadSession}
-            style={{
-              background: "#6366f1",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              padding: "6px 14px",
-              fontSize: "12px",
-              cursor: "pointer",
-              fontFamily: "monospace",
-            }}
-          >
-            Load Session
-          </button>
-          <span style={{ color: "#45475a", fontSize: "11px" }}>
-            {lastUpdated ? `Updated ${lastUpdated}` : "Connecting..."}
-          </span>
-        </div>
-      </div>
-
-      {/* Tab Bar */}
-      <div style={{
+        borderRight: "1px solid #313244",
         display: "flex",
-        gap: "0",
-        borderBottom: "1px solid #313244",
-        background: "#1e1e2e",
-        paddingLeft: "24px",
+        flexDirection: "column",
       }}>
-        {(["graph", "timeline"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              background: "transparent",
-              border: "none",
-              borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent",
-              color: activeTab === tab ? "#6366f1" : "#6c7086",
-              padding: "10px 20px",
-              cursor: "pointer",
-              fontFamily: "monospace",
-              fontSize: "13px",
-              textTransform: "capitalize",
-            }}
-          >
-            {tab === "graph" ? "🕸 Graph" : "📋 Timeline"}
-          </button>
-        ))}
-
-        {/* Stats */}
+        {/* Sidebar Header */}
         <div style={{
-          marginLeft: "auto",
-          display: "flex",
-          gap: "24px",
-          alignItems: "center",
-          paddingRight: "24px",
-          fontSize: "12px",
-          color: "#6c7086",
+          padding: "16px",
+          borderBottom: "1px solid #313244",
         }}>
-          <span>Nodes: <strong style={{ color: "#cdd6f4" }}>{nodes.length}</strong></span>
-          <span>Edges: <strong style={{ color: "#cdd6f4" }}>{links.length}</strong></span>
-          <span>Facts: <strong style={{ color: "#cdd6f4" }}>{triples.length}</strong></span>
+          <div style={{ color: "#6366f1", fontSize: "16px", fontWeight: "bold" }}>
+            ⚡ SYNQ
+          </div>
+          <div style={{ color: "#6c7086", fontSize: "11px", marginTop: "2px" }}>
+            Knowledge Graph
+          </div>
+        </div>
+
+        {/* Sessions Label */}
+        <div style={{
+          padding: "12px 16px 6px",
+          fontSize: "10px",
+          color: "#45475a",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+        }}>
+          Captured Sessions
+        </div>
+
+        {/* Session List */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {sessions.length === 0 ? (
+            <div style={{
+              padding: "16px",
+              fontSize: "12px",
+              color: "#45475a",
+            }}>
+              No sessions yet. Capture a chat using the extension.
+            </div>
+          ) : (
+            sessions.map((s) => (
+              <div
+                key={s._id}
+                onClick={() => loadSession(s)}
+                style={{
+                  padding: "10px 16px",
+                  cursor: "pointer",
+                  borderLeft: activeSession?._id === s._id
+                    ? "3px solid #6366f1"
+                    : "3px solid transparent",
+                  background: activeSession?._id === s._id
+                    ? "#313244"
+                    : "transparent",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  if (activeSession?._id !== s._id)
+                    (e.currentTarget as HTMLElement).style.background = "#262637";
+                }}
+                onMouseLeave={(e) => {
+                  if (activeSession?._id !== s._id)
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
+              >
+                <div style={{
+                  fontSize: "13px",
+                  color: activeSession?._id === s._id ? "#cdd6f4" : "#a6adc8",
+                  marginBottom: "3px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}>
+                  {s.projectName}
+                </div>
+                <div style={{ fontSize: "10px", color: "#45475a" }}>
+                  {s.tripleCount} facts · {s.platform}
+                </div>
+                <div style={{ fontSize: "10px", color: "#45475a" }}>
+                  {new Date(s.updatedAt).toLocaleDateString()}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, overflow: "hidden", padding: "16px" }}>
-        {activeTab === "graph" && (
-          <div style={{
-            height: "100%",
-            border: "1px solid #313244",
-            borderRadius: "12px",
-            overflow: "hidden",
-          }}>
-            {nodes.length === 0 ? (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                color: "#6c7086",
-                flexDirection: "column",
-                gap: "12px",
-              }}>
-                <div style={{ fontSize: "48px" }}>🕸</div>
-                <div>No graph data yet.</div>
-                <div style={{ fontSize: "12px" }}>
-                  Start a session in the extension and chat with an AI.
-                </div>
-              </div>
-            ) : (
-              <GraphView nodes={nodes} links={links} />
-            )}
-          </div>
-        )}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
-        {activeTab === "timeline" && (
-          <div style={{ height: "100%", overflowY: "auto" }}>
-            {loading ? (
-              <div style={{ color: "#6c7086", padding: "16px" }}>Loading...</div>
+        {/* Header */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 24px",
+          borderBottom: "1px solid #313244",
+          background: "#1e1e2e",
+        }}>
+          <div style={{ fontSize: "14px", color: "#cdd6f4" }}>
+            {activeSession ? (
+              <>
+                <span style={{ color: "#6366f1" }}>{activeSession.projectName}</span>
+                <span style={{ color: "#45475a", marginLeft: "12px", fontSize: "12px" }}>
+                  {activeSession.tripleCount} facts · {activeSession.platform}
+                </span>
+              </>
             ) : (
-              <Timeline triples={triples} />
+              <span style={{ color: "#45475a" }}>No session selected</span>
             )}
           </div>
-        )}
+
+          {/* Stats */}
+          <div style={{
+            display: "flex",
+            gap: "24px",
+            fontSize: "12px",
+            color: "#6c7086",
+          }}>
+            <span>Nodes: <strong style={{ color: "#cdd6f4" }}>{nodes.length}</strong></span>
+            <span>Edges: <strong style={{ color: "#cdd6f4" }}>{links.length}</strong></span>
+            <span>Facts: <strong style={{ color: "#cdd6f4" }}>{triples.length}</strong></span>
+          </div>
+        </div>
+
+        {/* Tab Bar */}
+        <div style={{
+          display: "flex",
+          borderBottom: "1px solid #313244",
+          background: "#1e1e2e",
+          paddingLeft: "24px",
+        }}>
+          {(["graph", "history"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                background: "transparent",
+                border: "none",
+                borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent",
+                color: activeTab === tab ? "#6366f1" : "#6c7086",
+                padding: "10px 20px",
+                cursor: "pointer",
+                fontFamily: "monospace",
+                fontSize: "13px",
+                textTransform: "capitalize",
+              }}
+            >
+              {tab === "graph" ? "🕸 Graph" : "📋 History"}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div style={{ flex: 1, overflow: "hidden", padding: "16px" }}>
+          {activeTab === "graph" && (
+            <div style={{
+              height: "100%",
+              border: "1px solid #313244",
+              borderRadius: "12px",
+              overflow: "hidden",
+              position: "relative",
+            }}>
+              {loading ? (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                  color: "#6c7086",
+                }}>
+                  Loading graph...
+                </div>
+              ) : nodes.length === 0 ? (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                  color: "#6c7086",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}>
+                  <div style={{ fontSize: "48px" }}>🕸</div>
+                  <div>No graph data for this session.</div>
+                </div>
+              ) : (
+                <GraphView nodes={nodes} links={links} />
+              )}
+            </div>
+          )}
+
+          {activeTab === "history" && (
+            <div style={{ height: "100%", overflowY: "auto" }}>
+              {loading ? (
+                <div style={{ color: "#6c7086", padding: "16px" }}>Loading...</div>
+              ) : triples.length === 0 ? (
+                <div style={{ color: "#6c7086", padding: "16px", fontSize: "12px" }}>
+                  No facts captured for this session yet.
+                </div>
+              ) : (
+                <div>
+                  {[...triples].reverse().map((t, i) => (
+                    <div key={i} style={{
+                      padding: "10px 12px",
+                      marginBottom: "8px",
+                      background: "#1e1e2e",
+                      borderRadius: "8px",
+                      borderLeft: "3px solid #6366f1",
+                      fontSize: "12px",
+                    }}>
+                      <div style={{ color: "#cdd6f4" }}>
+                        <span style={{ color: "#6366f1" }}>{t.subjectType}:</span>
+                        {" "}{t.subject}{" "}
+                        <span style={{ color: "#6c7086" }}>—[{t.relation}]→</span>
+                        {" "}<span style={{ color: "#22d3ee" }}>{t.objectType}:</span>
+                        {" "}{t.object}
+                      </div>
+                      <div style={{ color: "#45475a", fontSize: "10px", marginTop: "4px" }}>
+                        {new Date(t.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
