@@ -20,6 +20,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         handleGetStoredSession().then(sendResponse);
         return true;
     }
+    if (message.type === "GET_ACTIVE_SESSION") {
+        handleGetActiveSession().then(sendResponse);
+        return true;
+    }
 });
 async function handleIngest(payload) {
     try {
@@ -43,6 +47,26 @@ async function handleGetContext(sessionId) {
     catch (err) {
         console.error("SYNQ retrieve failed:", err);
         return { error: "Backend unreachable" };
+    }
+}
+async function handleGetActiveSession() {
+    try {
+        const res = await fetch(`${BACKEND}/api/context/active`);
+        const data = await res.json();
+        if (data.activeSession) {
+            // Save to chrome storage so popup and content script can use it
+            await chrome.storage.local.set({ synq_session: {
+                    sessionId: data.activeSession._id,
+                    projectName: data.activeSession.projectName,
+                    tripleCount: data.activeSession.tripleCount,
+                    platform: data.activeSession.platform,
+                } });
+        }
+        return data;
+    }
+    catch (err) {
+        console.error("SYNQ get active session failed:", err);
+        return { activeSession: null };
     }
 }
 async function handleCreateSession(payload) {

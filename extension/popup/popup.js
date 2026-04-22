@@ -13,6 +13,18 @@ chrome.storage.local.get("synq_session", (result) => {
   }
 });
 
+// Check if dashboard has set a new active session
+chrome.runtime.sendMessage({ type: "GET_ACTIVE_SESSION" }, (response) => {
+  if (response?.activeSession) {
+    const data = {
+      sessionId: response.activeSession._id,
+      projectName: response.activeSession.projectName,
+      tripleCount: response.activeSession.tripleCount,
+    };
+    showSession(data);
+  }
+});
+
 // Capture Chat button
 captureBtn.addEventListener("click", async () => {
   const projectName = document.getElementById("project-name").value.trim();

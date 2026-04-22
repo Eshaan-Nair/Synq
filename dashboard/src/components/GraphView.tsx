@@ -22,22 +22,22 @@ interface Props {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  Project:      "#6366f1",
-  Technology:   "#22d3ee",
-  Feature:      "#a6e3a1",
-  Bug:          "#f38ba8",
-  Decision:     "#fab387",
-  Auth:         "#cba6f7",
-  Database:     "#89b4fa",
-  Library:      "#f9e2af",
-  API:          "#94e2d5",
-  Concept:      "#b4befe",
-  Property:     "#a6e3a1",
-  Framework:    "#89dceb",
-  Architecture: "#f5c2e7",
-  Algorithm:    "#eba0ac",
-  Encoding:     "#f2cdcd",
-  default:      "#6c7086",
+  Project:      "#FBDB93",
+  Technology:   "#BE5B50",
+  Feature:      "#c47a6e",
+  Bug:          "#8A2D3B",
+  Decision:     "#FBDB93",
+  Auth:         "#BE5B50",
+  Database:     "#8A2D3B",
+  Library:      "#c49a6e",
+  API:          "#BE5B50",
+  Concept:      "#c47a6e",
+  Property:     "#FBDB93",
+  Framework:    "#BE5B50",
+  Architecture: "#8A2D3B",
+  Algorithm:    "#c47a6e",
+  Encoding:     "#FBDB93",
+  default:      "#7a4a52",
 };
 
 const NODE_RADIUS = 28;
