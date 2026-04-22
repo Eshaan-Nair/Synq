@@ -84,4 +84,17 @@ router.get("/retrieve/:sessionId", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/context/sessions
+// Returns all sessions for the history tab
+router.get("/sessions", async (req: Request, res: Response) => {
+  try {
+    const sessions = await Session.find()
+      .sort({ updatedAt: -1 })
+      .select("_id projectName platform tripleCount createdAt updatedAt");
+    res.json({ sessions });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch sessions" });
+  }
+});
+
 export default router;
