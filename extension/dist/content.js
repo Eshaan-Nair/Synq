@@ -125,42 +125,45 @@ function injectSidebarUI() {
     document.body.appendChild(host);
     const shadow = host.attachShadow({ mode: "open" });
     shadow.innerHTML = `
-    <style>
-      #synq-badge {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        background: #6366f1;
-        color: white;
-        padding: 8px 14px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-family: monospace;
-        cursor: pointer;
-        z-index: 999999;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        transition: background 0.2s;
-      }
-      #synq-badge:hover { background: #4f46e5; }
-      #synq-toast {
-        position: fixed;
-        bottom: 70px;
-        right: 24px;
-        background: #1e1e2e;
-        color: #a6e3a1;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-family: monospace;
-        z-index: 999999;
-        opacity: 0;
-        transition: opacity 0.3s;
-        pointer-events: none;
-      }
-    </style>
-    <div id="synq-badge">⚡ SYNQ</div>
-    <div id="synq-toast"></div>
-  `;
+  <style>
+    #synq-badge {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #00A896;
+      color: #021f2e;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 999999;
+      box-shadow: 0 4px 16px rgba(2, 195, 154, 0.4);
+      letter-spacing: 0.05em;
+      transition: background 0.2s;
+    }
+    #synq-badge:hover { background: #02C39A; }
+    #synq-toast {
+      position: fixed;
+      bottom: 70px;
+      right: 24px;
+      background: #032a3d;
+      color: #F0F3BD;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      z-index: 999999;
+      opacity: 0;
+      border: 1px solid #04445e;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+  </style>
+  <div id="synq-badge">⚡ SYNQ</div>
+  <div id="synq-toast"></div>
+`;
     shadow.getElementById("synq-badge")?.addEventListener("click", () => {
         showToast("Click the SYNQ extension icon to manage session");
     });

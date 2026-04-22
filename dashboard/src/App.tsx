@@ -1,20 +1,20 @@
 import { useEffect, useState, useCallback } from "react";
 import GraphView from "./components/GraphView";
-import { fetchGraphBySession, fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend } from "./api/synq";
+import { fetchGraphBySession, fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession } from "./api/synq";
 
-// ── Colour palette ─────────────────────────────────────────────────
 const C = {
-  cream:   "#FBDB93",
-  coral:   "#BE5B50",
-  wine:    "#8A2D3B",
-  deep:    "#641B2E",
-  bg:      "#1a0a10",
-  surface: "#2a1018",
-  border:  "#3d1520",
-  muted:   "#7a4a52",
-  text:    "#FBDB93",
-  subtext: "#c49a6e",
-  dim:     "#7a5a4a",
+  baltic:  "#05668D",
+  teal:    "#028090",
+  verd:    "#00A896",
+  mint:    "#02C39A",
+  cream:   "#F0F3BD",
+  bg:      "#021f2e",
+  surface: "#032a3d",
+  border:  "#04445e",
+  muted:   "#5a9aaa",
+  dim:     "#3a7a8a",
+  text:    "#F0F3BD",
+  subtext: "#a0d4c4",
 };
 
 interface Node { id: string; type: string; }
@@ -43,6 +43,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"graph" | "history">("graph");
   const [loading, setLoading] = useState(false);
   const [loadedToExtension, setLoadedToExtension] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadSessions = useCallback(async () => {
     try {
@@ -71,6 +72,52 @@ export default function App() {
     }
   }, []);
 
+  const handleDelete = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    setDeletingId(sessionId);
+    try {
+      await deleteSession(sessionId);
+
+      if (activeSession?._id === sessionId) {
+        setActiveSession(null);
+        setNodes([]);
+        setLinks([]);
+        setTriples([]);
+      }
+
+      const data = await fetchSessions();
+      setSessions(data.sessions);
+
+      if (activeSession?._id === sessionId && data.sessions.length > 0) {
+        loadSession(data.sessions[0]);
+      }
+    } catch {
+      console.error("Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Auto clear if active session no longer exists
+  useEffect(() => {
+    if (sessions.length === 0) {
+      setActiveSession(null);
+      setNodes([]);
+      setLinks([]);
+      setTriples([]);
+      return;
+    }
+    if (activeSession) {
+      const stillExists = sessions.find(s => s._id === activeSession._id);
+      if (!stillExists) {
+        setActiveSession(null);
+        setNodes([]);
+        setLinks([]);
+        setTriples([]);
+      }
+    }
+  }, [sessions, activeSession]);
+
   useEffect(() => {
     loadSessions();
     const interval = setInterval(loadSessions, 10000);
@@ -94,10 +141,9 @@ export default function App() {
       overflow: "hidden",
       margin: 0,
       padding: 0,
-      boxSizing: "border-box",
     }}>
 
-      {/* ── Left Sidebar ──────────────────────────────────────────── */}
+      {/* ── Sidebar ───────────────────────────────────────────────── */}
       <div style={{
         width: "260px",
         minWidth: "260px",
@@ -110,23 +156,24 @@ export default function App() {
 
         {/* Logo */}
         <div style={{
-          padding: "20px 20px 16px",
+          padding: "22px 16px 16px",
           borderBottom: `1px solid ${C.border}`,
+          textAlign: "center",
         }}>
           <div style={{
             color: C.cream,
-            fontSize: "26px",
+            fontSize: "28px",
             fontWeight: "900",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
+            letterSpacing: "0.2em",
           }}>
             ⚡ SYNQ
           </div>
           <div style={{
             color: C.dim,
-            fontSize: "13px",
+            fontSize: "12px",
             marginTop: "4px",
-            letterSpacing: "0.05em",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
           }}>
             Knowledge Graph
           </div>
@@ -134,12 +181,13 @@ export default function App() {
 
         {/* Section label */}
         <div style={{
-          padding: "14px 20px 8px",
+          padding: "14px 16px 8px",
           fontSize: "11px",
-          color: C.coral,
+          color: C.mint,
           textTransform: "uppercase",
-          letterSpacing: "0.15em",
+          letterSpacing: "0.18em",
           fontWeight: "700",
+          textAlign: "center",
         }}>
           Captured Sessions
         </div>
@@ -147,7 +195,12 @@ export default function App() {
         {/* Session list */}
         <div style={{ flex: 1, overflowY: "auto" }}>
           {sessions.length === 0 ? (
-            <div style={{ padding: "16px 20px", fontSize: "13px", color: C.dim }}>
+            <div style={{
+              padding: "16px",
+              fontSize: "13px",
+              color: C.dim,
+              textAlign: "center",
+            }}>
               No sessions yet.
             </div>
           ) : (
@@ -158,35 +211,61 @@ export default function App() {
                   key={s._id}
                   onClick={() => loadSession(s)}
                   style={{
-                    padding: "12px 20px",
+                    padding: "11px 16px",
                     cursor: "pointer",
-                    borderLeft: isActive ? `3px solid ${C.coral}` : `3px solid transparent`,
-                    background: isActive ? `${C.deep}88` : "transparent",
+                    borderLeft: isActive ? `3px solid ${C.mint}` : `3px solid transparent`,
+                    background: isActive ? `${C.baltic}55` : "transparent",
                     transition: "all 0.15s",
+                    position: "relative",
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = `${C.deep}44`;
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = `${C.baltic}33`;
+                    const btn = (e.currentTarget as HTMLElement).querySelector(".del-btn") as HTMLElement;
+                    if (btn) btn.style.opacity = "1";
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
+                    const btn = (e.currentTarget as HTMLElement).querySelector(".del-btn") as HTMLElement;
+                    if (btn) btn.style.opacity = "0";
                   }}
                 >
-                  <div style={{
-                    fontSize: "15px",
-                    fontWeight: "700",
-                    color: isActive ? C.cream : C.subtext,
-                    marginBottom: "4px",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    letterSpacing: "0.03em",
-                  }}>
-                    {s.projectName}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{
+                      fontSize: "14px",
+                      fontWeight: "700",
+                      color: isActive ? C.cream : C.subtext,
+                      marginBottom: "3px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: "180px",
+                    }}>
+                      {s.projectName}
+                    </div>
+                    <button
+                      className="del-btn"
+                      onClick={(e) => handleDelete(e, s._id)}
+                      style={{
+                        opacity: 0,
+                        background: "transparent",
+                        border: "none",
+                        color: "#ff6b6b",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        padding: "0 2px",
+                        lineHeight: 1,
+                        transition: "opacity 0.15s",
+                        flexShrink: 0,
+                      }}
+                      title="Delete session"
+                    >
+                      {deletingId === s._id ? "..." : "✕"}
+                    </button>
                   </div>
-                  <div style={{ fontSize: "12px", color: C.muted }}>
+                  <div style={{ fontSize: "11px", color: C.muted }}>
                     {s.tripleCount} facts · {s.platform}
                   </div>
-                  <div style={{ fontSize: "11px", color: C.dim, marginTop: "2px" }}>
+                  <div style={{ fontSize: "10px", color: C.dim, marginTop: "2px" }}>
                     {new Date(s.updatedAt).toLocaleDateString()}
                   </div>
                 </div>
@@ -215,24 +294,13 @@ export default function App() {
           background: C.surface,
           flexShrink: 0,
         }}>
-          {/* Session title */}
           <div>
             {activeSession ? (
               <>
-                <span style={{
-                  color: C.cream,
-                  fontSize: "22px",
-                  fontWeight: "800",
-                  letterSpacing: "0.05em",
-                }}>
+                <span style={{ color: C.cream, fontSize: "22px", fontWeight: "800", letterSpacing: "0.04em" }}>
                   {activeSession.projectName}
                 </span>
-                <span style={{
-                  color: C.muted,
-                  fontSize: "14px",
-                  marginLeft: "14px",
-                  letterSpacing: "0.03em",
-                }}>
+                <span style={{ color: C.muted, fontSize: "14px", marginLeft: "14px" }}>
                   {activeSession.tripleCount} facts · {activeSession.platform}
                 </span>
               </>
@@ -242,7 +310,6 @@ export default function App() {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-            {/* Load into Extension */}
             {activeSession && (
               <button
                 onClick={async () => {
@@ -251,8 +318,8 @@ export default function App() {
                   setTimeout(() => setLoadedToExtension(false), 3000);
                 }}
                 style={{
-                  background: loadedToExtension ? C.cream : C.coral,
-                  color: loadedToExtension ? C.deep : C.cream,
+                  background: loadedToExtension ? C.mint : C.verd,
+                  color: loadedToExtension ? C.bg : C.cream,
                   border: "none",
                   borderRadius: "6px",
                   padding: "8px 18px",
@@ -268,7 +335,6 @@ export default function App() {
               </button>
             )}
 
-            {/* Stats */}
             <div style={{ display: "flex", gap: "28px", fontSize: "14px", color: C.muted }}>
               <span>Nodes: <strong style={{ color: C.cream, fontSize: "16px" }}>{nodes.length}</strong></span>
               <span>Edges: <strong style={{ color: C.cream, fontSize: "16px" }}>{links.length}</strong></span>
@@ -277,7 +343,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Tab Bar */}
+        {/* Tabs */}
         <div style={{
           display: "flex",
           borderBottom: `1px solid ${C.border}`,
@@ -292,15 +358,14 @@ export default function App() {
               style={{
                 background: "transparent",
                 border: "none",
-                borderBottom: activeTab === tab ? `2px solid ${C.coral}` : "2px solid transparent",
-                color: activeTab === tab ? C.coral : C.muted,
+                borderBottom: activeTab === tab ? `2px solid ${C.mint}` : "2px solid transparent",
+                color: activeTab === tab ? C.mint : C.muted,
                 padding: "12px 24px",
                 cursor: "pointer",
                 fontFamily: "'Courier New', monospace",
                 fontSize: "14px",
                 fontWeight: activeTab === tab ? "700" : "400",
                 letterSpacing: "0.05em",
-                textTransform: "capitalize",
                 transition: "all 0.15s",
               }}
             >
@@ -309,7 +374,7 @@ export default function App() {
           ))}
         </div>
 
-        {/* Tab Content */}
+        {/* Content */}
         <div style={{ flex: 1, overflow: "hidden", padding: "16px" }}>
           {activeTab === "graph" && (
             <div style={{
@@ -317,7 +382,6 @@ export default function App() {
               border: `1px solid ${C.border}`,
               borderRadius: "10px",
               overflow: "hidden",
-              position: "relative",
               background: C.bg,
             }}>
               {loading ? (
@@ -357,14 +421,14 @@ export default function App() {
                       marginBottom: "8px",
                       background: C.surface,
                       borderRadius: "8px",
-                      borderLeft: `3px solid ${C.coral}`,
+                      borderLeft: `3px solid ${C.verd}`,
                       fontSize: "13px",
                     }}>
                       <div style={{ color: C.cream }}>
-                        <span style={{ color: C.coral, fontWeight: "700" }}>{t.subjectType}:</span>
+                        <span style={{ color: C.mint, fontWeight: "700" }}>{t.subjectType}:</span>
                         {" "}{t.subject}{" "}
                         <span style={{ color: C.muted }}>—[{t.relation}]→</span>
-                        {" "}<span style={{ color: C.cream, fontWeight: "700" }}>{t.objectType}:</span>
+                        {" "}<span style={{ color: C.mint, fontWeight: "700" }}>{t.objectType}:</span>
                         {" "}{t.object}
                       </div>
                       <div style={{ color: C.dim, fontSize: "11px", marginTop: "5px" }}>

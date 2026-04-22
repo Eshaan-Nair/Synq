@@ -128,4 +128,34 @@ router.get("/active", async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /api/context/session/:sessionId
+router.delete("/session/:sessionId", async (req: Request, res: Response) => {
+  const { sessionId } = req.params;
+  try {
+    // Delete from MongoDB
+    await Session.findByIdAndDelete(sessionId);
+
+    // Delete from Neo4j
+    const { getDriver } = await import("../services/neo4j");
+    const neo4jSession = getDriver().session();
+    try {
+      await neo4jSession.run(
+        `MATCH (s:Entity)-[r:RELATION {sessionId: $sessionId}]->(o:Entity)
+         DELETE r`,
+        { sessionId }
+      );
+    } finally {
+      await neo4jSession.close();
+    }
+
+    // Clear active session if deleted
+    if (activeSessionId === sessionId) activeSessionId = null;
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ error: "Failed to delete session" });
+  }
+});
+
 export default router;

@@ -22,22 +22,22 @@ interface Props {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  Project:      "#FBDB93",
-  Technology:   "#BE5B50",
-  Feature:      "#c47a6e",
-  Bug:          "#8A2D3B",
-  Decision:     "#FBDB93",
-  Auth:         "#BE5B50",
-  Database:     "#8A2D3B",
-  Library:      "#c49a6e",
-  API:          "#BE5B50",
-  Concept:      "#c47a6e",
-  Property:     "#FBDB93",
-  Framework:    "#BE5B50",
-  Architecture: "#8A2D3B",
-  Algorithm:    "#c47a6e",
-  Encoding:     "#FBDB93",
-  default:      "#7a4a52",
+  Project:      "#F0F3BD",
+  Technology:   "#02C39A",
+  Feature:      "#00A896",
+  Bug:          "#05668D",
+  Decision:     "#F0F3BD",
+  Auth:         "#02C39A",
+  Database:     "#028090",
+  Library:      "#00A896",
+  API:          "#02C39A",
+  Concept:      "#028090",
+  Property:     "#F0F3BD",
+  Framework:    "#00A896",
+  Architecture: "#05668D",
+  Algorithm:    "#028090",
+  Encoding:     "#F0F3BD",
+  default:      "#3a7a8a",
 };
 
 const NODE_RADIUS = 28;
@@ -250,44 +250,6 @@ export default function GraphView({ nodes, links }: Props) {
       });
 
       nodeGroup.attr("transform", (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
-    });
-
-    // ── Legend ──────────────────────────────────────────────────────
-    const legendTypes = [...new Set(nodes.map((n) => n.type))];
-    const legendG = svg.append("g")
-      .attr("transform", `translate(${width - 160}, ${height - legendTypes.length * 20 - 16})`);
-
-    legendG.append("rect")
-      .attr("x", -8)
-      .attr("y", -8)
-      .attr("width", 152)
-      .attr("height", legendTypes.length * 20 + 16)
-      .attr("fill", "#1e1e2e")
-      .attr("stroke", "#313244")
-      .attr("rx", 8)
-      .attr("opacity", 0.9);
-
-    legendTypes.forEach((type, i) => {
-      const color = TYPE_COLORS[type] || TYPE_COLORS.default;
-      const row = legendG.append("g")
-        .attr("transform", `translate(0, ${i * 20})`);
-
-      row.append("circle")
-        .attr("r", 5)
-        .attr("cx", 8)
-        .attr("cy", 8)
-        .attr("fill", color)
-        .attr("fill-opacity", 0.3)
-        .attr("stroke", color)
-        .attr("stroke-width", 1.5);
-
-      row.append("text")
-        .attr("x", 20)
-        .attr("y", 12)
-        .attr("fill", "#a6adc8")
-        .attr("font-size", "10px")
-        .attr("font-family", "monospace")
-        .text(type);
     });
 
     // ── Animate in nodes ────────────────────────────────────────────
