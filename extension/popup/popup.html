@@ -4,105 +4,193 @@
     <meta charset="UTF-8" />
     <title>SYNQ</title>
     <style>
+      :root {
+        --baltic:  #05668D;
+        --teal:    #028090;
+        --verd:    #00A896;
+        --mint:    #02C39A;
+        --cream:   #F0F3BD;
+        --bg:      #021f2e;
+        --surface: #032a3d;
+        --border:  #04445e;
+        --muted:   #5a9aaa;
+        --dim:     #3a7a8a;
+      }
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
         width: 300px;
-        background: #0f0f1a;
-        color: #cdd6f4;
-        font-family: monospace;
-        padding: 16px;
+        background: var(--bg);
+        color: var(--cream);
+        font-family: 'Courier New', Courier, monospace;
+        padding: 0;
+        letter-spacing: 0;
       }
-      h1 { color: #6366f1; font-size: 18px; margin-bottom: 4px; }
-      p.sub { font-size: 11px; color: #6c7086; margin-bottom: 16px; }
-      label { font-size: 12px; color: #a6adc8; display: block; margin-bottom: 4px; }
-      input, select {
+      .header {
+        background: var(--surface);
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        text-align: center;
+      }
+      .header h1 {
+        color: var(--cream);
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+      }
+      .header p {
+        color: var(--dim);
+        font-size: 10px;
+        margin-top: 3px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      #session-info {
+        display: none;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin: 14px 14px 0;
+        font-size: 12px;
+      }
+      #session-info .row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+      #session-info .label { color: var(--muted); }
+      #session-info .value { color: var(--mint); font-weight: 700; }
+      .form-section { padding: 14px; }
+      label {
+        font-size: 11px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      input {
         width: 100%;
-        padding: 8px;
-        background: #1e1e2e;
-        border: 1px solid #313244;
+        padding: 9px 10px;
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 6px;
-        color: #cdd6f4;
-        font-family: monospace;
+        color: var(--cream);
+        font-family: 'Courier New', monospace;
         font-size: 13px;
         margin-bottom: 12px;
+        outline: none;
+        transition: border 0.2s;
       }
+      input:focus { border-color: var(--verd); }
       button {
         width: 100%;
         padding: 10px;
-        background: #6366f1;
-        color: white;
         border: none;
         border-radius: 6px;
-        font-family: monospace;
+        font-family: 'Courier New', monospace;
         font-size: 13px;
+        font-weight: 700;
         cursor: pointer;
         margin-bottom: 8px;
+        letter-spacing: 0.05em;
+        transition: all 0.2s;
       }
-      button:hover { background: #4f46e5; }
-      button:disabled {
-        background: #313244;
-        color: #6c7086;
+      #capture-btn {
+        background: var(--verd);
+        color: var(--bg);
+      }
+      #capture-btn:hover { background: var(--mint); }
+      #capture-btn:disabled {
+        background: var(--border);
+        color: var(--dim);
         cursor: not-allowed;
       }
-      button.secondary {
-        background: #1e1e2e;
-        border: 1px solid #313244;
-        color: #cdd6f4;
-      }
-      button.secondary:hover { background: #313244; }
-      #status {
-        font-size: 11px;
-        color: #a6e3a1;
-        margin-top: 8px;
-        min-height: 16px;
-      }
-      #status.error { color: #f38ba8; }
-      #session-info {
-        background: #1e1e2e;
-        border-radius: 6px;
-        padding: 10px;
-        font-size: 11px;
-        margin-bottom: 12px;
-        border: 1px solid #313244;
-        display: none;
-      }
-      #session-info .label { color: #6c7086; }
-      #session-info .value { color: #6366f1; }
       .divider {
         border: none;
-        border-top: 1px solid #313244;
-        margin: 12px 0;
+        border-top: 1px solid var(--border);
+        margin: 4px 14px 12px;
+      }
+      #inject-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        width: calc(100% - 28px);
+        margin: 0 14px 14px;
+      }
+      #inject-btn:hover {
+        border-color: var(--verd);
+        color: var(--cream);
       }
       .hint {
         font-size: 10px;
-        color: #45475a;
+        color: var(--dim);
         margin-bottom: 12px;
-        line-height: 1.5;
+        line-height: 1.6;
+        padding: 8px 10px;
+        background: var(--surface);
+        border-radius: 6px;
+        border-left: 2px solid var(--teal);
       }
+      #status {
+        font-size: 11px;
+        color: var(--mint);
+        padding: 0 14px 12px;
+        min-height: 20px;
+      }
+      #status.error { color: #ff6b6b; }
+
+      /* Platform auto-detect badge */
+      #platform-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 10px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      #platform-badge span { color: var(--mint); font-weight: 700; }
     </style>
   </head>
   <body>
-    <h1>⚡ SYNQ</h1>
-    <p class="sub">Context Sovereignty Engine</p>
-
-    <div id="session-info">
-      <div><span class="label">Active: </span><span class="value" id="session-name">—</span></div>
-      <div><span class="label">Triples: </span><span class="value" id="triple-count">—</span></div>
-      <div><span class="label">Session ID: </span><span class="value" id="session-id-display">—</span></div>
+    <div class="header">
+      <h1>⚡ SYNQ</h1>
+      <p>Context Sovereignty Engine</p>
     </div>
 
-    <label>Project Name</label>
-    <input type="text" id="project-name" placeholder="e.g. SplitSmart" />
+    <div id="session-info">
+      <div class="row">
+        <span class="label">Active</span>
+        <span class="value" id="session-name">—</span>
+      </div>
+      <div class="row">
+        <span class="label">Facts</span>
+        <span class="value" id="triple-count">—</span>
+      </div>
+    </div>
 
-    <p class="hint">
-      Finish your chat first, then type a name and press Capture Chat to save everything discussed.
-    </p>
+    <div class="form-section">
+      <label>Project Name</label>
+      <input type="text" id="project-name" placeholder="e.g. SplitSmart" />
 
-    <button id="capture-btn">📸 Capture Chat</button>
+      <label>Detected Platform</label>
+      <div id="platform-badge">
+        🔍 Detecting... <span id="detected-platform">—</span>
+      </div>
+
+      <p class="hint">
+        Finish your chat first, then name it and press Capture Chat to save everything discussed.
+      </p>
+
+      <button id="capture-btn">📸 Capture Chat</button>
+    </div>
 
     <hr class="divider" />
-
-    <button class="secondary" id="inject-btn">🧠 Inject Context Now</button>
+    <button id="inject-btn">🧠 Inject Context Now</button>
 
     <div id="status"></div>
 

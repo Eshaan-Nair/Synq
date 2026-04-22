@@ -33,3 +33,8 @@ export async function setActiveSession(sessionId: string) {
   const res = await axios.post(`${BASE}/api/context/active`, { sessionId });
   return res.data;
 }
+
+export async function deleteSession(sessionId: string) {
+  const res = await axios.delete(`${BASE}/api/context/session/${sessionId}`);
+  return res.data;
+}
