@@ -166,7 +166,7 @@ export default function App() {
             fontWeight: "900",
             letterSpacing: "0.2em",
           }}>
-            ⚡ SYNQ
+            SYNQ
           </div>
           <div style={{
             color: C.dim,
@@ -331,7 +331,7 @@ export default function App() {
                   transition: "all 0.3s",
                 }}
               >
-                {loadedToExtension ? "✅ Loaded!" : "⚡ Load into Extension"}
+                {loadedToExtension ? "✅ Loaded!" : "Load into Extension"}
               </button>
             )}
 
@@ -369,7 +369,7 @@ export default function App() {
                 transition: "all 0.15s",
               }}
             >
-              {tab === "graph" ? "🕸 Graph" : "📋 History"}
+              {tab === "graph" ? "Graph" : "History"}
             </button>
           ))}
         </div>
