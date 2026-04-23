@@ -28,7 +28,7 @@ async function start() {
   await connectMongo();
   await connectNeo4j();
   app.listen(PORT, () => {
-    console.log(`🚀 SYNQ backend running on port ${PORT}`);
+    console.log(`SYNQ backend running on port ${PORT}`);
   });
 }
 

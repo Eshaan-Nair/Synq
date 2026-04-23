@@ -1,9 +1,8 @@
 import { Router, Request, Response } from "express";
 import { scrubPII } from "../utils/privacy";
-import { extractTriples } from "../services/extractor";
+import { extractTriples, generateProjectSummary } from "../services/extractor";
 import { saveTriple, getTriplesBySession } from "../services/neo4j";
 import { Session } from "../services/mongo";
-import { extractTriples, generateProjectSummary } from "../services/extractor";
 
 const router = Router();
 

@@ -95,7 +95,7 @@ async function injectContext() {
         showToast("⚠ No context found for this session.");
         return;
     }
-    const prompt = buildContextPrompt(data.contextBlock);
+    const prompt = buildContextPrompt(data);
     const inputSelector = getInputSelector(platform);
     const input = document.querySelector(inputSelector);
     if (!input) {
@@ -107,13 +107,14 @@ async function injectContext() {
     showToast(`🧠 Injected ${data.tripleCount} facts into chat`);
     console.log("✅ SYNQ context injected");
 }
-function buildContextPrompt(contextBlock) {
+function buildContextPrompt(data) {
+    const content = data.structuredSummary || data.contextBlock;
     return `[SYNQ CONTEXT — Previous Session Knowledge]
-The following facts were extracted from our previous conversations.
-Use these as your working memory for this session:
+You have worked on this project before. Here is what was discussed:
 
-${contextBlock}
+${content}
 
+Use this as your working memory. Do not re-explain things already established.
 [END SYNQ CONTEXT]
 ---
 `;
