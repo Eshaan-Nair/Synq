@@ -515,7 +515,7 @@ Use it for anything. Personal projects, commercial products, forks, modification
 *Every ⭐ tells me someone else felt this pain and found SYNQ useful.*
 *It takes two seconds and genuinely helps.*
 
-**[⭐ Star SYNQ on GitHub](https://github.com/yourusername/synq)**
+**[⭐ Star SYNQ on GitHub](https://github.com/Eshaan-Nair/Synq)**
 
 <br/>
 
