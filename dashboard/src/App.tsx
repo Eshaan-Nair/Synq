@@ -369,7 +369,7 @@ export default function App() {
                 transition: "all 0.15s",
               }}
             >
-              {tab === "graph" ? "Graph" : "History"}
+              {tab === "graph" ? "Graph" : "Facts"}
             </button>
           ))}
         </div>
