@@ -3,6 +3,7 @@ import { scrubPII } from "../utils/privacy";
 import { extractTriples } from "../services/extractor";
 import { saveTriple, getTriplesBySession } from "../services/neo4j";
 import { Session } from "../services/mongo";
+import { extractTriples, generateProjectSummary } from "../services/extractor";
 
 const router = Router();
 
@@ -67,16 +68,24 @@ router.get("/retrieve/:sessionId", async (req: Request, res: Response) => {
   const sessionId = req.params.sessionId as string;
   try {
     const triples = await getTriplesBySession(sessionId);
+    const session = await Session.findById(sessionId).select("projectName");
+    const projectName = session?.projectName || "Unknown Project";
 
-    // Format into a human+AI readable context block
+    // Raw triple format for graph/timeline
     const contextBlock = triples
-      .map((t) => `(${t.subjectType}:${t.subject}) -[${t.relation}]-> (${t.objectType}:${t.object})`)
+      .map(t => `(${t.subjectType}:${t.subject}) -[${t.relation}]-> (${t.objectType}:${t.object})`)
       .join("\n");
+
+    // Generate structured summary for injection
+    const structuredSummary = triples.length > 0
+      ? await generateProjectSummary(triples, projectName)
+      : "";
 
     res.json({
       sessionId,
       tripleCount: triples.length,
       contextBlock,
+      structuredSummary,
       triples,
     });
   } catch (err) {
