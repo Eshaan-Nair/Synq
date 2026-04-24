@@ -6,9 +6,9 @@
 
 <br/>
 
-[![Stars](https://img.shields.io/github/stars/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=02C39A)](https://github.com/Eshaan-Nair/Synq/stargazers)
-[![Forks](https://img.shields.io/github/forks/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=028090)](https://github.com/Eshaan-Nair/Synq/forks)
-[![Issues](https://img.shields.io/github/issues/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=05668D)](https://github.com/Eshaan-Nair/Synq/issues)
+[![Stars](https://img.shields.io/github/stars/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=021f2e&color=02C39A)](https://github.com/Eshaan-Nair/Synq/stargazers)
+[![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=021f2e&color=028090)](https://github.com/Eshaan-Nair/Synq/forks)
+[![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=021f2e&color=05668D)](https://github.com/Eshaan-Nair/Synq/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F0F3BD?style=for-the-badge&labelColor=021f2e)](LICENSE)
 
 <br/>
