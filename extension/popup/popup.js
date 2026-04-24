@@ -60,7 +60,7 @@ captureBtn.addEventListener("click", async () => {
   }
 
   captureBtn.disabled = true;
-  setStatus("📸 Capturing chat...");
+  setStatus("Extracting Context...");
 
   chrome.tabs.sendMessage(
     tab.id,
@@ -83,7 +83,7 @@ captureBtn.addEventListener("click", async () => {
         };
         chrome.storage.local.set({ synq_session: sessionData });
         showSession(sessionData);
-        setStatus(`✅ Captured ${response.triplesExtracted} facts!`);
+        setStatus(`Extracted ${response.triplesExtracted} facts!`);
       }
     }
   );
@@ -97,7 +97,7 @@ injectBtn.addEventListener("click", async () => {
     return;
   }
   chrome.tabs.sendMessage(tab.id, { type: "INJECT_NOW" }, () => {
-    setStatus("🧠 Injecting context...");
+    setStatus("Injecting context...");
   });
 });
 

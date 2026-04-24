@@ -6,14 +6,14 @@
 
 <br/>
 
-[![Stars](https://img.shields.io/github/stars/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=02C39A)](https://github.com/yourusername/synq/stargazers)
-[![Forks](https://img.shields.io/github/forks/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=028090)](https://github.com/yourusername/synq/forks)
-[![Issues](https://img.shields.io/github/issues/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=05668D)](https://github.com/yourusername/synq/issues)
+[![Stars](https://img.shields.io/github/stars/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=02C39A)](https://github.com/Eshaan-Nair/Synq/stargazers)
+[![Forks](https://img.shields.io/github/forks/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=028090)](https://github.com/Eshaan-Nair/Synq/forks)
+[![Issues](https://img.shields.io/github/issues/yourusername/synq?style=for-the-badge&logo=github&labelColor=021f2e&color=05668D)](https://github.com/Eshaan-Nair/Synq/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F0F3BD?style=for-the-badge&labelColor=021f2e)](LICENSE)
 
 <br/>
 
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-02C39A?style=flat-square&logo=googlechrome&logoColor=white&labelColor=021f2e)](https://github.com/yourusername/synq)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-02C39A?style=flat-square&logo=googlechrome&logoColor=white&labelColor=021f2e)](https://github.com/Eshaan-Nair/Synq)
 [![Neo4j](https://img.shields.io/badge/Graph_DB-Neo4j-028090?style=flat-square&logo=neo4j&logoColor=white&labelColor=021f2e)](https://neo4j.com)
 [![Groq](https://img.shields.io/badge/AI-Groq_LLaMA_3.1-05668D?style=flat-square&labelColor=021f2e)](https://groq.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-F0F3BD?style=flat-square&logo=typescript&logoColor=white&labelColor=021f2e)](https://www.typescriptlang.org)

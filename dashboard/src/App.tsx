@@ -3,18 +3,18 @@ import GraphView from "./components/GraphView";
 import { fetchGraphBySession, fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession } from "./api/synq";
 
 const C = {
-  baltic:  "#05668D",
-  teal:    "#028090",
-  verd:    "#00A896",
-  mint:    "#02C39A",
-  cream:   "#F0F3BD",
-  bg:      "#021f2e",
-  surface: "#032a3d",
-  border:  "#04445e",
-  muted:   "#5a9aaa",
-  dim:     "#3a7a8a",
-  text:    "#F0F3BD",
-  subtext: "#a0d4c4",
+  baltic:  "#6366F1", // Reused variable name for primary (Indigo)
+  teal:    "#4F46E5",
+  verd:    "#06B6D4", // Reused for secondary accent (Cyan)
+  mint:    "#0EA5E9",
+  cream:   "#F8FAFC",
+  bg:      "#0F111A",
+  surface: "#1A1D27",
+  border:  "#292D3E",
+  muted:   "#64748B",
+  dim:     "#475569",
+  text:    "#F8FAFC",
+  subtext: "#94A3B8",
 };
 
 interface Node { id: string; type: string; }
@@ -137,7 +137,7 @@ export default function App() {
       width: "100vw",
       background: C.bg,
       color: C.text,
-      fontFamily: "'Courier New', Courier, monospace",
+      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       overflow: "hidden",
       margin: 0,
       padding: 0,
@@ -219,7 +219,7 @@ export default function App() {
                     position: "relative",
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = `${C.baltic}33`;
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = `${C.surface}`;
                     const btn = (e.currentTarget as HTMLElement).querySelector(".del-btn") as HTMLElement;
                     if (btn) btn.style.opacity = "1";
                   }}
@@ -324,10 +324,9 @@ export default function App() {
                   borderRadius: "6px",
                   padding: "8px 18px",
                   fontSize: "13px",
-                  fontWeight: "700",
+                  fontWeight: "600",
                   cursor: "pointer",
-                  fontFamily: "'Courier New', monospace",
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0.02em",
                   transition: "all 0.3s",
                 }}
               >
@@ -362,10 +361,9 @@ export default function App() {
                 color: activeTab === tab ? C.mint : C.muted,
                 padding: "12px 24px",
                 cursor: "pointer",
-                fontFamily: "'Courier New', monospace",
                 fontSize: "14px",
-                fontWeight: activeTab === tab ? "700" : "400",
-                letterSpacing: "0.05em",
+                fontWeight: activeTab === tab ? "600" : "500",
+                letterSpacing: "0.02em",
                 transition: "all 0.15s",
               }}
             >
@@ -380,7 +378,8 @@ export default function App() {
             <div style={{
               height: "100%",
               border: `1px solid ${C.border}`,
-              borderRadius: "10px",
+              borderRadius: "12px",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
               overflow: "hidden",
               background: C.bg,
             }}>
@@ -417,21 +416,22 @@ export default function App() {
                 <div>
                   {[...triples].reverse().map((t, i) => (
                     <div key={i} style={{
-                      padding: "12px 16px",
-                      marginBottom: "8px",
+                      padding: "14px 18px",
+                      marginBottom: "12px",
                       background: C.surface,
-                      borderRadius: "8px",
-                      borderLeft: `3px solid ${C.verd}`,
-                      fontSize: "13px",
+                      borderRadius: "10px",
+                      borderLeft: `4px solid ${C.baltic}`,
+                      fontSize: "14px",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                     }}>
-                      <div style={{ color: C.cream }}>
-                        <span style={{ color: C.mint, fontWeight: "700" }}>{t.subjectType}:</span>
+                      <div style={{ color: C.cream, lineHeight: 1.5 }}>
+                        <span style={{ color: C.mint, fontWeight: "600" }}>{t.subjectType}:</span>
                         {" "}{t.subject}{" "}
-                        <span style={{ color: C.muted }}>—[{t.relation}]→</span>
-                        {" "}<span style={{ color: C.mint, fontWeight: "700" }}>{t.objectType}:</span>
+                        <span style={{ color: C.muted, fontSize: "13px", margin: "0 6px" }}>—[{t.relation}]→</span>
+                        {" "}<span style={{ color: C.mint, fontWeight: "600" }}>{t.objectType}:</span>
                         {" "}{t.object}
                       </div>
-                      <div style={{ color: C.dim, fontSize: "11px", marginTop: "5px" }}>
+                      <div style={{ color: C.dim, fontSize: "12px", marginTop: "8px" }}>
                         {new Date(t.timestamp).toLocaleString()}
                       </div>
                     </div>

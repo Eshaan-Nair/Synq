@@ -22,22 +22,22 @@ interface Props {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  Project:      "#F0F3BD",
-  Technology:   "#02C39A",
-  Feature:      "#00A896",
-  Bug:          "#05668D",
-  Decision:     "#F0F3BD",
-  Auth:         "#02C39A",
-  Database:     "#028090",
-  Library:      "#00A896",
-  API:          "#02C39A",
-  Concept:      "#028090",
-  Property:     "#F0F3BD",
-  Framework:    "#00A896",
-  Architecture: "#05668D",
-  Algorithm:    "#028090",
-  Encoding:     "#F0F3BD",
-  default:      "#3a7a8a",
+  Project:      "#E2E8F0",
+  Technology:   "#8B5CF6",
+  Feature:      "#EC4899",
+  Bug:          "#EF4444",
+  Decision:     "#F59E0B",
+  Auth:         "#10B981",
+  Database:     "#06B6D4",
+  Library:      "#3B82F6",
+  API:          "#6366F1",
+  Concept:      "#D946EF",
+  Property:     "#F43F5E",
+  Framework:    "#8B5CF6",
+  Architecture: "#EAB308",
+  Algorithm:    "#14B8A6",
+  Encoding:     "#84CC16",
+  default:      "#64748B",
 };
 
 const NODE_RADIUS = 28;
@@ -137,17 +137,17 @@ export default function GraphView({ nodes, links }: Props) {
 
     // Background pill for edge label
     linkLabelGroup.append("rect")
-      .attr("rx", 4)
-      .attr("ry", 4)
-      .attr("fill", "#1e1e2e")
-      .attr("stroke", "#313244")
-      .attr("stroke-width", 0.5)
-      .attr("opacity", 0.85);
+      .attr("rx", 6)
+      .attr("ry", 6)
+      .attr("fill", "#1A1D27")
+      .attr("stroke", "#292D3E")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.9);
 
-    const linkText = linkLabelGroup.append("text")
-      .attr("fill", "#6c7086")
-      .attr("font-size", "9px")
-      .attr("font-family", "monospace")
+    linkLabelGroup.append("text")
+      .attr("fill", "#94A3B8")
+      .attr("font-size", "10px")
+      .attr("font-family", "system-ui, sans-serif")
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .text((d) => d.relation);
@@ -212,11 +212,12 @@ export default function GraphView({ nodes, links }: Props) {
     nodeGroup.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", -(NODE_RADIUS + 8))
-      .attr("fill", "#cdd6f4")
-      .attr("font-size", "11px")
-      .attr("font-family", "monospace")
-      .attr("font-weight", "bold")
+      .attr("fill", "#F8FAFC")
+      .attr("font-size", "12px")
+      .attr("font-family", "system-ui, sans-serif")
+      .attr("font-weight", "600")
       .attr("pointer-events", "none")
+      .attr("letter-spacing", "0.02em")
       .text((d) => d.id.length > 14 ? d.id.slice(0, 14) + "…" : d.id);
 
     // Type label — INSIDE the circle
@@ -224,9 +225,12 @@ export default function GraphView({ nodes, links }: Props) {
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .attr("fill", (d) => TYPE_COLORS[d.type] || TYPE_COLORS.default)
-      .attr("font-size", "8px")
-      .attr("font-family", "monospace")
-      .attr("opacity", 0.9)
+      .attr("font-size", "9px")
+      .attr("font-family", "system-ui, sans-serif")
+      .attr("font-weight", "500")
+      .attr("letter-spacing", "0.05em")
+      .attr("text-transform", "uppercase")
+      .attr("opacity", 0.95)
       .attr("pointer-events", "none")
       .text((d) => d.type);
 
@@ -267,7 +271,7 @@ export default function GraphView({ nodes, links }: Props) {
       .delay((_, i) => i * 30 + 200)
       .attr("opacity", 1);
 
-    return () => simulation.stop();
+    return () => { simulation.stop(); };
   }, [nodes, links]);
 
   return (
