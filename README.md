@@ -192,7 +192,7 @@ New chat → inject context → AI already knows everything → start working im
 ### Step 1 — Clone
 
 ```bash
-git clone https://github.com/yourusername/synq.git
+git clone https://github.com/Eshaan-Nair/Synq.git
 cd synq
 ```
 
@@ -507,17 +507,6 @@ Use it for anything. Personal projects, commercial products, forks, modification
 ---
 
 <div align="center">
-
-<br/>
-
-**Built by a developer, for developers.**
-
-*Every ⭐ tells me someone else felt this pain and found SYNQ useful.*
-*It takes two seconds and genuinely helps.*
-
-**[⭐ Star SYNQ on GitHub](https://github.com/Eshaan-Nair/Synq)**
-
-<br/>
 
 *Made with · TypeScript · Neo4j · and genuine frustration at AI memory loss*
 
