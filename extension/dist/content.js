@@ -10,34 +10,82 @@ function detectPlatform() {
         return "gemini";
     return "unknown";
 }
-function getResponseSelector(platform) {
+// Multiple selectors per platform, tried in order.
+// If Claude/ChatGPT update their UI, add the new selector at the TOP of the array
+// and open a PR — the old one stays as fallback.
+function getResponseSelectors(platform) {
     switch (platform) {
-        case "claude": return ".font-claude-response";
-        case "chatgpt": return "[data-message-author-role='assistant']";
-        case "gemini": return ".response-content";
-        default: return "[data-message-author-role='assistant']";
+        case "claude":
+            return [
+                ".font-claude-response", // current (as of mid-2025)
+                "[data-is-streaming]", // fallback attribute
+                ".prose", // broad fallback
+            ];
+        case "chatgpt":
+            return [
+                "[data-message-author-role='assistant']",
+                ".markdown.prose",
+                ".agent-turn",
+            ];
+        case "gemini":
+            return [
+                ".response-content",
+                "model-response",
+                ".model-response-text",
+            ];
+        default:
+            return ["[data-message-author-role='assistant']"];
     }
 }
-function getInputSelector(platform) {
+function getInputSelectors(platform) {
     switch (platform) {
-        case "claude": return '[contenteditable="true"]';
-        case "chatgpt": return "#prompt-textarea";
-        case "gemini": return ".ql-editor";
-        default: return "textarea";
+        case "claude":
+            return ['[contenteditable="true"][data-placeholder]', '[contenteditable="true"]'];
+        case "chatgpt":
+            return ["#prompt-textarea", '[contenteditable="true"]'];
+        case "gemini":
+            return [".ql-editor", '[contenteditable="true"]'];
+        default:
+            return ["textarea", '[contenteditable="true"]'];
     }
+}
+// Try each selector in order, return the first one that finds elements
+function queryAll(selectors) {
+    for (const sel of selectors) {
+        try {
+            const results = document.querySelectorAll(sel);
+            if (results.length > 0)
+                return results;
+        }
+        catch {
+            // Invalid selector — skip
+        }
+    }
+    return [];
+}
+function queryOne(selectors) {
+    for (const sel of selectors) {
+        try {
+            const result = document.querySelector(sel);
+            if (result)
+                return result;
+        }
+        catch {
+            // Invalid selector — skip
+        }
+    }
+    return null;
 }
 const platform = detectPlatform();
 let sessionId = null;
 async function init() {
     console.log(`🔵 SYNQ active on: ${platform}`);
-    // Check if dashboard has set an active session via backend
     const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
     if (activeData?.activeSession) {
         sessionId = activeData.activeSession._id;
         console.log(`📦 SYNQ active session: ${activeData.activeSession.projectName}`);
     }
     else {
-        // Fall back to chrome storage
         const session = await getStoredSession();
         if (session) {
             sessionId = session.sessionId;
@@ -46,14 +94,18 @@ async function init() {
     }
     injectSidebarUI();
 }
-// Scrape ALL visible AI responses from current page at once
 async function captureCurrentChat(projectName) {
-    const selector = getResponseSelector(platform);
-    const responseBlocks = document.querySelectorAll(selector);
+    const selectors = getResponseSelectors(platform);
+    const responseBlocks = queryAll(selectors);
     if (responseBlocks.length === 0) {
-        return { success: false, triplesExtracted: 0, error: "No AI responses found on this page" };
+        const tried = selectors.join(", ");
+        console.warn(`SYNQ: No AI responses found. Tried selectors: ${tried}`);
+        return {
+            success: false,
+            triplesExtracted: 0,
+            error: `No AI responses found on this page. The platform's UI may have updated — please open an issue at github.com/Eshaan-Nair/Synq`,
+        };
     }
-    // Combine all visible responses into one text
     const fullText = Array.from(responseBlocks)
         .map((el) => el.textContent?.trim() || "")
         .filter((t) => t.length > 50)
@@ -62,16 +114,14 @@ async function captureCurrentChat(projectName) {
         return { success: false, triplesExtracted: 0, error: "No meaningful content found" };
     }
     console.log(`🧠 SYNQ capturing ${responseBlocks.length} responses...`);
-    // Step 1 — create session
     const sessionData = await sendMessage({
         type: "CREATE_SESSION",
         payload: { projectName, platform },
     });
     if (!sessionData?.sessionId) {
-        return { success: false, triplesExtracted: 0, error: "Failed to create session" };
+        return { success: false, triplesExtracted: 0, error: "Failed to create session. Is the backend running on port 3001?" };
     }
     sessionId = sessionData.sessionId;
-    // Step 2 — ingest the full text
     const result = await sendMessage({
         type: "INGEST_TEXT",
         payload: { text: fullText, sessionId, platform },
@@ -81,7 +131,6 @@ async function captureCurrentChat(projectName) {
     showToast(`✅ Captured ${count} facts from this chat`);
     return { success: true, triplesExtracted: count, sessionId: sessionId ?? undefined };
 }
-// Inject stored context into current chat input manually
 async function injectContext() {
     if (!sessionId) {
         showToast("⚠ No session loaded. Capture a chat first.");
@@ -96,14 +145,28 @@ async function injectContext() {
         return;
     }
     const prompt = buildContextPrompt(data);
-    const inputSelector = getInputSelector(platform);
-    const input = document.querySelector(inputSelector);
+    const inputSelectors = getInputSelectors(platform);
+    const input = queryOne(inputSelectors);
     if (!input) {
-        showToast("⚠ Could not find chat input.");
+        showToast("⚠ Could not find chat input. Try clicking the input box first.");
         return;
     }
     input.focus();
-    document.execCommand("insertText", false, prompt);
+    // Use modern input event dispatch instead of deprecated execCommand
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLElement.prototype, "textContent");
+    if (input.isContentEditable) {
+        // For contenteditable divs (Claude, Gemini)
+        input.textContent = prompt;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    else {
+        // For textarea (ChatGPT fallback)
+        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value");
+        if (nativeSetter?.set) {
+            nativeSetter.set.call(input, prompt);
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+    }
     showToast(`🧠 Injected ${data.tripleCount} facts into chat`);
     console.log("✅ SYNQ context injected");
 }
@@ -119,7 +182,6 @@ Use this as your working memory. Do not re-explain things already established.
 ---
 `;
 }
-// Inject badge UI via shadow DOM
 function injectSidebarUI() {
     const host = document.createElement("div");
     host.id = "synq-sidebar-host";
@@ -160,6 +222,7 @@ function injectSidebarUI() {
       border: 1px solid #04445e;
       transition: opacity 0.3s;
       pointer-events: none;
+      max-width: 280px;
     }
   </style>
   <div id="synq-badge">⚡ SYNQ</div>
@@ -177,7 +240,7 @@ function showToast(message) {
     const toast = shadow.getElementById("synq-toast");
     toast.textContent = message;
     toast.style.opacity = "1";
-    setTimeout(() => (toast.style.opacity = "0"), 3000);
+    setTimeout(() => (toast.style.opacity = "0"), 4000);
 }
 function sendMessage(msg) {
     return new Promise((resolve) => {
@@ -187,7 +250,6 @@ function sendMessage(msg) {
 async function getStoredSession() {
     return sendMessage({ type: "GET_SESSION" });
 }
-// Handle messages from popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === "CAPTURE_CHAT") {
         captureCurrentChat(message.payload.projectName).then((result) => {

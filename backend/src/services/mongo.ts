@@ -21,3 +21,27 @@ const sessionSchema = new mongoose.Schema({
 });
 
 export const Session = mongoose.model("Session", sessionSchema);
+
+// Singleton document that persists the active session across server restarts.
+// Only one document ever exists in this collection (id = "singleton").
+const activeSessionSchema = new mongoose.Schema({
+  _id: { type: String, default: "singleton" },
+  sessionId: { type: String, default: null },
+});
+
+export const ActiveSessionModel =
+  mongoose.models.ActiveSession ||
+  mongoose.model("ActiveSession", activeSessionSchema);
+
+export async function getActiveSessionId(): Promise<string | null> {
+  const doc = await ActiveSessionModel.findById("singleton");
+  return doc?.sessionId ?? null;
+}
+
+export async function setActiveSessionId(sessionId: string | null): Promise<void> {
+  await ActiveSessionModel.findByIdAndUpdate(
+    "singleton",
+    { sessionId },
+    { upsert: true, new: true }
+  );
+}
