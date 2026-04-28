@@ -3,195 +3,52 @@
   <head>
     <meta charset="UTF-8" />
     <title>SYNQ</title>
-    <style>
-      :root {
-        --baltic:  #6366F1;
-        --teal:    #4F46E5;
-        --verd:    #06B6D4;
-        --mint:    #0EA5E9;
-        --cream:   #F8FAFC;
-        --bg:      #0F111A;
-        --surface: #1A1D27;
-        --border:  #292D3E;
-        --muted:   #64748B;
-        --dim:     #475569;
-      }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        width: 320px;
-        background: var(--bg);
-        color: var(--cream);
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        padding: 0;
-        letter-spacing: 0;
-      }
-      .header {
-        background: var(--surface);
-        padding: 16px;
-        border-bottom: 1px solid var(--border);
-        text-align: center;
-      }
-      .header h1 {
-        color: var(--cream);
-        font-size: 22px;
-        font-weight: 800;
-        letter-spacing: 0.05em;
-      }
-      .header p {
-        color: var(--dim);
-        font-size: 10px;
-        margin-top: 3px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-      }
-      #session-info {
-        display: none;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin: 14px 14px 0;
-        font-size: 12px;
-      }
-      #session-info .row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 4px;
-      }
-      #session-info .label { color: var(--muted); }
-      #session-info .value { color: var(--mint); font-weight: 700; }
-      .form-section { padding: 14px; }
-      label {
-        font-size: 11px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 5px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
-      input {
-        width: 100%;
-        padding: 10px 12px;
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        color: var(--cream);
-        font-family: system-ui, sans-serif;
-        font-size: 13px;
-        margin-bottom: 12px;
-        outline: none;
-        transition: border 0.2s, box-shadow 0.2s;
-      }
-      input:focus { border-color: var(--baltic); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
-      button {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        font-family: system-ui, sans-serif;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-bottom: 8px;
-        letter-spacing: 0.02em;
-        transition: all 0.2s;
-      }
-      #capture-btn {
-        background: var(--baltic);
-        color: #ffffff;
-      }
-      #capture-btn:hover { background: var(--teal); transform: translateY(-1px); }
-      #capture-btn:disabled {
-        background: var(--border);
-        color: var(--dim);
-        cursor: not-allowed;
-      }
-      .divider {
-        border: none;
-        border-top: 1px solid var(--border);
-        margin: 4px 14px 12px;
-      }
-      #inject-btn {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        color: var(--muted);
-        width: calc(100% - 28px);
-        margin: 0 14px 14px;
-      }
-      #inject-btn:hover {
-        border-color: var(--baltic);
-        color: var(--cream);
-        background: var(--bg);
-      }
-      .hint {
-        font-size: 11px;
-        color: var(--muted);
-        margin-bottom: 12px;
-        line-height: 1.5;
-        padding: 10px 12px;
-        background: var(--bg);
-        border-radius: 8px;
-        border-left: 3px solid var(--baltic);
-      }
-      #status {
-        font-size: 11px;
-        color: var(--mint);
-        padding: 0 14px 12px;
-        min-height: 20px;
-      }
-      #status.error { color: #ff6b6b; }
-
-      /* Platform auto-detect badge */
-      #platform-badge {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 8px 10px;
-        margin-bottom: 12px;
-        font-size: 12px;
-        color: var(--muted);
-      }
-      #platform-badge span { color: var(--mint); font-weight: 700; }
-    </style>
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
+
     <div class="header">
-      <h1>SYNQ</h1>
-      <p>Context Sovereignty Engine</p>
+      <div>
+        <div class="header-title">SYNQ</div>
+        <div class="header-sub">Context Sovereignty Engine</div>
+      </div>
+      <span id="synq-status-badge" class="synq-status idle">NO SESSION</span>
+    </div>
+
+    <div class="platform-bar">
+      <div class="platform-dot" id="platform-dot"></div>
+      <span id="detected-platform">Detecting...</span>
     </div>
 
     <div id="session-info">
-      <div class="row">
-        <span class="label">Active</span>
-        <span class="value" id="session-name">—</span>
+      <div class="session-row">
+        <span class="session-label">Session</span>
+        <span class="session-value" id="session-name">—</span>
       </div>
-      <div class="row">
-        <span class="label">Facts</span>
-        <span class="value" id="triple-count">—</span>
+      <div class="session-row">
+        <span class="session-label">Chunks</span>
+        <span class="session-value" id="topic-count">—</span>
+      </div>
+      <div class="session-row">
+        <span class="session-label">Facts</span>
+        <span class="session-value" id="triple-count">—</span>
       </div>
     </div>
 
-    <div class="form-section">
+    <div class="section">
       <label>Session Name</label>
-      <input type="text" id="project-name" placeholder="e.g. SplitSmart" />
-
-      <label>Detected Platform</label>
-      <div id="platform-badge">
-        🔍Detecting... <span id="detected-platform">—</span>
-      </div>
+      <input type="text" id="project-name" placeholder="e.g. SplitSmart v2" />
 
       <p class="hint">
-        Finish your chat first, then name it and press Extract Context to save everything discussed.
+        Finish your chat → name it → Save Chat. SYNQ auto-connects and recalls context on your next chat.
       </p>
 
-      <button id="capture-btn">Extract Context</button>
+      <button id="save-btn">Save Chat</button>
+      <button id="pause-toggle-btn" disabled>Pause SYNQ</button>
     </div>
 
     <hr class="divider" />
-    <button id="inject-btn">Inject Context Now</button>
+    <button id="inject-btn">Inject Context (one-time)</button>
 
     <div id="status"></div>
 

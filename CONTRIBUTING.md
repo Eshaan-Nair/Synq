@@ -15,13 +15,13 @@ Contributions are very welcome. Whether it's a typo fix or a major feature — a
 ```bash
 # 1. Fork the repo on GitHub
 # 2. Clone your fork
-git clone https://github.com/YOUR-USERNAME/synq.git
+git clone https://github.com/YOUR-USERNAME/Synq.git
 cd synq
 
 # 3. Create a feature branch
 git checkout -b feature/what-you-are-building
 
-# 4. Start the full stack
+# 4. Ensure Docker Desktop is running, then start the full stack
 ./start.sh          # macOS / Linux
 start.bat           # Windows
 
@@ -44,26 +44,44 @@ refactor: simplify triple deduplication logic
 
 ## Adding support for a new AI platform
 
-Adding a new platform requires changes in two files:
+Adding a new platform requires changes in three files. Full selector reference: [PLATFORM_SELECTORS.md](PLATFORM_SELECTORS.md)
 
-### 1. `extension/src/content.ts`
+### 1. Create `extension/src/platforms/yourplatform.ts`
 
-**`detectPlatform()`** — add a hostname check:
 ```ts
-if (host.includes("yourplatform.com")) return "yourplatform";
+import type { PlatformConfig } from "./index";
+
+export const yourplatform: PlatformConfig = {
+  name: "yourplatform" as const,
+  hostname: "yourplatform.com",
+  userSelectors: [
+    "[data-message-role='user']",           // prefer data-* attributes
+    ".user-message-class",                  // class fallback
+  ],
+  responseSelectors: [
+    "[data-message-role='assistant']",  // prefer data-* attributes
+    ".ai-response-class",               // class fallback
+  ],
+  inputSelectors: [
+    "#chat-input",
+    "[contenteditable='true']",
+  ],
+  sendButtonSelectors: [
+    "button[aria-label='Send']",
+    "button[type='submit']",
+  ],
+};
 ```
 
-**`getResponseSelector()`** — add the CSS selector that wraps AI responses:
+### 2. Register it in `extension/src/platforms/index.ts`
+
 ```ts
-case "yourplatform": return ".ai-response-class";
+import { yourplatform } from "./yourplatform";
+
+const ALL_PLATFORMS = [claude, chatgpt, gemini, yourplatform];
 ```
 
-**`getInputSelector()`** — add the CSS selector for the chat input:
-```ts
-case "yourplatform": return "#chat-input-id";
-```
-
-### 2. `extension/manifest.json`
+### 3. `extension/manifest.json`
 
 Add the platform URL in both `host_permissions` and `content_scripts.matches`:
 ```json
@@ -75,19 +93,19 @@ Add the platform URL in both `host_permissions` and `content_scripts.matches`:
 }]
 ```
 
-To find the correct selectors: open the platform in Chrome, open DevTools (F12), and inspect an AI response element and the chat input box. Copy the most stable class or attribute selector you can find.
+To find the correct selectors: open the platform in Chrome, open DevTools (F12), and inspect an AI response element and the chat input box.
 
-## Finding stable selectors
-
-Prefer attribute selectors over class names — they tend to survive UI updates longer:
+**Prefer `data-*` attribute selectors over class names** — they survive UI redesigns much longer:
 - Good: `[data-message-author-role='assistant']`
-- Fragile: `.font-claude-response` (class names change often)
+- Fragile: `.font-claude-response` (class names change with every redesign)
 
 ## Pull request checklist
 
 - [ ] Tested on the affected platform(s)
 - [ ] No secrets or API keys committed
 - [ ] Commit message follows the format above
+- [ ] `npm run build` passes in `backend/` (TypeScript compiles without errors)
+- [ ] `npm run lint` passes in `dashboard/` (no new ESLint errors)
 - [ ] README updated if behavior changed
 
 ## Questions?

@@ -8,7 +8,7 @@
     "outDir": "./dist",
     "strict": true,
     "skipLibCheck": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "types": ["chrome"]
   },
   "include": ["src/**/*"]
