@@ -1,5 +1,11 @@
 import { Router, Request, Response } from "express";
 import { getDriver } from "../services/neo4j";
+import { logger } from "../utils/logger";
+import mongoose from "mongoose";
+
+function isValidObjectId(id: string): boolean {
+  return mongoose.Types.ObjectId.isValid(id);
+}
 
 const router = Router();
 
@@ -13,6 +19,7 @@ router.get("/all", async (req: Request, res: Response) => {
       RETURN s.name AS source, s.type AS sourceType,
              r.type AS relation,
              o.name AS target, o.type AS targetType
+      LIMIT 500
     `);
 
     const nodes = new Map<string, object>();
@@ -36,6 +43,9 @@ router.get("/all", async (req: Request, res: Response) => {
       nodes: Array.from(nodes.values()),
       links,
     });
+  } catch (err) {
+    logger.error("Graph /all query failed:", err);
+    res.status(500).json({ error: "Failed to retrieve graph" });
   } finally {
     await session.close();
   }
@@ -44,6 +54,14 @@ router.get("/all", async (req: Request, res: Response) => {
 // GET /api/graph/session/:sessionId
 // Returns nodes + edges for a specific session only
 router.get("/session/:sessionId", async (req: Request, res: Response) => {
+  const sessionId = req.params.sessionId as string;
+
+  // Issue #5 Fix: Validate sessionId format before querying Neo4j
+  if (!isValidObjectId(sessionId)) {
+    res.status(400).json({ error: "Invalid sessionId format" });
+    return;
+  }
+
   const session = getDriver().session();
   try {
     const result = await session.run(`
@@ -51,7 +69,7 @@ router.get("/session/:sessionId", async (req: Request, res: Response) => {
       RETURN s.name AS source, s.type AS sourceType,
              r.type AS relation,
              o.name AS target, o.type AS targetType
-    `, { sessionId: req.params.sessionId });
+    `, { sessionId });
 
     const nodes = new Map<string, object>();
     const links: object[] = [];
@@ -65,6 +83,9 @@ router.get("/session/:sessionId", async (req: Request, res: Response) => {
     });
 
     res.json({ nodes: Array.from(nodes.values()), links });
+  } catch (err) {
+    logger.error("Graph /session query failed:", err);
+    res.status(500).json({ error: "Failed to retrieve session graph" });
   } finally {
     await session.close();
   }

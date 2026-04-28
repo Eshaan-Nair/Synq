@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noImplicitAny": true,
+    "types": ["chrome"],
+    "declaration": false,
+    "outDir": "."
+  },
+  "files": ["popup.ts"]
+}

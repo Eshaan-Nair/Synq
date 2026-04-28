@@ -1,22 +1,42 @@
 import neo4j, { Driver } from "neo4j-driver";
+import { logger } from "../utils/logger";
 
-let driver: Driver;
+let driver: Driver | null = null;
 
 export async function connectNeo4j() {
-  try {
-    driver = neo4j.driver(
-      process.env.NEO4J_URI!,
-      neo4j.auth.basic(process.env.NEO4J_USER!, process.env.NEO4J_PASSWORD!)
-    );
-    await driver.verifyConnectivity();
-    console.log("✅ Neo4j connected");
-  } catch (err) {
-    console.error("❌ Neo4j connection failed:", err);
-    process.exit(1);
+  const MAX_RETRIES = 5;
+  const BASE_DELAY_MS = 2000;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      driver = neo4j.driver(
+        process.env.NEO4J_URI!,
+        neo4j.auth.basic(process.env.NEO4J_USER!, process.env.NEO4J_PASSWORD!)
+      );
+      await driver.verifyConnectivity();
+      logger.success("Neo4j connected");
+      return;
+    } catch (err) {
+      const delay = BASE_DELAY_MS * attempt;
+      if (attempt < MAX_RETRIES) {
+        logger.warn(`Neo4j not ready (attempt ${attempt}/${MAX_RETRIES}) — retrying in ${delay / 1000}s...`);
+        await new Promise(res => setTimeout(res, delay));
+      } else {
+        logger.error("Neo4j connection failed after all retries:", err);
+        process.exit(1);
+      }
+    }
   }
 }
 
+// FIX (Bug #3): All internal callers now use getDriver() instead of accessing
+// the module-level `driver` variable directly. getDriver() throws a clear,
+// descriptive error if called before connectNeo4j() completes, rather than
+// crashing with "Cannot read properties of null (reading 'session')".
 export function getDriver(): Driver {
+  if (!driver) {
+    throw new Error("[SYNQ] Neo4j driver is not initialized. connectNeo4j() has not completed yet.");
+  }
   return driver;
 }
 
@@ -28,7 +48,9 @@ export async function saveTriple(
   objectType: string,
   sessionId: string
 ) {
-  const session = driver.session();
+  // FIX (Bug #3): Use getDriver() instead of driver directly
+  const d = getDriver();
+  const session = d.session();
   try {
     await session.run(
       `
@@ -54,7 +76,9 @@ export async function saveTriple(
 }
 
 export async function getTriplesBySession(sessionId: string) {
-  const session = driver.session();
+  // FIX (Bug #3): Use getDriver() instead of driver directly
+  const d = getDriver();
+  const session = d.session();
   try {
     const result = await session.run(
       `

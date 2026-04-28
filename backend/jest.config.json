@@ -1,0 +1,12 @@
+{
+  "testEnvironment": "node",
+  "roots": ["<rootDir>/src/__tests__"],
+  "moduleFileExtensions": ["ts", "js"],
+  "transform": {
+    "^.+\\.ts$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
+  },
+  "collectCoverageFrom": [
+    "src/utils/**/*.ts",
+    "src/services/**/*.ts"
+  ]
+}

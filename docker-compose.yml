@@ -1,14 +1,13 @@
-version: "3.8"
 
 services:
   neo4j:
     image: neo4j:5.18
     container_name: synq_neo4j
     ports:
-      - "7474:7474"   # Neo4j Browser UI
-      - "7687:7687"   # Bolt protocol (app connects here)
+      - "7474:7474"
+      - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/synqpassword123
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-synqpassword123}
     volumes:
       - neo4j_data:/data
 
@@ -18,11 +17,23 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=synq
-      - MONGO_INITDB_ROOT_PASSWORD=synqpassword123
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-synq}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-synqpassword123}
     volumes:
       - mongo_data:/data/db
+
+  chromadb:
+    image: chromadb/chroma:0.6.3
+    container_name: synq_chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
 
 volumes:
   neo4j_data:
   mongo_data:
+  chroma_data:

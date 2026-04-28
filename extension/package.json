@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "esbuild src/content.ts --bundle --outfile=dist/content.js --platform=browser --target=es2020 && esbuild src/background.ts --bundle --outfile=dist/background.js --platform=browser --target=es2020",
+    "watch": "npm run build -- --watch"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/chrome": "^0.1.40",
+    "esbuild": "^0.28.0",
     "typescript": "^6.0.3"
   }
 }

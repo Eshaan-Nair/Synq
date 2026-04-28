@@ -1,4 +1,5 @@
 import axios from "axios";
+import { logger } from "../utils/logger";
 
 export interface Triple {
   subject: string;
@@ -49,49 +50,69 @@ async function groq(prompt: string, maxTokens = 1000): Promise<string> {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
+      timeout: 15000,
     }
   );
   return response.data.choices[0].message.content;
 }
 
-// Step 1 — compress raw chat into technical facts only
+// Step 1 — compress raw chat into ALL meaningful facts (technical + personal)
 async function summarizeChunk(text: string): Promise<string> {
-  const prompt = `You are a technical fact extractor. Read this AI conversation and extract ONLY:
-- Technologies, libraries, frameworks mentioned
-- Technical decisions made
-- Features being built
-- Bugs or issues discussed
-- Project names and their components
-- Any code patterns or architectural decisions
+  const prompt = `You are a fact extractor. Read this conversation and extract ALL meaningful facts including:
+- Technologies, libraries, frameworks, tools used
+- Technical decisions, bugs, features, architecture patterns
+- Personal facts: names of people, pets, places, preferences, hobbies, goals
+- Relationships: who owns what, who knows what, what the user wants or is building
+- Any specific named entities (project names, company names, product names)
 
-Remove ALL conversational filler, greetings, explanations of basics, and repeated information.
-Output ONLY a compressed bullet list of facts. Be extremely concise.
+Do NOT skip personal or casual facts — they are important.
+Remove only pure filler ("thanks", "sounds good", "ok") with no information content.
+Output a compressed bullet list of facts. Be specific and concise.
 
 Conversation:
 """
 ${text}
 """
 
-Compressed technical facts:`;
+Facts:`;
 
   try {
-    return await groq(prompt, 500);
+    return await groq(prompt, 600);
   } catch {
-    return text.slice(0, 500); // fallback to truncated raw text
+    return text.slice(0, 600); // fallback to truncated raw text
   }
 }
 
 // Step 2 — extract triples from compressed summary
 async function extractTriplesFromSummary(summary: string): Promise<Triple[]> {
-  const prompt = `Extract semantic triples from these technical facts.
+  const prompt = `Extract semantic triples from these facts.
 Return ONLY a valid JSON array, no explanation, no markdown.
 
-Each triple:
-- subject: main entity (e.g. "SplitSmart", "JWT", "MongoDB")
-- subjectType: "Project" | "Technology" | "Feature" | "Bug" | "Decision" | "Concept" | "Library" | "API" | "Database" | "Framework" | "Auth" | "Architecture"
-- relation: UPPER_SNAKE_CASE verb (e.g. "USES", "HAS_FEATURE", "DEPENDS_ON", "IS_A", "STORES_IN", "AUTHENTICATES_WITH")
-- object: related entity
+Each triple MUST have:
+- subject: the main entity (e.g. "Noob", "SplitSmart", "JWT", "MongoDB", "User")
+- subjectType: one of:
+  "Project" | "Technology" | "Feature" | "Bug" | "Decision" | "Concept" |
+  "Library" | "API" | "Database" | "Framework" | "Auth" | "Architecture" |
+  "Person" | "Pet" | "Goal" | "Problem" | "Preference" | "Tool" | "Pattern" |
+  "Location" | "Organization" | "Habit"
+- relation: UPPER_SNAKE_CASE verb, e.g.:
+  "USES" | "HAS_FEATURE" | "DEPENDS_ON" | "IS_A" | "STORES_IN" |
+  "AUTHENTICATES_WITH" | "OWNS" | "NAMED" | "PREFERS" | "WANTS" | "KNOWS" |
+  "HAS" | "LIVES_WITH" | "IS_BUILDING" | "SOLVED_WITH" | "STRUGGLING_WITH" |
+  "DECIDED_TO" | "INTERESTED_IN" | "WORKS_AT" | "CREATED_BY" | "RUNS_ON"
+- object: the related entity
 - objectType: same categories as subjectType
+
+STRICT CLASSIFICATION RULES (follow these exactly):
+1. AI model names (Gemini, Claude, GPT, GPT-4, ChatGPT, Sonnet, Llama, Mistral,
+   Copilot, Grok, etc.) MUST be classified as "Technology". NEVER as Pet or Person.
+2. Only classify as "Pet" if the text EXPLICITLY says "my [animal] named X" or
+   "I have a [animal] called X". Do not infer pets from names alone.
+3. Only classify as "Person" for real human names clearly identified as people.
+4. Programming languages, frameworks, tools, and APIs are always "Technology".
+5. Extract personal facts: if user says "my cat's name is John", extract
+   (Pet: John) -[OWNED_BY]-> (Person: User).
+6. Do not extract triples about things that are not clearly stated as facts.
 
 Facts:
 """
@@ -101,7 +122,7 @@ ${summary}
 Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
 
   try {
-    const raw = await groq(prompt, 1000);
+    const raw = await groq(prompt, 1200);
     const clean = raw.replace(/```json|```/g, "").trim();
     return JSON.parse(clean) as Triple[];
   } catch {
@@ -143,13 +164,14 @@ Keep it under 200 words total.`;
 
 export async function extractTriples(text: string): Promise<Triple[]> {
   const chunks = chunkText(text);
-  console.log(`📦 Processing ${chunks.length} chunk(s)...`);
+  // Issue #4 Fix: Use logger instead of console.log
+  logger.info(`Processing ${chunks.length} chunk(s) for triple extraction...`);
 
   const allTriples: Triple[] = [];
 
   for (let i = 0; i < chunks.length; i++) {
     try {
-      console.log(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
+      logger.debug(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
 
       // Step 1: compress
       const summary = await summarizeChunk(chunks[i]);
@@ -158,13 +180,9 @@ export async function extractTriples(text: string): Promise<Triple[]> {
       const triples = await extractTriplesFromSummary(summary);
       allTriples.push(...triples);
 
-      console.log(`  chunk ${i + 1} → ${triples.length} triples`);
-
-      if (i < chunks.length - 1) {
-        await new Promise(res => setTimeout(res, 500));
-      }
+      logger.debug(`  chunk ${i + 1} → ${triples.length} triples`);
     } catch (err: any) {
-      console.error(`  chunk ${i + 1} failed:`, JSON.stringify(err?.response?.data, null, 2));
+      logger.error(`chunk ${i + 1} failed:`, JSON.stringify(err?.response?.data, null, 2));
     }
   }
 
@@ -177,6 +195,6 @@ export async function extractTriples(text: string): Promise<Triple[]> {
     return true;
   });
 
-  console.log(`✅ Extracted ${unique.length} unique triples from ${chunks.length} chunks`);
+  logger.success(`Extracted ${unique.length} unique triples from ${chunks.length} chunks`);
   return unique;
 }
