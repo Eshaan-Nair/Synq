@@ -70,7 +70,7 @@ router.post("/save", async (req: Request, res: Response) => {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-      { upsert: true, returnDocument: 'after' }
+      { upsert: true, new: true }
     );
 
     // Store all window chunks in ChromaDB for RAG (non-fatal — Ollama may be down)
