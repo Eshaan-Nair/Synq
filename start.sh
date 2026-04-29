@@ -21,6 +21,34 @@ if grep -q "gsk_your_key_here" "backend/.env"; then
   echo ""
 fi
 
+# ── Check Ollama is installed and model is pulled ──────────────────
+echo " Checking Ollama..."
+if ! command -v ollama &>/dev/null; then
+  echo ""
+  echo " WARNING: Ollama is not installed or not in PATH."
+  echo " SYNQ needs Ollama for local embeddings (RAG context search)."
+  echo " Install from: https://ollama.com"
+  echo " After installing, run: ollama pull nomic-embed-text"
+  echo ""
+  echo " Continuing without Ollama — RAG features will be unavailable."
+  echo ""
+else
+  if ! ollama list 2>/dev/null | grep -q "nomic-embed-text"; then
+    echo " Pulling nomic-embed-text model (one-time, ~270MB)..."
+    if ollama pull nomic-embed-text; then
+      echo " nomic-embed-text model ready"
+    else
+      echo " WARNING: Failed to pull nomic-embed-text model."
+      echo " Make sure Ollama is running: ollama serve"
+      echo " Then manually run: ollama pull nomic-embed-text"
+      echo ""
+    fi
+  else
+    echo " Ollama + nomic-embed-text ready"
+  fi
+fi
+echo ""
+
 # ── Start databases ────────────────────────────────────────────────
 echo " Starting Docker containers (Neo4j + MongoDB + ChromaDB)..."
 docker-compose up -d
@@ -35,7 +63,7 @@ echo " Building extension..."
 cd extension
 if [ ! -d "node_modules" ]; then
   echo " Installing extension dependencies..."
-  npm install --silent
+  npm install --loglevel warn
 fi
 
 echo " Bundling content script..."
@@ -65,10 +93,9 @@ echo ""
 # ── Start backend in background ───────────────────────────────────
 echo " Starting backend on port 3001..."
 cd backend
-# #15: Only install if node_modules is missing
 if [ ! -d "node_modules" ]; then
   echo " Installing backend dependencies..."
-  npm install --silent
+  npm install --loglevel warn
 fi
 npm run dev &
 BACKEND_PID=$!
@@ -76,16 +103,30 @@ cd ..
 echo " Backend started (PID $BACKEND_PID)"
 echo ""
 
-# ── Wait briefly so backend can connect before dashboard starts ───
-sleep 2
+# ── Wait for backend to become healthy ────────────────────────────
+echo " Waiting for backend to start..."
+HEALTH_OK=0
+for i in $(seq 1 10); do
+  sleep 2
+  if curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health 2>/dev/null | grep -q "200"; then
+    HEALTH_OK=1
+    break
+  fi
+done
+
+if [ "$HEALTH_OK" -eq 0 ]; then
+  echo " WARNING: Backend health check timed out. Check terminal output for errors."
+else
+  echo " Backend is healthy"
+fi
+echo ""
 
 # ── Start dashboard in background ─────────────────────────────────
 echo " Starting dashboard on port 5173..."
 cd dashboard
-# #15: Only install if node_modules is missing
 if [ ! -d "node_modules" ]; then
   echo " Installing dashboard dependencies..."
-  npm install --silent
+  npm install --loglevel warn
 fi
 npm run dev &
 DASHBOARD_PID=$!

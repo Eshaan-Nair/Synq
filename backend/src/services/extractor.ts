@@ -171,7 +171,7 @@ export async function extractTriples(text: string): Promise<Triple[]> {
 
   for (let i = 0; i < chunks.length; i++) {
     try {
-      logger.debug(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
+      logger.info(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
 
       // Step 1: compress
       const summary = await summarizeChunk(chunks[i]);
@@ -180,7 +180,7 @@ export async function extractTriples(text: string): Promise<Triple[]> {
       const triples = await extractTriplesFromSummary(summary);
       allTriples.push(...triples);
 
-      logger.debug(`  chunk ${i + 1} → ${triples.length} triples`);
+      logger.info(`  chunk ${i + 1} → ${triples.length} triples`);
     } catch (err: any) {
       logger.error(`chunk ${i + 1} failed:`, JSON.stringify(err?.response?.data, null, 2));
     }

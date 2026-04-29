@@ -8,7 +8,7 @@ SYNQ is designed to run entirely on your own machine. No data leaves your networ
 |-------------|-------------|-------------|
 | Knowledge graph | Neo4j 5.18 (Docker) | Semantic triples |
 | Session store   | MongoDB 7.0 (Docker) | Session metadata + full chats |
-| Vector store    | ChromaDB 0.6.3 (Docker) | Topic embeddings |
+| Vector store    | ChromaDB 0.6.3 (Docker) | Window chunk embeddings |
 | Embeddings      | Ollama (local binary) | `nomic-embed-text` model |
 | Backend         | Node.js / Express | No persistent state |
 | Dashboard       | React / Vite | No persistent state |
