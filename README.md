@@ -32,6 +32,10 @@ Every time you open a new chat, your AI starts from zero. You re-explain your st
 
 *Switch accounts. Switch AIs. Switch chats. SYNQ still remembers everything.*
 
+
+https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
+
+
 </div>
 
 ---
