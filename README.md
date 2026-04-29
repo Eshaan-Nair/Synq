@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./dashboard/icon48.png" width="300">
+
 # SYNQ
 
 ### Your AI forgets. SYNQ makes it remember.
