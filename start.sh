@@ -35,10 +35,9 @@ if ! command -v ollama &>/dev/null; then
   echo " Continuing without Ollama — RAG features will be unavailable."
   echo ""
 else
-  # FIX: Guard ollama list with `|| true` so a non-zero exit (e.g. daemon not
-  # running) doesn't kill the script — we handle the failure explicitly below.
-  OLLAMA_LIST=$(ollama list 2>/dev/null || true)
-  if echo "$OLLAMA_LIST" | grep -q "nomic-embed-text"; then
+  # FIX: Use `ollama show` instead of parsing `ollama list` output.
+  # Cleanly returns exit code 0 if the model exists and non-zero if not.
+  if ollama show nomic-embed-text >/dev/null 2>&1; then
     echo " Ollama + nomic-embed-text ready"
   else
     echo " Pulling nomic-embed-text model (one-time, ~270MB)..."

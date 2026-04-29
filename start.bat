@@ -28,20 +28,17 @@ where ollama >nul 2>&1
 if %errorlevel% neq 0 (
   echo.
   echo  WARNING: Ollama is not installed or not in PATH.
-  echo  SYNQ needs Ollama for local embeddings (RAG context search).
+  echo  SYNQ needs Ollama for local embeddings ^(RAG context search^).
   echo  Install from: https://ollama.com
   echo  After installing, run: ollama pull nomic-embed-text
   echo.
   echo  Continuing without Ollama — RAG features will be unavailable.
   echo.
 ) else (
-  REM FIX: Write ollama list output to a temp file first to avoid Windows
-  REM pipe parsing errors (". was unexpected at this time") caused by
-  REM special characters in ollama's table output when piped directly.
-  ollama list > "%TEMP%\synq_ollama_list.txt" 2>nul
-  findstr /C:"nomic-embed-text" "%TEMP%\synq_ollama_list.txt" >nul 2>&1
+  REM Check if nomic-embed-text model is available
+  ollama show nomic-embed-text >nul 2>&1
   if %errorlevel% neq 0 (
-    echo  Pulling nomic-embed-text model (one-time, ~270MB)...
+    echo  Pulling nomic-embed-text model ^(one-time, ~270MB^)...
     call ollama pull nomic-embed-text
     if %errorlevel% neq 0 (
       echo  WARNING: Failed to pull nomic-embed-text model.
@@ -54,13 +51,12 @@ if %errorlevel% neq 0 (
   ) else (
     echo  Ollama + nomic-embed-text ready
   )
-  del "%TEMP%\synq_ollama_list.txt" >nul 2>&1
 )
 echo.
 
 REM ── Start Docker databases ─────────────────────────────────────────
 echo  Starting Docker containers (Neo4j + MongoDB + ChromaDB)...
-docker compose up -d
+docker-compose up -d
 if %errorlevel% neq 0 (
   echo  Docker failed to start. Is Docker Desktop running?
   echo  Enable WSL2 if on Windows: https://docs.microsoft.com/en-us/windows/wsl/install
@@ -141,6 +137,7 @@ echo.
 REM ── Wait for backend to become healthy ─────────────────────────────
 echo  Waiting for backend to start...
 timeout /t 4 /nobreak >nul
+REM Try a simple health check (curl may not be available on all Windows PCs)
 where curl >nul 2>&1
 if %errorlevel%==0 (
   curl -s http://localhost:3001/health >nul 2>&1
@@ -150,7 +147,7 @@ if %errorlevel%==0 (
     echo  WARNING: Backend health check failed. Check the backend window for errors.
   )
 ) else (
-  echo  Backend should be starting (install curl to enable health checks)
+  echo  Backend should be starting ^(install curl to enable health checks^)
 )
 echo.
 
@@ -186,6 +183,6 @@ echo =========================================
 echo.
 echo  Extension: load the /extension folder in chrome://extensions (Developer mode)
 echo  Close the backend and dashboard windows to stop.
-echo  To stop databases: docker compose stop
+echo  To stop databases: docker-compose stop
 echo.
 pause
