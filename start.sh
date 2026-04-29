@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+# FIX: Removed top-level `set -e` — it caused the script to silently exit on
+# any non-zero return (e.g. ollama list failing when daemon isn't running yet)
+# before warning messages could print. Error handling is now done explicitly.
 
 echo ""
 echo " Starting SYNQ..."
@@ -33,7 +35,12 @@ if ! command -v ollama &>/dev/null; then
   echo " Continuing without Ollama — RAG features will be unavailable."
   echo ""
 else
-  if ! ollama list 2>/dev/null | grep -q "nomic-embed-text"; then
+  # FIX: Guard ollama list with `|| true` so a non-zero exit (e.g. daemon not
+  # running) doesn't kill the script — we handle the failure explicitly below.
+  OLLAMA_LIST=$(ollama list 2>/dev/null || true)
+  if echo "$OLLAMA_LIST" | grep -q "nomic-embed-text"; then
+    echo " Ollama + nomic-embed-text ready"
+  else
     echo " Pulling nomic-embed-text model (one-time, ~270MB)..."
     if ollama pull nomic-embed-text; then
       echo " nomic-embed-text model ready"
@@ -43,16 +50,26 @@ else
       echo " Then manually run: ollama pull nomic-embed-text"
       echo ""
     fi
-  else
-    echo " Ollama + nomic-embed-text ready"
   fi
 fi
 echo ""
 
 # ── Start databases ────────────────────────────────────────────────
 echo " Starting Docker containers (Neo4j + MongoDB + ChromaDB)..."
-docker-compose up -d
-echo " Databases running"
+# FIX: Use `docker compose` (no hyphen) — `docker-compose` is the legacy
+# standalone CLI deprecated in Docker Desktop v4+. Falls back to
+# docker-compose if the new syntax isn't available.
+if docker compose up -d 2>/dev/null; then
+  echo " Databases running"
+else
+  echo " Retrying with legacy docker-compose..."
+  if docker-compose up -d; then
+    echo " Databases running"
+  else
+    echo " ERROR: Docker failed to start. Is Docker Desktop running?"
+    exit 1
+  fi
+fi
 echo ""
 
 # ── Give DBs a moment to initialise ───────────────────────────────
@@ -63,7 +80,7 @@ echo " Building extension..."
 cd extension
 if [ ! -d "node_modules" ]; then
   echo " Installing extension dependencies..."
-  npm install --loglevel warn
+  npm install --loglevel warn || { echo " ERROR: Extension dependency install failed."; cd ..; exit 1; }
 fi
 
 echo " Bundling content script..."
@@ -95,7 +112,7 @@ echo " Starting backend on port 3001..."
 cd backend
 if [ ! -d "node_modules" ]; then
   echo " Installing backend dependencies..."
-  npm install --loglevel warn
+  npm install --loglevel warn || { echo " ERROR: Backend dependency install failed."; cd ..; exit 1; }
 fi
 npm run dev &
 BACKEND_PID=$!
@@ -126,7 +143,7 @@ echo " Starting dashboard on port 5173..."
 cd dashboard
 if [ ! -d "node_modules" ]; then
   echo " Installing dashboard dependencies..."
-  npm install --loglevel warn
+  npm install --loglevel warn || { echo " ERROR: Dashboard dependency install failed."; cd ..; exit 1; }
 fi
 npm run dev &
 DASHBOARD_PID=$!
@@ -147,12 +164,16 @@ echo " Press Ctrl+C to stop everything."
 echo ""
 
 # ── Trap Ctrl+C and kill children cleanly ─────────────────────────
+# FIX: Trap only INT and TERM (not EXIT) — trapping EXIT caused the cleanup
+# function (which stops Docker) to also run on normal script completion,
+# unexpectedly shutting down databases when nothing went wrong.
 cleanup() {
   echo ""
   echo " Stopping SYNQ..."
   kill $BACKEND_PID $DASHBOARD_PID 2>/dev/null || true
-  docker-compose stop
+  # FIX: Use `docker compose` here too for consistency
+  docker compose stop 2>/dev/null || docker-compose stop 2>/dev/null || true
   echo " Done."
 }
-trap cleanup EXIT INT TERM
+trap cleanup INT TERM
 wait
