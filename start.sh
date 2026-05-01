@@ -1,13 +1,14 @@
 #!/bin/bash
-# FIX: Removed top-level `set -e` — it caused the script to silently exit on
-# any non-zero return (e.g. ollama list failing when daemon isn't running yet)
-# before warning messages could print. Error handling is now done explicitly.
+# Error handling is done explicitly per-section.
+# Top-level `set -e` is intentionally omitted -- it causes the script to
+# silently exit on non-zero returns (e.g. ollama not running) before any
+# warning messages can print.
 
 echo ""
 echo " Starting SYNQ..."
 echo ""
 
-# ── Check .env exists ──────────────────────────────────────────────
+# -- Check .env exists -------------------------------------------------------
 if [ ! -f "backend/.env" ]; then
   echo " MISSING: backend/.env not found."
   echo " Run: cp backend/.env.example backend/.env"
@@ -15,7 +16,7 @@ if [ ! -f "backend/.env" ]; then
   exit 1
 fi
 
-# ── Check GROQ_API_KEY is not the placeholder ──────────────────────
+# -- Check GROQ_API_KEY is not the placeholder --------------------------------
 if grep -q "gsk_your_key_here" "backend/.env"; then
   echo " WARNING: backend/.env still has the placeholder GROQ_API_KEY."
   echo " Edit backend/.env and replace gsk_your_key_here with your real key."
@@ -23,7 +24,7 @@ if grep -q "gsk_your_key_here" "backend/.env"; then
   echo ""
 fi
 
-# ── Check Ollama is installed and model is pulled ──────────────────
+# -- Check Ollama is installed and model is pulled ----------------------------
 echo " Checking Ollama..."
 if ! command -v ollama &>/dev/null; then
   echo ""
@@ -32,11 +33,10 @@ if ! command -v ollama &>/dev/null; then
   echo " Install from: https://ollama.com"
   echo " After installing, run: ollama pull nomic-embed-text"
   echo ""
-  echo " Continuing without Ollama — RAG features will be unavailable."
+  echo " Continuing without Ollama -- RAG features will be unavailable."
   echo ""
 else
-  # FIX: Use `ollama show` instead of parsing `ollama list` output.
-  # Cleanly returns exit code 0 if the model exists and non-zero if not.
+  # `ollama show` returns 0 if the model exists, non-zero if not.
   if ollama show nomic-embed-text >/dev/null 2>&1; then
     echo " Ollama + nomic-embed-text ready"
   else
@@ -53,11 +53,9 @@ else
 fi
 echo ""
 
-# ── Start databases ────────────────────────────────────────────────
+# -- Start databases ----------------------------------------------------------
 echo " Starting Docker containers (Neo4j + MongoDB + ChromaDB)..."
-# FIX: Use `docker compose` (no hyphen) — `docker-compose` is the legacy
-# standalone CLI deprecated in Docker Desktop v4+. Falls back to
-# docker-compose if the new syntax isn't available.
+# Try modern `docker compose` (Docker Desktop v4+), fall back to legacy CLI.
 if docker compose up -d 2>/dev/null; then
   echo " Databases running"
 else
@@ -71,13 +69,13 @@ else
 fi
 echo ""
 
-# ── Give DBs a moment to initialise ───────────────────────────────
+# -- Give DBs a moment to initialise -----------------------------------------
 sleep 3
 
-# ── Build extension with esbuild ──────────────────────────────────
+# -- Build extension with esbuild --------------------------------------------
 echo " Building extension..."
 cd extension
-if [ ! -d "node_modules" ]; then
+if [ ! -f "node_modules/.bin/esbuild" ]; then
   echo " Installing extension dependencies..."
   npm install --loglevel warn || { echo " ERROR: Extension dependency install failed."; cd ..; exit 1; }
 fi
@@ -106,10 +104,10 @@ fi
 cd ..
 echo ""
 
-# ── Start backend in background ───────────────────────────────────
+# -- Start backend in background ---------------------------------------------
 echo " Starting backend on port 3001..."
 cd backend
-if [ ! -d "node_modules" ]; then
+if [ ! -f "node_modules/.bin/ts-node-dev" ]; then
   echo " Installing backend dependencies..."
   npm install --loglevel warn || { echo " ERROR: Backend dependency install failed."; cd ..; exit 1; }
 fi
@@ -119,7 +117,7 @@ cd ..
 echo " Backend started (PID $BACKEND_PID)"
 echo ""
 
-# ── Wait for backend to become healthy ────────────────────────────
+# -- Wait for backend to become healthy --------------------------------------
 echo " Waiting for backend to start..."
 HEALTH_OK=0
 for i in $(seq 1 10); do
@@ -137,10 +135,10 @@ else
 fi
 echo ""
 
-# ── Start dashboard in background ─────────────────────────────────
+# -- Start dashboard in background -------------------------------------------
 echo " Starting dashboard on port 5173..."
 cd dashboard
-if [ ! -d "node_modules" ]; then
+if [ ! -f "node_modules/.bin/vite" ]; then
   echo " Installing dashboard dependencies..."
   npm install --loglevel warn || { echo " ERROR: Dashboard dependency install failed."; cd ..; exit 1; }
 fi
@@ -156,21 +154,21 @@ echo "   Dashboard  >  http://localhost:5173"
 echo "   Backend    >  http://localhost:3001/health"
 echo "   Neo4j UI   >  http://localhost:7474"
 echo "   ChromaDB   >  http://localhost:8000"
+echo "   MongoDB    >  mongodb://localhost:27017"
 echo "========================================="
 echo ""
 echo " Extension: load the /extension folder in chrome://extensions (Developer mode)"
 echo " Press Ctrl+C to stop everything."
 echo ""
 
-# ── Trap Ctrl+C and kill children cleanly ─────────────────────────
-# FIX: Trap only INT and TERM (not EXIT) — trapping EXIT caused the cleanup
-# function (which stops Docker) to also run on normal script completion,
-# unexpectedly shutting down databases when nothing went wrong.
+# -- Trap Ctrl+C and kill children cleanly -----------------------------------
+# Trap only INT and TERM (not EXIT) -- trapping EXIT causes the cleanup
+# function to also run on normal script completion, stopping databases
+# unexpectedly when nothing went wrong.
 cleanup() {
   echo ""
   echo " Stopping SYNQ..."
   kill $BACKEND_PID $DASHBOARD_PID 2>/dev/null || true
-  # FIX: Use `docker compose` here too for consistency
   docker compose stop 2>/dev/null || docker-compose stop 2>/dev/null || true
   echo " Done."
 }

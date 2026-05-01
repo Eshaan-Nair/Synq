@@ -63,7 +63,7 @@ router.post("/save", async (req, res) => {
             messageCount: messageCount || 0,
             createdAt: new Date(),
             updatedAt: new Date(),
-        }, { upsert: true, returnDocument: 'after' });
+        }, { upsert: true, new: true });
         // Store all window chunks in ChromaDB for RAG (non-fatal — Ollama may be down)
         let vectorsStored = false;
         try {
@@ -92,7 +92,7 @@ router.post("/save", async (req, res) => {
             updatedAt: new Date(),
             hasFullChat: true,
             topicCount: windowChunks.length,
-            tripleCount: triplesCount,
+            $inc: { tripleCount: triplesCount },
         });
         const warnings = [];
         if (!vectorsStored)

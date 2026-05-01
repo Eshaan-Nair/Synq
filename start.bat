@@ -32,7 +32,7 @@ if %errorlevel% neq 0 (
   echo  Install from: https://ollama.com
   echo  After installing, run: ollama pull nomic-embed-text
   echo.
-  echo  Continuing without Ollama — RAG features will be unavailable.
+  echo  Continuing without Ollama -- RAG features will be unavailable.
   echo.
 ) else (
   REM Check if nomic-embed-text model is available
@@ -56,12 +56,16 @@ echo.
 
 REM ── Start Docker databases ─────────────────────────────────────────
 echo  Starting Docker containers (Neo4j + MongoDB + ChromaDB)...
-docker-compose up -d
+REM Try modern `docker compose` first (Docker Desktop v4+), fall back to legacy
+docker compose up -d >nul 2>&1
 if %errorlevel% neq 0 (
-  echo  Docker failed to start. Is Docker Desktop running?
-  echo  Enable WSL2 if on Windows: https://docs.microsoft.com/en-us/windows/wsl/install
-  pause
-  exit /b 1
+  docker-compose up -d
+  if %errorlevel% neq 0 (
+    echo  ERROR: Docker failed to start. Is Docker Desktop running?
+    echo  Enable WSL2 if on Windows: https://docs.microsoft.com/en-us/windows/wsl/install
+    pause
+    exit /b 1
+  )
 )
 echo  Databases running
 echo.
@@ -73,7 +77,7 @@ REM ── Build extension with esbuild ─────────────�
 echo  Building extension...
 cd extension
 
-if not exist "node_modules" (
+if not exist "node_modules\.bin\esbuild.cmd" (
   echo  Installing extension dependencies...
   call npm install --loglevel warn
   if %errorlevel% neq 0 (
@@ -116,7 +120,7 @@ REM ── Start backend ──────────────────�
 echo  Starting backend on port 3001...
 cd backend
 
-if not exist "node_modules" (
+if not exist "node_modules\.bin\ts-node-dev.cmd" (
   echo  Installing backend dependencies...
   call npm install --loglevel warn
   if %errorlevel% neq 0 (
@@ -155,7 +159,7 @@ REM ── Start dashboard ─────────────────�
 echo  Starting dashboard on port 5173...
 cd dashboard
 
-if not exist "node_modules" (
+if not exist "node_modules\.bin\vite.cmd" (
   echo  Installing dashboard dependencies...
   call npm install --loglevel warn
   if %errorlevel% neq 0 (
@@ -179,10 +183,11 @@ echo    Dashboard  ^>  http://localhost:5173
 echo    Backend    ^>  http://localhost:3001/health
 echo    Neo4j UI   ^>  http://localhost:7474
 echo    ChromaDB   ^>  http://localhost:8000
+echo    MongoDB    ^>  mongodb://localhost:27017
 echo =========================================
 echo.
 echo  Extension: load the /extension folder in chrome://extensions (Developer mode)
 echo  Close the backend and dashboard windows to stop.
-echo  To stop databases: docker-compose stop
+echo  To stop databases: docker compose stop
 echo.
 pause
