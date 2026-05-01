@@ -41,6 +41,7 @@ app.use(express.json({ limit: "5mb" }));
 // Issue #3 Fix: Restrict CORS to trusted origins only
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",   // Vite dashboard (dev)
+  "http://localhost:5174",   // Vite dashboard (dev alternative)
   "http://localhost:4173",   // Vite dashboard (preview)
   "http://localhost:3000",   // alternative dev port
 ];

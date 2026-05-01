@@ -143,106 +143,92 @@ export default function App() {
     <div className="layout-container">
       {/* Error Banner */}
       {error && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          background: "#7f1d1d",
-          color: "#fca5a5",
-          padding: "10px 20px",
-          fontSize: "13px",
-          zIndex: 9999,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}>
+        <div className="error-banner">
           <span>⚠ {error}</span>
-          <button
-            onClick={() => setError(null)}
-            style={{ background: "transparent", border: "none", color: "#fca5a5", cursor: "pointer", fontSize: "16px" }}
-          >✕</button>
+          <button onClick={() => setError(null)}>✕</button>
         </div>
       )}
 
-      {/* ── Sidebar ───────────────────────────────────────────────── */}
-      <div className="sidebar">
-        {/* Header */}
-        <div className="sidebar-header">
-          <div className="sidebar-title">SYNQ</div>
-          <div className="sidebar-subtitle">Context Sovereignty Engine</div>
-        </div>
-
-        {/* Session list */}
-        <div className="session-list">
-          {sessions.length === 0 ? (
-            <div className="empty-state">
-              No sessions yet.
-            </div>
-          ) : (
-            sessions.map((s) => {
-              const isActive = activeSession?._id === s._id;
-              return (
-                <div
-                  key={s._id}
-                  className={`session-item ${isActive ? "active" : ""}`}
-                  onClick={() => loadSession(s)}
-                  onMouseEnter={(e) => {
-                    const btn = (e.currentTarget as HTMLElement).querySelector(".delete-btn") as HTMLElement;
-                    if (btn) btn.style.opacity = "1";
-                  }}
-                  onMouseLeave={(e) => {
-                    const btn = (e.currentTarget as HTMLElement).querySelector(".delete-btn") as HTMLElement;
-                    if (btn) btn.style.opacity = "0";
-                  }}
-                >
-                  <div className="session-header">
-                    <div className="session-name">
-                      {s.projectName}
-                    </div>
-                    <button
-                      className="delete-btn"
-                      onClick={(e) => handleDelete(e, s._id)}
-                      style={{ opacity: 0 }}
-                      title="Delete session"
-                    >
-                      {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
-                    </button>
-                  </div>
-                  <div className="session-meta">
-                    <div className="session-stats">
-                      <span>{s.tripleCount} facts</span>
-                      {s.topicCount ? <span>{s.topicCount} topics</span> : null}
-                    </div>
-                    <span className="session-platform">{s.platform}</span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+      {/* Full Screen Background Graph */}
+      <div className="background-graph">
+        {loadingSession ? (
+          <div className="graph-loading">
+            {[80, 120, 60, 100, 90, 70].map((size, i) => (
+              <div key={i} className="skeleton-box skeleton-pulse" style={{
+                width: size, height: size, borderRadius: "50%",
+                animationDelay: `${i * 0.15}s`,
+              }} />
+            ))}
+          </div>
+        ) : nodes.length === 0 ? (
+          <div className="empty-state" style={{ height: "100%", justifyContent: "center" }}>
+            No graph data for this session.
+          </div>
+        ) : (
+          <GraphView nodes={nodes} links={links} />
+        )}
       </div>
 
-      {/* ── Main Content ──────────────────────────────────────────── */}
-      <div className="main-content" style={{ flexDirection: "column" }}>
+      {/* Floating UI Layer */}
+      <div className="floating-ui-layer">
+        {/* ── Sidebar ───────────────────────────────────────────────── */}
+        <div className="sidebar floating-panel">
+          <div className="sidebar-header">
+            <div className="sidebar-title">SYNQ</div>
+            <div className="sidebar-subtitle">Context Sovereignty Engine</div>
+          </div>
+          <div className="session-list">
+            {sessions.length === 0 ? (
+              <div className="empty-state">No sessions yet.</div>
+            ) : (
+              sessions.map((s) => {
+                const isActive = activeSession?._id === s._id;
+                return (
+                  <div
+                    key={s._id}
+                    className={`session-item ${isActive ? "active" : ""}`}
+                    onClick={() => loadSession(s)}
+                    onMouseEnter={(e) => {
+                      const btn = (e.currentTarget as HTMLElement).querySelector(".delete-btn") as HTMLElement;
+                      if (btn) btn.style.opacity = "1";
+                    }}
+                    onMouseLeave={(e) => {
+                      const btn = (e.currentTarget as HTMLElement).querySelector(".delete-btn") as HTMLElement;
+                      if (btn) btn.style.opacity = "0";
+                    }}
+                  >
+                    <div className="session-header">
+                      <div className="session-name">{s.projectName}</div>
+                      <button
+                        className="delete-btn"
+                        onClick={(e) => handleDelete(e, s._id)}
+                        style={{ opacity: 0 }}
+                        title="Delete session"
+                      >
+                        {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
+                      </button>
+                    </div>
+                    <div className="session-meta">
+                      <div className="session-stats">
+                        <span>{s.tripleCount} facts</span>
+                        {s.topicCount ? <span>{s.topicCount} topics</span> : null}
+                      </div>
+                      <span className="session-platform">{s.platform}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
 
-        {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 28px",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--surface)",
-          flexShrink: 0,
-        }}>
-          <div>
+        {/* ── Top Header ──────────────────────────────────────────── */}
+        <div className="top-header floating-panel">
+          <div className="header-left">
             {activeSession ? (
               <>
-                <span style={{ color: "var(--text-main)", fontSize: "20px", fontWeight: "700" }}>
-                  {activeSession.projectName}
-                </span>
-                <span style={{ color: "var(--text-muted)", fontSize: "14px", marginLeft: "14px" }}>
+                <span className="header-project-name">{activeSession.projectName}</span>
+                <span className="header-meta">
                   {activeSession.tripleCount} facts
                   {activeSession.topicCount ? ` · ${activeSession.topicCount} topics` : ""}
                   {" · "}{activeSession.platform}
@@ -253,9 +239,10 @@ export default function App() {
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <div className="header-right">
             {activeSession && (
               <button
+                className="load-ext-btn"
                 onClick={async () => {
                   await setActiveSessionOnBackend(activeSession._id);
                   setLoadedToExtension(true);
@@ -264,29 +251,22 @@ export default function App() {
                 style={{
                   background: loadedToExtension ? "var(--success)" : "var(--surface)",
                   color: loadedToExtension ? "#000" : "var(--text-main)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
                 }}
               >
                 {loadedToExtension ? "Loaded!" : "Load into Extension"}
               </button>
             )}
 
-            <div style={{ display: "flex", gap: "24px", fontSize: "13px", color: "var(--text-muted)" }}>
-              <span>Nodes: <strong style={{ color: "var(--text-main)" }}>{nodes.length}</strong></span>
-              <span>Edges: <strong style={{ color: "var(--text-main)", fontSize: "16px" }}>{links.length}</strong></span>
-              <span>Facts: <strong style={{ color: "var(--text-main)", fontSize: "16px" }}>{triples.length}</strong></span>
+            <div className="header-stats">
+              <span>Nodes: <strong>{nodes.length}</strong></span>
+              <span>Edges: <strong>{links.length}</strong></span>
+              <span>Facts: <strong>{triples.length}</strong></span>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="tabs-header">
+        {/* ── Tabs Header (Floating Pill) ─────────────────────────── */}
+        <div className="floating-tabs floating-panel">
           {(["graph", "history", "chat"] as const).map((tab) => (
             <button
               key={tab}
@@ -298,92 +278,60 @@ export default function App() {
           ))}
         </div>
 
-        {/* Content */}
-        <div className="tab-content">
-
-          {/* Graph tab */}
-          {activeTab === "graph" && (
-            <div className="graph-wrapper">
-              {loadingSession ? (
-                <div style={{ padding: "32px", height: "100%", boxSizing: "border-box" }}>
-                  <div style={{ display: "flex", gap: "24px", height: "100%", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
-                    {[80, 120, 60, 100, 90, 70].map((size, i) => (
-                      <div key={i} className="skeleton-box skeleton-pulse" style={{
-                        width: size, height: size, borderRadius: "50%",
-                        animationDelay: `${i * 0.15}s`,
-                      }} />
+        {/* ── Right Side Panel (History / Chat) ───────────────────── */}
+        {activeTab !== "graph" && (
+          <div className="floating-side-content floating-panel">
+            {/* History tab */}
+            {activeTab === "history" && (
+              <div className="history-list">
+                {loadingSession ? (
+                  <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {["90%","75%","85%","60%","80%"].map((w, i) => (
+                      <div key={i} className="skeleton-box skeleton-pulse" style={{ height: 44, width: w, animationDelay: `${i * 0.12}s` }} />
                     ))}
                   </div>
-                </div>
-              ) : nodes.length === 0 ? (
-                <div className="empty-state" style={{ flexDirection: "column", gap: "14px" }}>
-                  <div style={{ fontSize: "16px" }}>No graph data for this session.</div>
-                </div>
-              ) : (
-                <GraphView nodes={nodes} links={links} />
-              )}
-            </div>
-          )}
-
-          {/* History tab */}
-          {activeTab === "history" && (
-            <div className="history-list">
-              {loadingSession ? (
-                <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {["90%","75%","85%","60%","80%"].map((w, i) => (
-                    <div key={i} className="skeleton-box skeleton-pulse" style={{
-                      height: 44, width: w,
-                      animationDelay: `${i * 0.12}s`,
-                    }} />
-                  ))}
-                </div>
-              ) : triples.length === 0 ? (
-                <div className="empty-state">
-                  No facts captured for this session yet.
-                </div>
-              ) : (
-                <>
-                  {[...triples].reverse().map((t, i) => (
-                    <div key={i} className="history-item">
-                      <div className="history-item-subject">
-                        <span className="history-item-type">{t.subjectType}:</span>
-                        {" "}{t.subject}{" "}
-                        <span className="history-item-relation">—[{t.relation}]→</span>
-                        {" "}<span className="history-item-type">{t.objectType}:</span>
-                        {" "}{t.object}
+                ) : triples.length === 0 ? (
+                  <div className="empty-state">No facts captured for this session yet.</div>
+                ) : (
+                  <>
+                    {[...triples].reverse().map((t, i) => (
+                      <div key={i} className="history-item">
+                        <div className="history-item-subject">
+                          <span className="history-item-type">{t.subjectType}:</span> {t.subject}{" "}
+                          <span className="history-item-relation">—[{t.relation}]→</span>{" "}
+                          <span className="history-item-type">{t.objectType}:</span> {t.object}
+                        </div>
+                        <div className="history-item-date">
+                          {new Date(t.timestamp).toLocaleString()}
+                        </div>
                       </div>
-                      <div className="history-item-date">
-                        {new Date(t.timestamp).toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-          )}
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
 
-          {/* Chat tab */}
-          {activeTab === "chat" && (
-            <div style={{ height: "100%", overflow: "hidden" }}>
-              {loadingSession ? (
-                <div className="empty-state">Loading...</div>
-              ) : !chatData ? (
-                <div className="empty-state" style={{ flexDirection: "column", gap: "14px" }}>
-                  <div style={{ fontSize: "16px" }}>No full chat saved for this session.</div>
-                  <div style={{ fontSize: "13px", color: "var(--text-dim)" }}>
-                    Use "Save Chat" in the extension to enable RAG mode.
+            {/* Chat tab */}
+            {activeTab === "chat" && (
+              <div style={{ height: "100%", overflow: "hidden" }}>
+                {loadingSession ? (
+                  <div className="empty-state">Loading...</div>
+                ) : !chatData ? (
+                  <div className="empty-state" style={{ flexDirection: "column", gap: "14px", height: "100%", justifyContent: "center" }}>
+                    <div style={{ fontSize: "16px" }}>No full chat saved for this session.</div>
+                    <div style={{ fontSize: "13px", color: "var(--text-dim)" }}>Use "Save Chat" in the extension to enable RAG mode.</div>
                   </div>
-                </div>
-              ) : (
-                <ChatViewer
-                  rawText={chatData.rawText}
-                  messageCount={chatData.messageCount}
-                  createdAt={chatData.createdAt}
-                />
-              )}
-            </div>
-          )}
-        </div>
+                ) : (
+                  <ChatViewer
+                    rawText={chatData.rawText}
+                    messageCount={chatData.messageCount}
+                    createdAt={chatData.createdAt}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

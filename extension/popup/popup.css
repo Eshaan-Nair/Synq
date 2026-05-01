@@ -1,24 +1,25 @@
 :root {
-  --bg: #0B0E14;
-  --surface: #151822;
-  --border: #1E2330;
+  --bg-gradient: radial-gradient(circle at 15% 50%, #1a0f2e, #0B0E14 60%);
+  --surface: rgba(21, 24, 34, 0.65);
+  --surface-blur: blur(16px);
+  --border: rgba(255, 255, 255, 0.08);
   --text-main: #F8FAFC;
   --text-muted: #94A3B8;
   --text-dim: #475569;
   
-  --accent: #6366F1;
-  --accent-hover: #818CF8;
-  --accent-dim: rgba(99, 102, 241, 0.15);
+  --accent: #00F0FF;
+  --accent-hover: #5EEAD4;
+  --accent-dim: rgba(0, 240, 255, 0.15);
   
-  --danger: #EF4444;
-  --success: #10B981;
+  --danger: #FF0055;
+  --success: #00FF9D;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   width: 320px;
-  background: var(--bg);
+  background: #0B0E14 var(--bg-gradient);
   color: var(--text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -27,6 +28,8 @@ body {
 /* Header */
 .header {
   background: var(--surface);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
   padding: 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -65,7 +68,9 @@ body {
 
 /* Platform badge */
 .platform-bar {
-  background: var(--bg);
+  background: rgba(11, 14, 20, 0.4);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
   border-bottom: 1px solid var(--border);
   padding: 10px 16px;
   display: flex;
@@ -84,6 +89,8 @@ body {
   display: none;
   margin: 16px 16px 0;
   background: var(--surface);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;

@@ -123,44 +123,6 @@ export default function GraphView({ nodes, links }: Props) {
     // ── Defs ───────────────────────────────────────────────────────
     const defs = svg.append("defs");
 
-    // Per-type glow filter
-    Object.entries(TYPE_COLORS).forEach(([type, color]) => {
-      const f = defs.append("filter")
-        .attr("id", `glow-${type}`)
-        .attr("x", "-60%").attr("y", "-60%")
-        .attr("width", "220%").attr("height", "220%");
-      f.append("feGaussianBlur")
-        .attr("stdDeviation", "4")
-        .attr("result", "coloredBlur");
-      f.append("feFlood").attr("flood-color", color).attr("flood-opacity", "0.4").attr("result", "flood");
-      f.append("feComposite").attr("in", "flood").attr("in2", "coloredBlur").attr("operator", "in").attr("result", "colorGlow");
-      const merge = f.append("feMerge");
-      merge.append("feMergeNode").attr("in", "colorGlow");
-      merge.append("feMergeNode").attr("in", "SourceGraphic");
-      
-      // Also define a 3D radial gradient for the bubbles
-      const grad = defs.append("radialGradient")
-        .attr("id", `grad-${type}`)
-        .attr("cx", "30%")
-        .attr("cy", "30%")
-        .attr("r", "70%");
-      grad.append("stop").attr("offset", "0%").attr("stop-color", "#ffffff").attr("stop-opacity", 0.4);
-      grad.append("stop").attr("offset", "20%").attr("stop-color", color).attr("stop-opacity", 0.5);
-      grad.append("stop").attr("offset", "100%").attr("stop-color", color).attr("stop-opacity", 0.1);
-    });
-    
-    // Add a generic drop shadow filter for 3D depth
-    const dropShadow = defs.append("filter")
-      .attr("id", "drop-shadow")
-      .attr("x", "-20%").attr("y", "-20%")
-      .attr("width", "150%").attr("height", "150%");
-    dropShadow.append("feDropShadow")
-      .attr("dx", "0")
-      .attr("dy", "4")
-      .attr("stdDeviation", "4")
-      .attr("flood-color", "#000000")
-      .attr("flood-opacity", "0.6");
-
     // Arrow markers per type
     Object.entries(TYPE_COLORS).forEach(([type, color]) => {
       defs.append("marker")
@@ -275,22 +237,20 @@ export default function GraphView({ nodes, links }: Props) {
           })
       );
 
-    // Outer glow ring
+    // Outer ring (clean, flat border instead of glow)
     nodeGroup.append("circle")
-      .attr("r", d => nodeRadius(d.id) + (nodeRadius(d.id) > 15 ? 8 : 4))
+      .attr("r", d => nodeRadius(d.id) + 4)
       .attr("fill", "none")
       .attr("stroke", d => TYPE_COLORS[d.type] || TYPE_COLORS.default)
-      .attr("stroke-width", d => nodeRadius(d.id) > 15 ? 1 : 0.5)
-      .attr("stroke-opacity", 0.15)
-      .attr("filter", d => `url(#glow-${TYPE_COLORS[d.type] ? d.type : "default"})`);
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.5);
 
-    // Main filled circle with 3D gradient and drop shadow
+    // Main filled circle (flat, solid color)
     nodeGroup.append("circle")
       .attr("r", d => nodeRadius(d.id))
-      .attr("fill", d => `url(#grad-${TYPE_COLORS[d.type] ? d.type : "default"})`)
-      .attr("stroke", d => TYPE_COLORS[d.type] || TYPE_COLORS.default)
-      .attr("stroke-width", 1.5)
-      .attr("filter", "url(#drop-shadow)");
+      .attr("fill", d => TYPE_COLORS[d.type] || TYPE_COLORS.default)
+      .attr("stroke", "#1A1D27")
+      .attr("stroke-width", 2);
 
     // Show abbreviation only if the node is large enough (radius > 15)
     nodeGroup.append("text")
@@ -474,7 +434,7 @@ export default function GraphView({ nodes, links }: Props) {
 
       {/* Zoom controls */}
       <div style={{
-        position: "absolute", bottom: 16, left: 16,
+        position: "absolute", bottom: 24, left: 368,
         display: "flex", flexDirection: "column", gap: 6,
       }}>
         {(() => {
