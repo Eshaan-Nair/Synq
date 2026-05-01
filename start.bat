@@ -79,7 +79,7 @@ cd extension
 
 if not exist "node_modules\.bin\esbuild.cmd" (
   echo  Installing extension dependencies...
-  call npm install --loglevel warn
+  call npm install --loglevel error
   if %errorlevel% neq 0 (
     echo  ERROR: Extension dependency install failed.
     echo  Check the error above and try: cd extension ^&^& npm install
@@ -122,7 +122,7 @@ cd backend
 
 if not exist "node_modules\.bin\ts-node-dev.cmd" (
   echo  Installing backend dependencies...
-  call npm install --loglevel warn
+  call npm install --loglevel error
   if %errorlevel% neq 0 (
     echo  ERROR: Backend dependency install failed.
     echo  Check the error above and try: cd backend ^&^& npm install
@@ -161,7 +161,7 @@ cd dashboard
 
 if not exist "node_modules\.bin\vite.cmd" (
   echo  Installing dashboard dependencies...
-  call npm install --loglevel warn
+  call npm install --loglevel error
   if %errorlevel% neq 0 (
     echo  ERROR: Dashboard dependency install failed.
     echo  Check the error above and try: cd dashboard ^&^& npm install
