@@ -1,18 +1,9 @@
 "use strict";
 /**
- * chunker.ts — Sliding Window Chunker (v1.2)
+ * chunker.ts — Sliding Window Chunker (v1.3)
  *
- * Replaces the previous Groq-based topic splitter entirely.
- *
- * Why: The Groq topic splitter dropped personal facts ("my dog's name is Noob"),
- * rejected short content, and filtered "generic" topic names. This made RAG recall
- * unreliable for anything that wasn't explicitly technical.
- *
- * This implementation is a pure function — no API calls, no filtering, no information loss.
- * Every word in the raw chat ends up in at least one chunk. Overlapping windows ensure
- * that context spanning a chunk boundary is captured in both neighbours.
- *
- * The Groq pipeline (extractTriples -> Neo4j) is completely unchanged.
+ * Fix: Added guard against infinite loop when overlapWords >= windowWords.
+ * If step would be <= 0, the function now clamps overlap to windowWords - 1.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.slidingWindowChunks = slidingWindowChunks;
@@ -28,6 +19,10 @@ function slidingWindowChunks(text, sessionId, windowWords = 300, overlapWords = 
     const words = text.split(/\s+/).filter(Boolean);
     if (words.length === 0)
         return [];
+    // FIX (Issue #5): Guard against infinite loop if overlapWords >= windowWords.
+    // Clamp overlap so step is always at least 1.
+    const safeOverlap = Math.min(overlapWords, windowWords - 1);
+    const step = windowWords - safeOverlap;
     // If the whole chat fits in one window, return it as a single chunk
     if (words.length <= windowWords) {
         return [{
@@ -40,7 +35,6 @@ function slidingWindowChunks(text, sessionId, windowWords = 300, overlapWords = 
             }];
     }
     const chunks = [];
-    const step = windowWords - overlapWords; // how far we advance each iteration
     let i = 0;
     let chunkIndex = 0;
     while (i < words.length) {
@@ -55,7 +49,6 @@ function slidingWindowChunks(text, sessionId, windowWords = 300, overlapWords = 
         });
         i += step;
         chunkIndex++;
-        // Stop if the remaining words are already covered by overlap of the last chunk
         if (i >= words.length)
             break;
     }

@@ -17,7 +17,7 @@ async function generateEmbedding(text) {
         const response = await axios_1.default.post(`${OLLAMA_URL}/api/embeddings`, {
             model: EMBED_MODEL,
             prompt: text,
-        });
+        }, { timeout: 20000 });
         return response.data.embedding;
     }
     catch (err) {

@@ -1,37 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -41,10 +8,13 @@ const privacy_1 = require("../utils/privacy");
 const extractor_1 = require("../services/extractor");
 const neo4j_1 = require("../services/neo4j");
 const mongo_1 = require("../services/mongo");
+const chroma_1 = require("../services/chroma");
 const logger_1 = require("../utils/logger");
 const mongoose_1 = __importDefault(require("mongoose"));
 const router = (0, express_1.Router)();
-// Issue #5 Fix: Validate that a sessionId string is a valid MongoDB ObjectId
+// FIX (Bug #7): Static top-level imports replace the dynamic import() calls
+// that were inside the DELETE route handler. Dynamic imports inside request
+// handlers cause repeated module resolution overhead on every request.
 function isValidObjectId(id) {
     return mongoose_1.default.Types.ObjectId.isValid(id);
 }
@@ -55,7 +25,6 @@ router.post("/ingest", async (req, res) => {
         res.status(400).json({ error: "text and sessionId are required" });
         return;
     }
-    // Issue #5 Fix: validate text length to prevent trivial/empty ingests
     if (typeof text !== "string" || text.trim().length < 10) {
         res.status(400).json({ error: "text must be at least 10 characters" });
         return;
@@ -88,7 +57,6 @@ router.post("/session", async (req, res) => {
         res.status(400).json({ error: "projectName is required" });
         return;
     }
-    // Issue #5 Fix: validate platform enum
     const VALID_PLATFORMS = ["claude", "chatgpt", "gemini"];
     if (platform && !VALID_PLATFORMS.includes(platform)) {
         res.status(400).json({ error: `platform must be one of: ${VALID_PLATFORMS.join(", ")}` });
@@ -120,13 +88,10 @@ router.get("/retrieve/:sessionId", async (req, res) => {
         const contextBlock = triples
             .map(t => `(${t.subjectType}:${t.subject}) -[${t.relation}]-> (${t.objectType}:${t.object})`)
             .join("\n");
-        // Issue #24 Fix: Use cached summary if it exists and triples haven't changed.
-        // Only regenerate if the cached count doesn't match current triples.
         let structuredSummary = session?.summary || "";
         const cachedCount = session?.tripleCount || 0;
         if (triples.length > 0 && (structuredSummary === "" || cachedCount !== triples.length)) {
             structuredSummary = await (0, extractor_1.generateProjectSummary)(triples, projectName);
-            // Persist the newly generated summary and update the count
             await mongo_1.Session.findByIdAndUpdate(sessionId, {
                 summary: structuredSummary,
                 tripleCount: triples.length,
@@ -195,20 +160,18 @@ router.delete("/session/:sessionId", async (req, res) => {
     }
     try {
         await mongo_1.Session.findByIdAndDelete(sid);
-        const { getDriver } = await Promise.resolve().then(() => __importStar(require("../services/neo4j")));
-        const neo4jSession = getDriver().session();
+        // FIX (Bug #7): Use statically imported getDriver() instead of dynamic import
+        const neo4jSession = (0, neo4j_1.getDriver)().session();
         try {
             await neo4jSession.run(`MATCH (s:Entity)-[r:RELATION {sessionId: $sessionId}]->(o:Entity) DELETE r`, { sessionId: sid });
         }
         finally {
             await neo4jSession.close();
         }
-        // Delete full chat and vectors
+        // FIX (Bug #7): Use statically imported FullChat and deleteChunksBySession
         try {
-            const { FullChat } = await Promise.resolve().then(() => __importStar(require("../services/mongo")));
-            const { deleteChunksBySession } = await Promise.resolve().then(() => __importStar(require("../services/chroma")));
-            await FullChat.findOneAndDelete({ sessionId: sid });
-            await deleteChunksBySession(sid);
+            await mongo_1.FullChat.findOneAndDelete({ sessionId: sid });
+            await (0, chroma_1.deleteChunksBySession)(sid);
         }
         catch (err) {
             logger_1.logger.warn("Could not delete chat/vectors:", err);

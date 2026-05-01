@@ -37,6 +37,7 @@ async function groq(prompt, maxTokens = 1000) {
             "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
             "Content-Type": "application/json",
         },
+        timeout: 15000,
     });
     return response.data.choices[0].message.content;
 }
@@ -146,16 +147,13 @@ async function extractTriples(text) {
     const allTriples = [];
     for (let i = 0; i < chunks.length; i++) {
         try {
-            logger_1.logger.debug(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
+            logger_1.logger.info(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
             // Step 1: compress
             const summary = await summarizeChunk(chunks[i]);
             // Step 2: extract triples from summary
             const triples = await extractTriplesFromSummary(summary);
             allTriples.push(...triples);
-            logger_1.logger.debug(`  chunk ${i + 1} → ${triples.length} triples`);
-            if (i < chunks.length - 1) {
-                await new Promise(res => setTimeout(res, 500));
-            }
+            logger_1.logger.info(`  chunk ${i + 1} → ${triples.length} triples`);
         }
         catch (err) {
             logger_1.logger.error(`chunk ${i + 1} failed:`, JSON.stringify(err?.response?.data, null, 2));

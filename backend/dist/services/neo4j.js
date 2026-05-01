@@ -9,7 +9,7 @@ exports.saveTriple = saveTriple;
 exports.getTriplesBySession = getTriplesBySession;
 const neo4j_driver_1 = __importDefault(require("neo4j-driver"));
 const logger_1 = require("../utils/logger");
-let driver;
+let driver = null;
 async function connectNeo4j() {
     const MAX_RETRIES = 5;
     const BASE_DELAY_MS = 2000;
@@ -33,11 +33,20 @@ async function connectNeo4j() {
         }
     }
 }
+// FIX (Bug #3): All internal callers now use getDriver() instead of accessing
+// the module-level `driver` variable directly. getDriver() throws a clear,
+// descriptive error if called before connectNeo4j() completes, rather than
+// crashing with "Cannot read properties of null (reading 'session')".
 function getDriver() {
+    if (!driver) {
+        throw new Error("[SYNQ] Neo4j driver is not initialized. connectNeo4j() has not completed yet.");
+    }
     return driver;
 }
 async function saveTriple(subject, subjectType, relation, object, objectType, sessionId) {
-    const session = driver.session();
+    // FIX (Bug #3): Use getDriver() instead of driver directly
+    const d = getDriver();
+    const session = d.session();
     try {
         await session.run(`
       MERGE (s:Entity {name: $subject, type: $subjectType})
@@ -60,7 +69,9 @@ async function saveTriple(subject, subjectType, relation, object, objectType, se
     }
 }
 async function getTriplesBySession(sessionId) {
-    const session = driver.session();
+    // FIX (Bug #3): Use getDriver() instead of driver directly
+    const d = getDriver();
+    const session = d.session();
     try {
         const result = await session.run(`
       MATCH (s:Entity)-[r:RELATION {sessionId: $sessionId}]->(o:Entity)

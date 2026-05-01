@@ -36,7 +36,7 @@ async function connectChroma() {
             // Use cosine similarity — works correctly with nomic-embed-text's 768-dim vectors
             // L2 distance gives values of 200-450 on these vectors, making exp(-dist) always ~0
             metadata: { "hnsw:space": "cosine" },
-        });
+        }, { timeout: 10000 });
         collectionId = res.data.id;
         logger_1.logger.success(`ChromaDB connected — collection "${COLLECTION_NAME}" (${collectionId})`);
     }
@@ -54,13 +54,13 @@ async function storeWindowChunks(chunks) {
     }
     if (chunks.length === 0)
         return;
-    // Delete any existing chunks for this session first (idempotent saves)
-    try {
-        const potentialIds = chunks.map(c => c.id);
-        await axios_1.default.post(`${COLL_BASE}/${collectionId}/delete`, { ids: potentialIds });
-        logger_1.logger.info(`Pre-cleared ${potentialIds.length} slot(s) for session ${chunks[0].sessionId}`);
+    // Purge ALL existing vectors for this session before storing new ones.
+    // The previous approach only deleted chunk IDs matching the NEW set — if the
+    // conversation shrank and produced fewer chunks, the old extra vectors
+    // remained and polluted RAG retrieval. Full purge ensures a clean re-save.
+    if (chunks[0]?.sessionId) {
+        await deleteChunksBySession(chunks[0].sessionId);
     }
-    catch (_) { /* ok — none existed yet */ }
     // Embed chunks in parallel
     const embeddings = await (0, embeddings_1.generateEmbeddings)(chunks.map(c => c.content));
     await axios_1.default.post(`${COLL_BASE}/${collectionId}/add`, {
@@ -73,7 +73,7 @@ async function storeWindowChunks(chunks) {
             wordStart: c.wordStart,
             wordEnd: c.wordEnd,
         })),
-    });
+    }, { timeout: 10000 });
     logger_1.logger.success(`Stored ${chunks.length} window chunks in ChromaDB`);
 }
 async function retrieveRelevantChunks(query, sessionId, topN = 3) {
@@ -88,7 +88,7 @@ async function retrieveRelevantChunks(query, sessionId, topN = 3) {
         n_results: Math.min(fetchN, 100), // ChromaDB caps at collection size
         where: { sessionId },
         include: ["documents", "distances", "metadatas"],
-    });
+    }, { timeout: 10000 });
     const docs = results.data.documents?.[0] || [];
     const distances = results.data.distances?.[0] || [];
     const metadatas = results.data.metadatas?.[0] || [];
@@ -121,9 +121,9 @@ async function deleteChunksBySession(sessionId) {
         const res = await axios_1.default.post(`${COLL_BASE}/${collectionId}/get`, {
             where: { sessionId },
             include: [],
-        });
+        }, { timeout: 10000 });
         if (res.data?.ids?.length > 0) {
-            await axios_1.default.post(`${COLL_BASE}/${collectionId}/delete`, { ids: res.data.ids });
+            await axios_1.default.post(`${COLL_BASE}/${collectionId}/delete`, { ids: res.data.ids }, { timeout: 10000 });
             logger_1.logger.info(`Deleted ${res.data.ids.length} chunks for session ${sessionId}`);
         }
     }

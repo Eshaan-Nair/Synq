@@ -21,6 +21,7 @@ router.get("/all", async (req, res) => {
       RETURN s.name AS source, s.type AS sourceType,
              r.type AS relation,
              o.name AS target, o.type AS targetType
+      LIMIT 500
     `);
         const nodes = new Map();
         const links = [];

@@ -100,6 +100,8 @@ if (SYNQ_SECRET) {
 else {
     logger_1.logger.warn("SYNQ_SECRET not set — request auth is disabled (dev mode)");
 }
+// Apply global rate limit across ALL routes (200 req/min per IP)
+app.use(globalLimiter);
 // Routes
 app.use("/api/context", context_1.default);
 app.use("/api/graph", graph_1.default);
@@ -107,10 +109,10 @@ app.use("/api/chat/save", saveLimiter); // strict limit — BEFORE the route han
 app.use("/api/chat", chat_1.default);
 app.use("/api/rag", rag_1.default);
 // Health check — includes service status
-app.get("/health", async (req, res) => {
+app.get("/health", (_req, res) => {
     res.json({
         status: "SYNQ backend running",
-        version: "2.0.0",
+        version: "1.3.0",
         services: {
             backend: "ok",
             port: PORT,
