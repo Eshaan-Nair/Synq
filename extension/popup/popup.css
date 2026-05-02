@@ -1,19 +1,19 @@
 :root {
   --bg: #0B0E14;
   --bg-gradient: radial-gradient(circle at 15% 50%, #1a0f2e, #0B0E14 60%);
-  --surface: rgba(21, 24, 34, 0.65);
-  --surface-blur: blur(16px);
+  --surface: rgba(21, 24, 34, 0.75);
+  --surface-blur: blur(20px);
   --border: rgba(255, 255, 255, 0.08);
-  --text-main: #F8FAFC;
+  --text-main: #F1F5F9;
   --text-muted: #94A3B8;
   --text-dim: #475569;
   
-  --accent: #00F0FF;
-  --accent-hover: #5EEAD4;
-  --accent-dim: rgba(0, 240, 255, 0.15);
+  --accent: #818CF8;
+  --accent-hover: #6366F1;
+  --accent-dim: rgba(129, 140, 248, 0.15);
   
-  --danger: #FF0055;
-  --success: #00FF9D;
+  --danger: #F43F5E;
+  --success: #10B981;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -173,14 +173,14 @@ button {
 
 #save-btn { 
   background: var(--accent); 
-  color: var(--bg);
-  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.2);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(129, 140, 248, 0.25);
 }
 
 #save-btn:hover:not(:disabled) { 
   background: var(--accent-hover); 
   transform: translateY(-1px); 
-  box-shadow: 0 6px 16px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(129, 140, 248, 0.35);
 }
 
 #save-btn:active:not(:disabled) {
