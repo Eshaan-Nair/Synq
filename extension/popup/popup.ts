@@ -246,6 +246,10 @@ saveBtn.addEventListener("click", async () => {
         const chunks = response.topicsExtracted as number;
         const facts  = response.triplesExtracted as number;
         setStatus(`✅ Saved! ${chunks} chunks stored, ${facts} facts extracted. SYNQ auto-connected.`);
+
+        // ── Success State Glow ───────────────────────────────────────
+        document.body.classList.add("success-glow");
+        setTimeout(() => document.body.classList.remove("success-glow"), 2500);
       }
     }
   );

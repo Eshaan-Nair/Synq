@@ -36,6 +36,8 @@ interface Link {
 interface Props {
   nodes: Node[];
   links: Link[];
+  onNodeClick?: (nodeId: string | null) => void;
+  selectedNodeId?: string | null;
 }
 
 // ── Extended color palette (technical + personal entity types) ─────
@@ -83,11 +85,12 @@ function typeAbbrev(type: string): string {
   return abbrevs[type] || type.slice(0, 4).toUpperCase();
 }
 
-export default function GraphView({ nodes, links }: Props) {
+export default function GraphView({ nodes, links, onNodeClick, selectedNodeId }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const svgSelRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
   const [hoveredNode, setHoveredNode] = useState<{ id: string; type: string; degree: number } | null>(null);
+  const [filterType, setFilterType] = useState<string | null>(null);
 
   // Settings State
   const [showSettings, setShowSettings] = useState(false);
@@ -182,17 +185,21 @@ export default function GraphView({ nodes, links }: Props) {
     const linkPath = linkG.selectAll<SVGPathElement, Link>("path")
       .data(links)
       .join("path")
+      .attr("class", "edge-path")
       .attr("fill", "none")
       .attr("stroke", d => {
-        const t = d.target as Node;
-        return TYPE_COLORS[t.type] || TYPE_COLORS.default;
+        const targetId = typeof d.target === "string" ? d.target : (d.target as any).id;
+        const targetNode = nodes.find(n => n.id === targetId);
+        const type = targetNode?.type || "default";
+        return TYPE_COLORS[type] || TYPE_COLORS.default;
       })
       .attr("stroke-width", 1.5)
       .attr("stroke-opacity", 0.35)
       .attr("marker-end", d => {
-        const t = d.target as Node;
-        const key = TYPE_COLORS[t.type] ? t.type : "default";
-        return `url(#arrow-${key})`;
+        const targetId = typeof d.target === "string" ? d.target : (d.target as any).id;
+        const targetNode = nodes.find(n => n.id === targetId);
+        const type = targetNode?.type && TYPE_COLORS[targetNode.type] ? targetNode.type : "default";
+        return `url(#arrow-${type})`;
       });
 
     // Edge labels — hidden by default, shown on hover
@@ -312,49 +319,17 @@ export default function GraphView({ nodes, links }: Props) {
         return name.length > 22 ? name.slice(0, 20) + "…" : name;
       });
 
-    // ── Hover interactions ─────────────────────────────────────────
+    // ── Hover & Focus Interactions (State Only) ───────────────────
     nodeGroup
       .on("mouseenter", (_event, d) => {
         setHoveredNode({ id: d.id, type: d.type, degree: degreeMap.get(d.id) ?? 0 });
-        
-        // Show relations (labels and bright paths) for connected edges
-        linkLabelGroup
-          .attr("opacity", l => {
-            if (settingEdgeLabels === "always") return 1;
-            const s = l.source as Node;
-            const t = l.target as Node;
-            return (s.id === d.id || t.id === d.id) ? 1 : 0;
-          });
-        linkPath
-          .attr("stroke-opacity", l => {
-            const s = l.source as Node;
-            const t = l.target as Node;
-            return (s.id === d.id || t.id === d.id) ? 0.85 : 0.1;
-          })
-          .attr("stroke-width", l => {
-            const s = l.source as Node;
-            const t = l.target as Node;
-            return (s.id === d.id || t.id === d.id) ? 2.5 : 1.5;
-          });
-
-        // Show node titles and inner abbreviations for this node AND its connected neighbors
-        nodeGroup.selectAll<SVGElement, Node>(".name-label-g, .type-abbrev-text")
-          .attr("opacity", n => {
-            if (settingNodeLabels === "always") return 1;
-            if (n.id === d.id) return 1;
-            const isConnected = links.some(l => {
-              const s = l.source as Node;
-              const t = l.target as Node;
-              return (s.id === d.id && t.id === n.id) || (t.id === d.id && s.id === n.id);
-            });
-            return isConnected ? 1 : 0;
-          });
       })
       .on("mouseleave", () => {
         setHoveredNode(null);
-        linkLabelGroup.attr("opacity", settingEdgeLabels === "always" ? 1 : 0);
-        linkPath.attr("stroke-opacity", 0.35).attr("stroke-width", 1.5);
-        nodeGroup.selectAll(".name-label-g, .type-abbrev-text").attr("opacity", settingNodeLabels === "always" ? 1 : 0);
+      })
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        onNodeClick?.(d.id);
       });
 
     // ── Tick ───────────────────────────────────────────────────────
@@ -431,7 +406,72 @@ export default function GraphView({ nodes, links }: Props) {
     linkPath.attr("opacity", 0).transition().duration(500).delay((_, i) => i * 30 + 250).attr("opacity", 1);
 
     return () => { simulation.stop(); };
-  }, [nodes, links, settingNodeSize, settingNodeLabels, settingEdgeLabels, settingTension]);
+  }, [nodes, links, settingNodeSize, settingTension]);
+
+  // ── Handle Visual State (Selection, Hover, Filters) ─────────────
+  useEffect(() => {
+    if (!svgSelRef.current) return;
+    const svg = svgSelRef.current;
+
+    // Calculate neighbors for hover
+    const neighbors = new Set<string>();
+    if (hoveredNode) {
+      neighbors.add(hoveredNode.id);
+      links.forEach(l => {
+        const s = typeof l.source === "string" ? l.source : (l.source as any).id;
+        const t = typeof l.target === "string" ? l.target : (l.target as any).id;
+        if (s === hoveredNode.id) neighbors.add(t);
+        if (t === hoveredNode.id) neighbors.add(s);
+      });
+    }
+
+    // Nodes
+    svg.selectAll<SVGGElement, Node>("g.nodes > g")
+      .transition("visual").duration(250)
+      .attr("opacity", n => {
+        if (hoveredNode) return neighbors.has(n.id) ? 1 : 0.15;
+        if (!selectedNodeId && !filterType) return 1;
+        if (selectedNodeId && n.id === selectedNodeId) return 1;
+        if (filterType && n.type === filterType) return 1;
+        return 0.15;
+      })
+      .attr("filter", n => (selectedNodeId && n.id === selectedNodeId) ? "brightness(1.4)" : "none");
+
+    // Links
+    svg.selectAll<SVGPathElement, Link>("g.links path")
+      .transition("visual").duration(250)
+      .attr("stroke-opacity", l => {
+        const s = typeof l.source === "string" ? l.source : (l.source as any).id;
+        const t = typeof l.target === "string" ? l.target : (l.target as any).id;
+        
+        if (hoveredNode) return (s === hoveredNode.id || t === hoveredNode.id) ? 0.8 : 0.1;
+        if (!selectedNodeId && !filterType) return 0.35;
+        if (selectedNodeId && (s === selectedNodeId || t === selectedNodeId)) return 0.8;
+        if (filterType && (nodes.find(n => n.id === s)?.type === filterType || nodes.find(n => n.id === t)?.type === filterType)) return 0.6;
+        return 0.15;
+      });
+
+    // Node labels
+    svg.selectAll<SVGElement, Node>(".name-label-g, .type-abbrev-text")
+      .attr("opacity", n => {
+        if (settingNodeLabels === "always") return 1;
+        if (hoveredNode && neighbors.has(n.id)) return 1;
+        if (selectedNodeId && n.id === selectedNodeId) return 1;
+        return 0;
+      });
+
+    // Edge labels
+    svg.selectAll<SVGElement, Link>("g.link-labels g")
+      .attr("opacity", l => {
+        if (settingEdgeLabels === "always") return 1;
+        const s = typeof l.source === "string" ? l.source : (l.source as any).id;
+        const t = typeof l.target === "string" ? l.target : (l.target as any).id;
+        if (hoveredNode && (s === hoveredNode.id || t === hoveredNode.id)) return 1;
+        if (selectedNodeId && (s === selectedNodeId || t === selectedNodeId)) return 1;
+        return 0;
+      });
+
+  }, [selectedNodeId, filterType, hoveredNode, nodes, links, settingNodeLabels, settingEdgeLabels]);
 
   // ── Legend data ────────────────────────────────────────────────
   const usedTypes = [...new Set(nodes.map(n => n.type))].filter(t => TYPE_COLORS[t]);
@@ -533,18 +573,26 @@ export default function GraphView({ nodes, links }: Props) {
       {/* Legend — shows full type name with color dot */}
       {usedTypes.length > 0 && (
         <div className="graph-legend">
-          <div className="graph-legend-title">Entity Types</div>
+          <div className="graph-legend-title">Entity Types (Filter)</div>
           {usedTypes.map(type => (
-            <div key={type} className="graph-legend-item">
+            <div 
+              key={type} 
+              className={`graph-legend-item ${filterType === type ? "active" : ""}`}
+              onClick={() => setFilterType(filterType === type ? null : type)}
+              style={{ cursor: "pointer", opacity: (!filterType || filterType === type) ? 1 : 0.4 }}
+            >
               <div style={{
                 width: 8, height: 8, borderRadius: "50%",
                 background: TYPE_COLORS[type] || TYPE_COLORS.default,
                 boxShadow: `0 0 6px ${TYPE_COLORS[type] || TYPE_COLORS.default}`,
                 flexShrink: 0,
               }} />
-              <span className="graph-legend-text">{type}</span>
+              <span className="graph-legend-text" style={{ color: filterType === type ? "var(--accent)" : "var(--text-muted)" }}>{type}</span>
             </div>
           ))}
+          {filterType && (
+            <button className="clear-legend-btn" onClick={() => setFilterType(null)}>Clear Filter</button>
+          )}
         </div>
       )}
 

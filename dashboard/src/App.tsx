@@ -44,6 +44,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClosed, setIsClosed] = useState(true);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   // Issue #17 Fix: Track whether the user is actively loading a session.
   const isLoadingSessionRef = useRef(false);
@@ -82,6 +83,7 @@ export default function App() {
     } catch (err) {
       console.error(`Failed to load session: ${extractErrorMessage(err)}`);
     } finally {
+      setSelectedNodeId(null);
       setLoadingSession(false);
       isLoadingSessionRef.current = false;
     }
@@ -111,6 +113,17 @@ export default function App() {
       setDeletingId(null);
     }
   };
+
+  const loadIntoExtension = useCallback(async () => {
+    if (!activeSession) return;
+    try {
+      await setActiveSessionOnBackend(activeSession._id);
+      setLoadedToExtension(true);
+      setTimeout(() => setLoadedToExtension(false), 3000);
+    } catch (err) {
+      setError(`Failed to sync with extension: ${extractErrorMessage(err)}`);
+    }
+  }, [activeSession]);
 
   // FIX (Bug #1): setState calls wrapped in setTimeout to avoid synchronous
   // setState within an effect body, which can trigger cascading renders.
@@ -167,7 +180,12 @@ export default function App() {
             No graph data for this session.
           </div>
         ) : (
-          <GraphView nodes={nodes} links={links} />
+          <GraphView
+            nodes={nodes}
+            links={links}
+            onNodeClick={(id) => setSelectedNodeId(prev => prev === id ? null : id)}
+            selectedNodeId={selectedNodeId}
+          />
         )}
       </div>
 
@@ -191,11 +209,11 @@ export default function App() {
                     className={`session-item ${isActive ? "active" : ""}`}
                     onClick={() => loadSession(s)}
                     onMouseEnter={(e) => {
-                      const btn = (e.currentTarget as HTMLElement).querySelector(".delete-btn") as HTMLElement;
+                      const btn = e.currentTarget.querySelector(".delete-btn") as HTMLElement;
                       if (btn) btn.style.opacity = "1";
                     }}
                     onMouseLeave={(e) => {
-                      const btn = (e.currentTarget as HTMLElement).querySelector(".delete-btn") as HTMLElement;
+                      const btn = e.currentTarget.querySelector(".delete-btn") as HTMLElement;
                       if (btn) btn.style.opacity = "0";
                     }}
                   >
@@ -212,10 +230,10 @@ export default function App() {
                     </div>
                     <div className="session-meta">
                       <div className="session-stats">
-                        <span>{s.tripleCount} facts</span>
-                        {s.topicCount ? <span>{s.topicCount} topics</span> : null}
+                        <span><strong>{s.tripleCount}</strong> facts</span>
+                        {s.topicCount ? <span><strong>{s.topicCount}</strong> topics</span> : null}
                       </div>
-                      <span className="session-platform">{s.platform}</span>
+                      <span className="session-date">{new Date(s.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                     </div>
                   </div>
                 );
@@ -242,24 +260,13 @@ export default function App() {
           </div>
 
           <div className="header-right">
-            {activeSession && (
-              <button
-                className="load-ext-btn"
-                onClick={async () => {
-                  await setActiveSessionOnBackend(activeSession._id);
-                  setLoadedToExtension(true);
-                  setTimeout(() => setLoadedToExtension(false), 3000);
-                }}
-                style={{
-                  background: loadedToExtension ? "var(--success)" : "var(--surface)",
-                  color: loadedToExtension ? "#000" : "var(--text-main)",
-                }}
-              >
-                {loadedToExtension ? "Loaded!" : "Load into Extension"}
-              </button>
-            )}
 
             <div className="header-stats">
+              {selectedNodeId && (
+                <button className="clear-filter-btn" onClick={() => setSelectedNodeId(null)}>
+                  Viewing <strong>{selectedNodeId}</strong> ✕
+                </button>
+              )}
               <span>Nodes: <strong>{nodes.length}</strong></span>
               <span>Edges: <strong>{links.length}</strong></span>
               <span>Facts: <strong>{triples.length}</strong></span>
@@ -267,14 +274,23 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── Tabs Header (Floating Pill) ─────────────────────────── */}
-        <div className="floating-tabs floating-panel">
+        {/* ── Unified Action Bar (Floating Pill) ─────────────────────────── */}
+        <div className="unified-action-bar floating-panel">
+          <button
+            className={`load-ext-btn ${loadedToExtension ? "success" : ""}`}
+            onClick={loadIntoExtension}
+          >
+            {loadedToExtension ? "✓ Synced" : "Load Extension"}
+          </button>
+
+          <div className="tab-divider" />
+
           {(["history", "chat"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
-                setIsClosed(false); // Open if switching tabs
+                setIsClosed(false);
               }}
               className={`tab-btn ${activeTab === tab ? "active" : ""}`}
             >
@@ -289,8 +305,8 @@ export default function App() {
             {/* Dual-Arrow Handle attached to the left edge */}
             <div className="expand-handle-group">
               {/* Expand Button (Move Left) */}
-              <button 
-                className="handle-btn" 
+              <button
+                className="handle-btn"
                 onClick={() => {
                   if (isClosed) setIsClosed(false);
                   else setIsExpanded(true);
@@ -302,10 +318,10 @@ export default function App() {
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              
+
               {/* Collapse Button (Move Right) */}
-              <button 
-                className="handle-btn" 
+              <button
+                className="handle-btn"
                 onClick={() => {
                   if (isExpanded) setIsExpanded(false);
                   else setIsClosed(true);
@@ -320,55 +336,58 @@ export default function App() {
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "inherit" }}>
               {/* History tab */}
-            {activeTab === "history" && (
-              <div className="history-list">
-                {loadingSession ? (
-                  <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {["90%","75%","85%","60%","80%"].map((w, i) => (
-                      <div key={i} className="skeleton-box skeleton-pulse" style={{ height: 44, width: w, animationDelay: `${i * 0.12}s` }} />
-                    ))}
-                  </div>
-                ) : triples.length === 0 ? (
-                  <div className="empty-state">No facts captured for this session yet.</div>
-                ) : (
-                  <>
-                    {[...triples].reverse().map((t, i) => (
-                      <div key={i} className="history-item">
-                        <div className="history-item-subject">
-                          <span className="history-item-type">{t.subjectType}:</span> {t.subject}{" "}
-                          <span className="history-item-relation">—[{t.relation}]→</span>{" "}
-                          <span className="history-item-type">{t.objectType}:</span> {t.object}
-                        </div>
-                        <div className="history-item-date">
-                          {new Date(t.timestamp).toLocaleString()}
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
+              {activeTab === "history" && (
+                <div className="history-list">
+                  {loadingSession ? (
+                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {["90%", "75%", "85%", "60%", "80%"].map((w, i) => (
+                        <div key={i} className="skeleton-box skeleton-pulse" style={{ height: 44, width: w, animationDelay: `${i * 0.12}s` }} />
+                      ))}
+                    </div>
+                  ) : triples.length === 0 ? (
+                    <div className="empty-state">No facts captured for this session yet.</div>
+                  ) : (
+                    <>
+                      {[...triples]
+                        .reverse()
+                        .filter(t => !selectedNodeId || t.subject === selectedNodeId || t.object === selectedNodeId)
+                        .map((t, i) => (
+                          <div key={i} className="history-item">
+                            <div className="history-item-subject">
+                              <span className="history-item-type">{t.subjectType}:</span> {t.subject}{" "}
+                              <span className="history-item-relation">—[{t.relation}]→</span>{" "}
+                              <span className="history-item-type">{t.objectType}:</span> {t.object}
+                            </div>
+                            <div className="history-item-date">
+                              {new Date(t.timestamp).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+                    </>
+                  )}
+                </div>
+              )}
 
-            {/* Chat tab */}
-            {activeTab === "chat" && (
-              <div style={{ height: "100%", overflow: "hidden" }}>
-                {loadingSession ? (
-                  <div className="empty-state">Loading...</div>
-                ) : !chatData ? (
-                  <div className="empty-state" style={{ flexDirection: "column", gap: "14px", height: "100%", justifyContent: "center" }}>
-                    <div style={{ fontSize: "16px" }}>No full chat saved for this session.</div>
-                    <div style={{ fontSize: "13px", color: "var(--text-dim)" }}>Use "Save Chat" in the extension to enable RAG mode.</div>
-                  </div>
-                ) : (
-                  <ChatViewer
-                    rawText={chatData.rawText}
-                    messageCount={chatData.messageCount}
-                    createdAt={chatData.createdAt}
-                    platform={activeSession?.platform}
-                  />
-                )}
-              </div>
-            )}
+              {/* Chat tab */}
+              {activeTab === "chat" && (
+                <div style={{ height: "100%", overflow: "hidden" }}>
+                  {loadingSession ? (
+                    <div className="empty-state">Loading...</div>
+                  ) : !chatData ? (
+                    <div className="empty-state" style={{ flexDirection: "column", gap: "14px", height: "100%", justifyContent: "center" }}>
+                      <div style={{ fontSize: "16px" }}>No full chat saved for this session.</div>
+                      <div style={{ fontSize: "13px", color: "var(--text-dim)" }}>Use "Save Chat" in the extension to enable RAG mode.</div>
+                    </div>
+                  ) : (
+                    <ChatViewer
+                      rawText={chatData.rawText}
+                      messageCount={chatData.messageCount}
+                      createdAt={chatData.createdAt}
+                      platform={activeSession?.platform}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

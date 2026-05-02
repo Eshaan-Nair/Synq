@@ -462,6 +462,14 @@ function injectSidebarUI() {
   if (document.getElementById("synq-sidebar-host")) return;
   const host = document.createElement("div");
   host.id = "synq-sidebar-host";
+  // Ensure the host creates a top-level stacking context and doesn't block clicks globally
+  host.style.position = "fixed";
+  host.style.top = "0";
+  host.style.left = "0";
+  host.style.width = "100%";
+  host.style.height = "100%";
+  host.style.zIndex = "2147483647"; // Max z-index
+  host.style.pointerEvents = "none"; // Let clicks pass through the invisible host wrapper
   document.body.appendChild(host);
   synqShadow = host.attachShadow({ mode: "open" });
   synqShadow.innerHTML = `
@@ -469,12 +477,12 @@ function injectSidebarUI() {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap');
     
     #synq-badge {
-      position: fixed; bottom: 24px; right: 24px;
+      position: absolute; bottom: 24px; right: 24px;
       background: #151822; color: #F8FAFC;
       padding: 10px 18px; border-radius: 8px;
       font-size: 12px; font-family: 'Inter', system-ui, sans-serif;
-      font-weight: 600; cursor: pointer; z-index: 999999;
-      border: 1px solid #1E2330;
+      font-weight: 600; cursor: pointer;
+      border: 1px solid #1E2330; pointer-events: auto;
       letter-spacing: 0.05em; transition: all 0.2s;
     }
     #synq-badge:hover { background: #1E2330; border-color: #818CF8; }
@@ -484,11 +492,11 @@ function injectSidebarUI() {
     }
     #synq-badge.paused { color: #475569; border-color: transparent; }
     #synq-toast {
-      position: fixed; bottom: 76px; right: 24px;
+      position: absolute; bottom: 76px; right: 24px;
       background: #0B0E14; color: #F1F5F9;
       padding: 10px 16px; border-radius: 6px;
       font-size: 12px; font-family: 'Inter', system-ui, sans-serif;
-      z-index: 999999; opacity: 0;
+      opacity: 0;
       border: 1px solid rgba(129, 140, 248, 0.3); transition: opacity 0.3s;
       pointer-events: none; max-width: 280px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
