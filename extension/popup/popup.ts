@@ -18,6 +18,7 @@ const tripleCountEl      = document.getElementById("triple-count")     as HTMLEl
 const topicCountEl       = document.getElementById("topic-count")      as HTMLElement;
 const saveBtn            = document.getElementById("save-btn")         as HTMLButtonElement;
 const pauseToggleBtn     = document.getElementById("pause-toggle-btn") as HTMLButtonElement;
+const unloadBtn          = document.getElementById("unload-btn")       as HTMLButtonElement;
 const injectBtn          = document.getElementById("inject-btn")       as HTMLButtonElement;
 const detectedPlatformEl = document.getElementById("detected-platform") as HTMLElement;
 const platformDot        = document.getElementById("platform-dot")     as HTMLElement;
@@ -137,11 +138,26 @@ saveBtn.addEventListener("click", async () => {
     return;
   }
 
-  // Step 1: Create session from popup → background (this path is reliable)
+  // Step 1: Create or update session from popup → background
   setStatus("Creating session...");
+  
+  // Check if we already have a session for this specific URL
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tabUrl = activeTab?.url || "";
+  let existingSessionId: string | undefined;
+  
+  if (tabUrl) {
+    const result = await chrome.storage.local.get("synq_url_map");
+    const urlMap = (result.synq_url_map || {}) as Record<string, string>;
+    existingSessionId = urlMap[tabUrl];
+    if (existingSessionId) {
+      console.log(`[SYNQ popup] found existing sessionId for this URL: ${existingSessionId}`);
+    }
+  }
+
   const sessionResult = await new Promise<any>((resolve) => {
     chrome.runtime.sendMessage(
-      { type: "CREATE_SESSION", payload: { projectName, platform } },
+      { type: "CREATE_SESSION", payload: { projectName, platform, sessionId: existingSessionId } },
       (response) => {
         if (chrome.runtime.lastError) {
           resolve({ error: chrome.runtime.lastError.message });
@@ -153,10 +169,43 @@ saveBtn.addEventListener("click", async () => {
   });
 
   if (!sessionResult?.sessionId) {
-    saveBtn.disabled = false;
-    saveBtn.textContent = "💾 Save Chat";
-    setStatus(`❌ ${sessionResult?.error || "Failed to create session. Is the backend running on port 3001?"}`, "error");
-    return;
+    // If we tried to update an existing session but it was deleted on the backend
+    if (sessionResult?.error === "Session not found" && existingSessionId) {
+      console.warn(`[SYNQ popup] session ${existingSessionId} not found on backend. Clearing mapping and retrying...`);
+      
+      // Clear mapping and retry creation
+      if (tabUrl) {
+        const urlMapResult = await chrome.storage.local.get("synq_url_map");
+        const urlMap = (urlMapResult.synq_url_map || {}) as Record<string, string>;
+        delete urlMap[tabUrl];
+        await chrome.storage.local.set({ synq_url_map: urlMap });
+      }
+
+      // Recursive call to try again without existingSessionId
+      // Alternatively, we could just copy the creation logic here, but let's just trigger a second attempt
+      setStatus("Session stale, creating new one...");
+      const retryResult = await new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage(
+          { type: "CREATE_SESSION", payload: { projectName, platform } },
+          (response) => resolve(response)
+        );
+      });
+
+      if (!retryResult?.sessionId) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "💾 Save Chat";
+        setStatus(`❌ ${retryResult?.error || "Failed to create session"}`, "error");
+        return;
+      }
+      
+      // Update sessionResult so we proceed with the new one
+      sessionResult.sessionId = retryResult.sessionId;
+    } else {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "💾 Save Chat";
+      setStatus(`❌ ${sessionResult?.error || "Failed to create session. Is the backend running on port 3001?"}`, "error");
+      return;
+    }
   }
 
   // Step 2: Tell content script to scrape + save using the sessionId we just created
@@ -183,6 +232,16 @@ saveBtn.addEventListener("click", async () => {
           topicCount:  response.topicsExtracted  as number,
         };
         chrome.storage.local.set({ synq_session: sessionData });
+        
+        // Save the URL -> sessionId mapping so we update instead of create next time
+        if (tabUrl) {
+          chrome.storage.local.get("synq_url_map", (result) => {
+            const urlMap = (result.synq_url_map || {}) as Record<string, string>;
+            urlMap[tabUrl] = sessionResult.sessionId;
+            chrome.storage.local.set({ synq_url_map: urlMap });
+          });
+        }
+
         showSession(sessionData);
         pauseToggleBtn.disabled = false;
         const chunks = response.topicsExtracted as number;
@@ -213,6 +272,30 @@ pauseToggleBtn.addEventListener("click", async () => {
   setStatus(isPaused ? "⏸ SYNQ paused" : "▶️ SYNQ resumed");
 });
 
+// ── Unload Session ───────────────────────────────────────────────
+unloadBtn.addEventListener("click", async () => {
+  if (!currentSessionId) return;
+  
+  unloadBtn.disabled = true;
+  unloadBtn.textContent = "⏳ Unloading...";
+
+  chrome.runtime.sendMessage({ type: "UNLOAD_SESSION" }, (response) => {
+    unloadBtn.disabled = false;
+    unloadBtn.textContent = "Unload Session";
+
+    if (response?.success) {
+      currentSessionId = null;
+      chrome.storage.local.remove("synq_session");
+      sessionInfo.style.display = "none";
+      pauseToggleBtn.disabled = true;
+      updatePauseUI();
+      setStatus("🔌 Session unloaded");
+    } else {
+      setStatus("❌ Failed to unload session", "error");
+    }
+  });
+});
+
 // ── Inject Context (one-time) ─────────────────────────────────────
 injectBtn.addEventListener("click", async () => {
   const tabId = await getTabId();
@@ -241,6 +324,7 @@ function showSession(data: SessionData) {
   if (data.sessionId) {
     currentSessionId = data.sessionId;
     pauseToggleBtn.disabled = false;
+    unloadBtn.disabled = false;
   }
 }
 

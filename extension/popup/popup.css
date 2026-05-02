@@ -109,6 +109,27 @@ body {
 .session-label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
 .session-value { color: var(--text-main); font-weight: 600; }
 
+#unload-btn {
+  margin-top: 12px;
+  background: rgba(244, 63, 94, 0.05);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  color: var(--danger);
+  font-size: 11px;
+  padding: 8px;
+  width: 100%;
+}
+
+#unload-btn:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: var(--danger);
+}
+
+#unload-btn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
 /* Form */
 .section { padding: 16px; }
 
