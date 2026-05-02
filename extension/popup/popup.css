@@ -31,7 +31,7 @@ body {
   background: var(--surface);
   backdrop-filter: var(--surface-blur);
   -webkit-backdrop-filter: var(--surface-blur);
-  padding: 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -88,13 +88,13 @@ body {
 /* Session info */
 #session-info {
   display: none;
-  margin: 16px 16px 0;
+  margin: 12px 16px 0;
   background: var(--surface);
   backdrop-filter: var(--surface-blur);
   -webkit-backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px 12px;
   font-size: 12px;
 }
 
@@ -131,7 +131,7 @@ body {
 }
 
 /* Form */
-.section { padding: 16px; }
+.section { padding: 12px 16px; }
 
 label {
   font-size: 10px; 
@@ -152,7 +152,7 @@ input {
   color: var(--text-main);
   font-family: 'Inter', system-ui, sans-serif; 
   font-size: 13px;
-  margin-bottom: 12px; 
+  margin-bottom: 8px; 
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
 }
@@ -170,20 +170,20 @@ input:focus {
   background: var(--surface); 
   border-radius: 6px;
   border-left: 2px solid var(--accent); 
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 /* Buttons */
 button {
   width: 100%; 
-  padding: 12px; 
+  padding: 10px; 
   border: none; 
   border-radius: 6px;
   font-family: 'Inter', system-ui, sans-serif; 
   font-size: 13px; 
   font-weight: 600;
   cursor: pointer; 
-  margin-bottom: 8px; 
+  margin-bottom: 6px; 
   transition: all 0.2s;
   display: flex; 
   align-items: center; 
@@ -248,7 +248,7 @@ button {
   border: 1px solid var(--border);
   color: var(--text-muted); 
   width: calc(100% - 32px); 
-  margin: 0 16px 16px;
+  margin: 0 16px 12px;
 }
 
 #inject-btn:hover { 
@@ -260,7 +260,7 @@ button {
 #status {
   font-size: 11px; 
   color: var(--success);
-  padding: 0 16px 12px; 
+  padding: 0 16px 8px; 
   min-height: 20px; 
   line-height: 1.4;
   text-align: center;
