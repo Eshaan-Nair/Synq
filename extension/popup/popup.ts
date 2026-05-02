@@ -76,7 +76,6 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
     detectedPlatformEl.textContent = PLATFORM_LABELS.unknown;
     platformDot.classList.add("unknown");
     saveBtn.disabled = true;
-    pauseToggleBtn.disabled = true;
   } else {
     detectedPlatformEl.textContent = PLATFORM_LABELS[platform];
   }
