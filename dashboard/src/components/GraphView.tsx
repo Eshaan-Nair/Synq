@@ -402,8 +402,8 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId }:
     }, 100);
 
     // ── Animate in ─────────────────────────────────────────────────
-    nodeGroup.attr("opacity", 0).transition().duration(500).delay((_, i) => i * 40).attr("opacity", 1);
-    linkPath.attr("opacity", 0).transition().duration(500).delay((_, i) => i * 30 + 250).attr("opacity", 1);
+    nodeGroup.attr("opacity", 0).transition().duration(500).attr("opacity", 1);
+    linkPath.attr("opacity", 0).transition().duration(500).attr("opacity", 1);
 
     return () => { simulation.stop(); };
   }, [nodes, links, settingNodeSize, settingTension]);
