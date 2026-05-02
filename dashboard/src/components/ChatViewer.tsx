@@ -11,22 +11,23 @@ interface Props {
   rawText: string;
   messageCount: number;
   createdAt: string;
+  platform?: string;
 }
 
 const C = {
-  indigo:  "#6366F1",
-  cyan:    "#06B6D4",
-  mint:    "#02C39A",
-  cream:   "#F8FAFC",
+  indigo:  "#818CF8",
+  cyan:    "#6366F1",
+  mint:    "#10B981",
+  cream:   "#F1F5F9",
   surface: "#1A1D27",
-  border:  "#292D3E",
-  muted:   "#64748B",
+  border:  "rgba(255, 255, 255, 0.08)",
+  muted:   "#94A3B8",
   dim:     "#475569",
-  bg:      "#0F111A",
-  userBg:  "rgba(99, 102, 241, 0.15)",
-  userBorder: "rgba(99, 102, 241, 0.4)",
-  asstBg: "rgba(6, 182, 212, 0.12)",
-  asstBorder: "rgba(6, 182, 212, 0.35)",
+  bg:      "#0B0E14",
+  userBg:  "rgba(129, 140, 248, 0.12)",
+  userBorder: "rgba(129, 140, 248, 0.25)",
+  asstBg: "rgba(99, 102, 241, 0.08)",
+  asstBorder: "rgba(99, 102, 241, 0.2)",
 };
 
 interface Turn {
@@ -57,7 +58,7 @@ function parseTurns(rawText: string): Turn[] {
   return turns;
 }
 
-export default function ChatViewer({ rawText, messageCount, createdAt }: Props) {
+export default function ChatViewer({ rawText, messageCount, createdAt, platform }: Props) {
   const turns = parseTurns(rawText);
 
   return (
@@ -71,6 +72,7 @@ export default function ChatViewer({ rawText, messageCount, createdAt }: Props) 
         justifyContent: "space-between",
         alignItems: "center",
         flexShrink: 0,
+        background: "rgba(0,0,0,0.1)",
       }}>
         <div style={{ fontSize: "11px", color: C.muted }}>
           {turns.length} turn{turns.length !== 1 ? "s" : ""} · {messageCount} messages · saved {new Date(createdAt).toLocaleDateString()}
@@ -78,7 +80,7 @@ export default function ChatViewer({ rawText, messageCount, createdAt }: Props) 
         <div style={{
           fontSize: "9px",
           color: C.dim,
-          background: `${C.indigo}15`,
+          background: `rgba(255,255,255,0.05)`,
           padding: "3px 8px",
           borderRadius: 4,
           letterSpacing: "0.08em",
@@ -119,7 +121,7 @@ export default function ChatViewer({ rawText, messageCount, createdAt }: Props) 
                 paddingLeft: isUser ? 0 : 4,
                 paddingRight: isUser ? 4 : 0,
               }}>
-                {isUser ? "YOU" : "ASSISTANT"}
+                {isUser ? "YOU" : (platform ? platform.toUpperCase() : "ASSISTANT")}
               </div>
 
               {/* Message bubble */}

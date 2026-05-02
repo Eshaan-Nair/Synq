@@ -2,29 +2,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
 
 :root {
-  --surface: rgba(18, 20, 28, 0.7);
-  --surface-blur: blur(20px);
-  --border: rgba(255, 255, 255, 0.06);
-  --text-main: #F8FAFC;
+  --surface: rgba(21, 24, 34, 0.75);
+  --surface-blur: blur(12px);
+  --border: rgba(255, 255, 255, 0.08);
+  --text-main: #F1F5F9;
   --text-muted: #94A3B8;
   --text-dim: #475569;
   
-  --accent: #00F0FF;
-  --accent-hover: #5EEAD4;
-  --accent-dim: rgba(0, 240, 255, 0.15);
+  --accent: #818CF8;
+  --accent-hover: #6366F1;
+  --accent-dim: rgba(129, 140, 248, 0.15);
   
-  --danger: #FF0055;
-  --success: #00FF9D;
+  --danger: #F43F5E;
+  --success: #10B981;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #040508;
+  background-color: #0B0E14;
   background-image: 
-    radial-gradient(circle at center, transparent 0%, #040508 100%),
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    radial-gradient(circle at center, transparent 0%, #0B0E14 100%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 100% 100%, 32px 32px, 32px 32px;
   background-attachment: fixed;
   color: var(--text-main);
@@ -269,7 +269,71 @@ body {
   border-radius: 16px;
   display: flex;
   flex-direction: column;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width, transform;
+  z-index: 50;
+}
+
+.floating-side-content.expanded {
+  width: 850px;
+}
+
+.floating-side-content.closed {
+  transform: translateX(calc(100% + 4px));
+}
+
+.expand-handle-group {
+  position: absolute;
+  left: -32px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  background: var(--surface);
+  backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  z-index: 100;
+  transition: width 0.25s ease, left 0.25s ease, transform 0.25s ease;
+  box-shadow: -6px 0 16px rgba(0, 0, 0, 0.4);
+}
+
+.handle-btn {
+  width: 100%;
+  height: 56px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.handle-btn:hover:not(:disabled) {
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.handle-btn:disabled {
+  color: var(--text-dim);
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+.handle-btn:first-child {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Make handle peek out more on hover of the whole group */
+.expand-handle-group:hover {
+  width: 38px;
+  left: -38px;
 }
 
 .error-banner {

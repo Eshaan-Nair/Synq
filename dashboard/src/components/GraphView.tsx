@@ -40,32 +40,32 @@ interface Props {
 
 // ── Extended color palette (technical + personal entity types) ─────
 const TYPE_COLORS: Record<string, string> = {
-  // Personal
-  Person: "#F472B6",
-  Pet: "#FB923C",
-  Goal: "#34D399",
-  Problem: "#F87171",
-  Preference: "#A78BFA",
-  Habit: "#FCD34D",
-  Location: "#67E8F9",
-  Organization: "#6366F1",
-  // Technical
-  Project: "#E2E8F0",
-  Technology: "#8B5CF6",
-  Feature: "#EC4899",
-  Bug: "#EF4444",
-  Decision: "#F59E0B",
-  Auth: "#10B981",
-  Database: "#06B6D4",
-  Library: "#3B82F6",
-  API: "#818CF8",
-  Concept: "#D946EF",
-  Framework: "#7C3AED",
-  Architecture: "#EAB308",
-  Tool: "#4ADE80",
-  Pattern: "#2DD4BF",
-  Algorithm: "#14B8A6",
-  default: "#64748B",
+  // Personal (Warm & Soft)
+  Person: "#F472B6", // Pink
+  Pet: "#FB923C",    // Orange
+  Goal: "#34D399",   // Emerald
+  Problem: "#F87171", // Red
+  Preference: "#818CF8", // Indigo (Accent)
+  Habit: "#FCD34D",  // Amber
+  Location: "#2DD4BF", // Teal
+  Organization: "#6366F1", // Indigo
+  // Technical (Sophisticated Cools)
+  Project: "#94A3B8", // Slate
+  Technology: "#8B5CF6", // Violet
+  Feature: "#EC4899", // Pink
+  Bug: "#EF4444",    // Red
+  Decision: "#F59E0B", // Amber
+  Auth: "#10B981",   // Emerald
+  Database: "#06B6D4", // Cyan
+  Library: "#3B82F6", // Blue
+  API: "#6366F1",    // Indigo
+  Concept: "#D946EF", // Fuchsia
+  Framework: "#7C3AED", // Violet
+  Architecture: "#EAB308", // Yellow
+  Tool: "#4ADE80",   // Green
+  Pattern: "#2DD4BF", // Teal
+  Algorithm: "#14B8A6", // Teal
+  default: "#475569",
 };
 
 // Short abbreviation to show INSIDE the node circle.
@@ -457,10 +457,10 @@ export default function GraphView({ nodes, links }: Props) {
           };
           return (
             <>
-              <button title="Zoom in" onClick={zoomIn} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#6366F1")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>+</button>
-              <button title="Zoom out" onClick={zoomOut} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#6366F1")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>−</button>
-              <button title="Reset zoom" onClick={zoomReset} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#6366F1")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>⊙</button>
-              <button title="Graph Settings" onClick={() => setShowSettings(!showSettings)} style={{...btnStyle, marginTop: 8, borderColor: showSettings ? "#00F0FF" : "#292D3E", color: showSettings ? "#00F0FF" : "#94A3B8"}} onMouseEnter={e => (e.currentTarget.style.borderColor = "#00F0FF")} onMouseLeave={e => (e.currentTarget.style.borderColor = showSettings ? "#00F0FF" : "#292D3E")}>
+              <button title="Zoom in" onClick={zoomIn} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>+</button>
+              <button title="Zoom out" onClick={zoomOut} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>−</button>
+              <button title="Reset zoom" onClick={zoomReset} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>⊙</button>
+              <button title="Graph Settings" onClick={() => setShowSettings(!showSettings)} style={{...btnStyle, marginTop: 8, borderColor: showSettings ? "#818CF8" : "#292D3E", color: showSettings ? "#818CF8" : "#94A3B8"}} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = showSettings ? "#818CF8" : "#292D3E")}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               </button>
             </>
@@ -473,12 +473,12 @@ export default function GraphView({ nodes, links }: Props) {
         <div style={{
           position: "absolute", bottom: 24, left: 412,
           background: "rgba(15, 17, 26, 0.95)", backdropFilter: "blur(12px)",
-          border: "1px solid rgba(0, 240, 255, 0.3)", borderRadius: 12, padding: "16px 20px", width: 260,
-          color: "#F8FAFC", fontSize: 13,
+          border: "1px solid rgba(129, 140, 248, 0.3)", borderRadius: 12, padding: "16px 20px", width: 260,
+          color: "#F1F5F9", fontSize: 13,
           display: "flex", flexDirection: "column", gap: 16,
           boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
         }}>
-          <div style={{ fontWeight: 700, fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: "#00F0FF" }}>Graph Settings</div>
+          <div style={{ fontWeight: 700, fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: "#818CF8" }}>Graph Settings</div>
           
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ color: "#94A3B8" }}>Node Size</span>

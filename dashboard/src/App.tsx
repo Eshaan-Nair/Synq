@@ -36,12 +36,14 @@ export default function App() {
   const [triples, setTriples] = useState<Triple[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
-  const [activeTab, setActiveTab] = useState<"history" | "chat" | null>(null);
+  const [activeTab, setActiveTab] = useState<"history" | "chat" | null>("history");
   const [loadingSession, setLoadingSession] = useState(false);
   const [loadedToExtension, setLoadedToExtension] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [chatData, setChatData] = useState<ChatData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isClosed, setIsClosed] = useState(true);
 
   // Issue #17 Fix: Track whether the user is actively loading a session.
   const isLoadingSessionRef = useRef(false);
@@ -270,7 +272,10 @@ export default function App() {
           {(["history", "chat"] as const).map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(activeTab === tab ? null : tab)}
+              onClick={() => {
+                setActiveTab(tab);
+                setIsClosed(false); // Open if switching tabs
+              }}
               className={`tab-btn ${activeTab === tab ? "active" : ""}`}
             >
               {tab === "history" ? "Facts" : "Chat"}
@@ -280,8 +285,41 @@ export default function App() {
 
         {/* ── Right Side Panel (Facts / Chat) ───────────────────── */}
         {activeTab !== null && (
-          <div className="floating-side-content floating-panel">
-            {/* History tab */}
+          <div className={`floating-side-content floating-panel ${isExpanded ? "expanded" : ""} ${isClosed ? "closed" : ""}`}>
+            {/* Dual-Arrow Handle attached to the left edge */}
+            <div className="expand-handle-group">
+              {/* Expand Button (Move Left) */}
+              <button 
+                className="handle-btn" 
+                onClick={() => {
+                  if (isClosed) setIsClosed(false);
+                  else setIsExpanded(true);
+                }}
+                disabled={isExpanded}
+                title="Expand"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              
+              {/* Collapse Button (Move Right) */}
+              <button 
+                className="handle-btn" 
+                onClick={() => {
+                  if (isExpanded) setIsExpanded(false);
+                  else setIsClosed(true);
+                }}
+                disabled={isClosed}
+                title="Collapse"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "inherit" }}>
+              {/* History tab */}
             {activeTab === "history" && (
               <div className="history-list">
                 {loadingSession ? (
@@ -326,10 +364,12 @@ export default function App() {
                     rawText={chatData.rawText}
                     messageCount={chatData.messageCount}
                     createdAt={chatData.createdAt}
+                    platform={activeSession?.platform}
                   />
                 )}
               </div>
             )}
+            </div>
           </div>
         )}
       </div>
