@@ -55,11 +55,10 @@ export async function getActiveSessionId(): Promise<string | null> {
 }
 
 export async function setActiveSessionId(sessionId: string | null): Promise<void> {
-  // FIX (Issue #2): Mongoose 9 deprecated `returnDocument: 'after'`.
-  // Use `new: true` instead, which is the correct Mongoose option.
+  // Use `returnDocument: 'after'` instead, which is the correct Mongoose option.
   await ActiveSessionModel.findByIdAndUpdate(
     "singleton",
     { sessionId },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
 }

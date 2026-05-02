@@ -60,6 +60,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     handleSetPauseState(message.payload).then(sendResponse);
     return true;
   }
+  if (message.type === "UNLOAD_SESSION") {
+    handleUnloadSession().then(sendResponse);
+    return true;
+  }
 });
 
 async function handleSaveChat(payload: {
@@ -161,9 +165,9 @@ async function handleGetActiveSession() {
   }
 }
 
-async function handleCreateSession(payload: { projectName: string; platform: string }) {
+async function handleCreateSession(payload: { projectName: string; platform: string; sessionId?: string }) {
   try {
-    console.log(`[SYNQ bg] creating session: ${payload.projectName} on ${payload.platform}`);
+    console.log(`[SYNQ bg] creating/updating session: ${payload.projectName} on ${payload.platform} (ID: ${payload.sessionId || "new"})`);
     const res = await fetch(`${BACKEND}/api/context/session`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -191,7 +195,7 @@ async function handleCreateSession(payload: { projectName: string; platform: str
 
 // Notify all content scripts on AI platforms that the active session changed.
 // Without this, content scripts on other tabs keep using a stale sessionId.
-function broadcastSessionChanged(sessionId: string, projectName: string) {
+function broadcastSessionChanged(sessionId: string | null, projectName?: string) {
   const AI_URLS = [
     "*://chatgpt.com/*",
     "*://claude.ai/*",
@@ -210,7 +214,7 @@ function broadcastSessionChanged(sessionId: string, projectName: string) {
   });
 }
 
-async function handleSetActiveSession(sessionId: string) {
+async function handleSetActiveSession(sessionId: string | null) {
   try {
     await fetch(`${BACKEND}/api/context/active`, {
       method: "POST",
@@ -220,6 +224,18 @@ async function handleSetActiveSession(sessionId: string) {
     return { ok: true };
   } catch {
     return { ok: false };
+  }
+}
+
+async function handleUnloadSession() {
+  try {
+    await chrome.storage.local.remove("synq_session");
+    await handleSetActiveSession(null);
+    broadcastSessionChanged(null);
+    return { success: true };
+  } catch (err) {
+    log.error(`Unload session failed: ${err}`);
+    return { success: false, error: String(err) };
   }
 }
 
