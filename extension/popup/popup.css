@@ -1,4 +1,5 @@
 :root {
+  --bg: #0B0E14;
   --bg-gradient: radial-gradient(circle at 15% 50%, #1a0f2e, #0B0E14 60%);
   --surface: rgba(21, 24, 34, 0.65);
   --surface-blur: blur(16px);
@@ -171,19 +172,26 @@ button {
 }
 
 #save-btn { 
-  background: var(--text-main); 
-  color: var(--bg); 
+  background: var(--accent); 
+  color: var(--bg);
+  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.2);
 }
 
 #save-btn:hover:not(:disabled) { 
-  background: #e2e8f0; 
+  background: var(--accent-hover); 
   transform: translateY(-1px); 
+  box-shadow: 0 6px 16px rgba(0, 240, 255, 0.3);
+}
+
+#save-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 #save-btn:disabled { 
   background: var(--border); 
   color: var(--text-dim); 
   cursor: not-allowed; 
+  box-shadow: none;
 }
 
 /* Pause toggle */
