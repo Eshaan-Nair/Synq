@@ -36,7 +36,7 @@ export default function App() {
   const [triples, setTriples] = useState<Triple[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
-  const [activeTab, setActiveTab] = useState<"graph" | "history" | "chat">("graph");
+  const [activeTab, setActiveTab] = useState<"history" | "chat" | null>(null);
   const [loadingSession, setLoadingSession] = useState(false);
   const [loadedToExtension, setLoadedToExtension] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -267,19 +267,19 @@ export default function App() {
 
         {/* ── Tabs Header (Floating Pill) ─────────────────────────── */}
         <div className="floating-tabs floating-panel">
-          {(["graph", "history", "chat"] as const).map((tab) => (
+          {(["history", "chat"] as const).map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => setActiveTab(activeTab === tab ? null : tab)}
               className={`tab-btn ${activeTab === tab ? "active" : ""}`}
             >
-              {tab === "graph" ? "Graph" : tab === "history" ? "History" : "Chat"}
+              {tab === "history" ? "Facts" : "Chat"}
             </button>
           ))}
         </div>
 
-        {/* ── Right Side Panel (History / Chat) ───────────────────── */}
-        {activeTab !== "graph" && (
+        {/* ── Right Side Panel (Facts / Chat) ───────────────────── */}
+        {activeTab !== null && (
           <div className="floating-side-content floating-panel">
             {/* History tab */}
             {activeTab === "history" && (

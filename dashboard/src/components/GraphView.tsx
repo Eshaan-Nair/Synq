@@ -89,6 +89,12 @@ export default function GraphView({ nodes, links }: Props) {
   const svgSelRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
   const [hoveredNode, setHoveredNode] = useState<{ id: string; type: string; degree: number } | null>(null);
 
+  // Settings State
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingNodeSize, setSettingNodeSize] = useState<"normal" | "large">("normal");
+  const [settingNodeLabels, setSettingNodeLabels] = useState<"always" | "hover">("hover");
+  const [settingEdgeLabels, setSettingEdgeLabels] = useState<"always" | "hover">("hover");
+  const [settingTension, setSettingTension] = useState<"loose" | "tight">("tight");
   // ── Zoom buttons ───────────────────────────────────────────────
   function zoomIn() { if (svgSelRef.current && zoomRef.current) svgSelRef.current.transition().duration(300).call(zoomRef.current.scaleBy, 1.4); }
   function zoomOut() { if (svgSelRef.current && zoomRef.current) svgSelRef.current.transition().duration(300).call(zoomRef.current.scaleBy, 0.7); }
@@ -113,7 +119,9 @@ export default function GraphView({ nodes, links }: Props) {
     // Node radius scales with degree: min 8, max 60 to show main/sub topics clearly
     const nodeRadius = (id: string) => {
       const deg = degreeMap.get(id) ?? 0;
-      return Math.max(8, Math.min(60, 8 + deg * 7));
+      const base = settingNodeSize === "large" ? 14 : 8;
+      const mult = settingNodeSize === "large" ? 10 : 7;
+      return Math.max(base, Math.min(60, base + deg * mult));
     };
 
     const svg = d3.select(svgRef.current);
@@ -155,8 +163,8 @@ export default function GraphView({ nodes, links }: Props) {
         .distance(d => {
           const s = d.source as Node;
           const t = d.target as Node;
-          // Increased distance to reduce label overlap
-          return 180 + nodeRadius(s.id) + nodeRadius(t.id);
+          const baseDist = settingTension === "loose" ? 280 : 180;
+          return baseDist + nodeRadius(s.id) + nodeRadius(t.id);
         })
         .strength(0.4)
       )
@@ -193,7 +201,7 @@ export default function GraphView({ nodes, links }: Props) {
     const linkLabelGroup = linkLabelG.selectAll<SVGGElement, Link>("g")
       .data(links)
       .join("g")
-      .attr("opacity", 0);
+      .attr("opacity", settingEdgeLabels === "always" ? 1 : 0);
 
     linkLabelGroup.append("rect")
       .attr("rx", 5).attr("ry", 5)
@@ -263,7 +271,7 @@ export default function GraphView({ nodes, links }: Props) {
       .attr("letter-spacing", "0.04em")
       .attr("pointer-events", "none")
       .attr("class", "type-abbrev-text")
-      .attr("opacity", 0)
+      .attr("opacity", settingNodeLabels === "always" ? 1 : 0)
       .style("transition", "opacity 0.2s ease")
       .text(d => nodeRadius(d.id) > 15 ? typeAbbrev(d.type) : "");
 
@@ -274,7 +282,7 @@ export default function GraphView({ nodes, links }: Props) {
     const nameLabelGroup = nodeGroup.append("g")
       .attr("pointer-events", "none")
       .attr("class", "name-label-g")
-      .attr("opacity", 0)
+      .attr("opacity", settingNodeLabels === "always" ? 1 : 0)
       .style("transition", "opacity 0.2s ease");
 
     // Background pill for name label
@@ -312,6 +320,7 @@ export default function GraphView({ nodes, links }: Props) {
         // Show relations (labels and bright paths) for connected edges
         linkLabelGroup
           .attr("opacity", l => {
+            if (settingEdgeLabels === "always") return 1;
             const s = l.source as Node;
             const t = l.target as Node;
             return (s.id === d.id || t.id === d.id) ? 1 : 0;
@@ -331,6 +340,7 @@ export default function GraphView({ nodes, links }: Props) {
         // Show node titles and inner abbreviations for this node AND its connected neighbors
         nodeGroup.selectAll<SVGElement, Node>(".name-label-g, .type-abbrev-text")
           .attr("opacity", n => {
+            if (settingNodeLabels === "always") return 1;
             if (n.id === d.id) return 1;
             const isConnected = links.some(l => {
               const s = l.source as Node;
@@ -342,9 +352,9 @@ export default function GraphView({ nodes, links }: Props) {
       })
       .on("mouseleave", () => {
         setHoveredNode(null);
-        linkLabelGroup.attr("opacity", 0);
+        linkLabelGroup.attr("opacity", settingEdgeLabels === "always" ? 1 : 0);
         linkPath.attr("stroke-opacity", 0.35).attr("stroke-width", 1.5);
-        nodeGroup.selectAll(".name-label-g, .type-abbrev-text").attr("opacity", 0);
+        nodeGroup.selectAll(".name-label-g, .type-abbrev-text").attr("opacity", settingNodeLabels === "always" ? 1 : 0);
       });
 
     // ── Tick ───────────────────────────────────────────────────────
@@ -421,7 +431,7 @@ export default function GraphView({ nodes, links }: Props) {
     linkPath.attr("opacity", 0).transition().duration(500).delay((_, i) => i * 30 + 250).attr("opacity", 1);
 
     return () => { simulation.stop(); };
-  }, [nodes, links]);
+  }, [nodes, links, settingNodeSize, settingNodeLabels, settingEdgeLabels, settingTension]);
 
   // ── Legend data ────────────────────────────────────────────────
   const usedTypes = [...new Set(nodes.map(n => n.type))].filter(t => TYPE_COLORS[t]);
@@ -432,7 +442,7 @@ export default function GraphView({ nodes, links }: Props) {
       {/* SVG canvas */}
       <svg ref={svgRef} style={{ width: "100%", height: "100%", background: "transparent" }} />
 
-      {/* Zoom controls */}
+      {/* Zoom controls & Settings Toggle */}
       <div style={{
         position: "absolute", bottom: 24, left: 368,
         display: "flex", flexDirection: "column", gap: 6,
@@ -450,10 +460,75 @@ export default function GraphView({ nodes, links }: Props) {
               <button title="Zoom in" onClick={zoomIn} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#6366F1")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>+</button>
               <button title="Zoom out" onClick={zoomOut} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#6366F1")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>−</button>
               <button title="Reset zoom" onClick={zoomReset} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#6366F1")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>⊙</button>
+              <button title="Graph Settings" onClick={() => setShowSettings(!showSettings)} style={{...btnStyle, marginTop: 8, borderColor: showSettings ? "#00F0FF" : "#292D3E", color: showSettings ? "#00F0FF" : "#94A3B8"}} onMouseEnter={e => (e.currentTarget.style.borderColor = "#00F0FF")} onMouseLeave={e => (e.currentTarget.style.borderColor = showSettings ? "#00F0FF" : "#292D3E")}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </button>
             </>
           );
         })()}
       </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div style={{
+          position: "absolute", bottom: 24, left: 412,
+          background: "rgba(15, 17, 26, 0.95)", backdropFilter: "blur(12px)",
+          border: "1px solid rgba(0, 240, 255, 0.3)", borderRadius: 12, padding: "16px 20px", width: 260,
+          color: "#F8FAFC", fontSize: 13,
+          display: "flex", flexDirection: "column", gap: 16,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+        }}>
+          <div style={{ fontWeight: 700, fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: "#00F0FF" }}>Graph Settings</div>
+          
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "#94A3B8" }}>Node Size</span>
+            <select 
+              value={settingNodeSize} 
+              onChange={e => setSettingNodeSize(e.target.value as any)}
+              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+            >
+              <option value="normal">Normal</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "#94A3B8" }}>Node Labels</span>
+            <select 
+              value={settingNodeLabels} 
+              onChange={e => setSettingNodeLabels(e.target.value as any)}
+              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+            >
+              <option value="hover">On Hover</option>
+              <option value="always">Always Show</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "#94A3B8" }}>Edge Facts</span>
+            <select 
+              value={settingEdgeLabels} 
+              onChange={e => setSettingEdgeLabels(e.target.value as any)}
+              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+            >
+              <option value="hover">On Hover</option>
+              <option value="always">Always Show</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "#94A3B8" }}>Physics Tension</span>
+            <select 
+              value={settingTension} 
+              onChange={e => setSettingTension(e.target.value as any)}
+              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+            >
+              <option value="tight">Tight</option>
+              <option value="loose">Loose</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* Legend — shows full type name with color dot */}
       {usedTypes.length > 0 && (

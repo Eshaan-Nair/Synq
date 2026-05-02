@@ -2,10 +2,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
 
 :root {
-  --bg-gradient: radial-gradient(circle at 15% 50%, #1a0f2e, #0B0E14 60%);
-  --surface: rgba(21, 24, 34, 0.65);
-  --surface-blur: blur(16px);
-  --border: rgba(255, 255, 255, 0.08);
+  --surface: rgba(18, 20, 28, 0.7);
+  --surface-blur: blur(20px);
+  --border: rgba(255, 255, 255, 0.06);
   --text-main: #F8FAFC;
   --text-muted: #94A3B8;
   --text-dim: #475569;
@@ -21,7 +20,13 @@
 body {
   margin: 0;
   padding: 0;
-  background: #0B0E14 var(--bg-gradient);
+  background-color: #040508;
+  background-image: 
+    radial-gradient(circle at center, transparent 0%, #040508 100%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+  background-attachment: fixed;
   color: var(--text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
