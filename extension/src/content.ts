@@ -477,20 +477,21 @@ function injectSidebarUI() {
       border: 1px solid #1E2330;
       letter-spacing: 0.05em; transition: all 0.2s;
     }
-    #synq-badge:hover { background: #1E2330; }
+    #synq-badge:hover { background: #1E2330; border-color: #818CF8; }
     #synq-badge.active {
-      border-color: #6366F1;
-      box-shadow: 0 0 0 1px #6366F1;
+      border-color: #818CF8;
+      box-shadow: 0 0 10px rgba(129, 140, 248, 0.2);
     }
-    #synq-badge.paused { color: #475569; }
+    #synq-badge.paused { color: #475569; border-color: transparent; }
     #synq-toast {
       position: fixed; bottom: 76px; right: 24px;
-      background: #0B0E14; color: #F8FAFC;
+      background: #0B0E14; color: #F1F5F9;
       padding: 10px 16px; border-radius: 6px;
       font-size: 12px; font-family: 'Inter', system-ui, sans-serif;
       z-index: 999999; opacity: 0;
-      border: 1px solid #1E2330; transition: opacity 0.3s;
+      border: 1px solid rgba(129, 140, 248, 0.3); transition: opacity 0.3s;
       pointer-events: none; max-width: 280px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
   </style>
   <div id="synq-badge">SYNQ</div>
