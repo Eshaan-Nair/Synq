@@ -5,9 +5,9 @@
   --surface: rgba(21, 24, 34, 0.75);
   --surface-blur: blur(12px);
   --border: rgba(255, 255, 255, 0.08);
-  --text-main: #F1F5F9;
-  --text-muted: #94A3B8;
-  --text-dim: #475569;
+  --text-main: #F8FAFC;
+  --text-muted: #CBD5E1;
+  --text-dim: #64748B;
   
   --accent: #818CF8;
   --accent-hover: #6366F1;
@@ -30,6 +30,9 @@ body {
   color: var(--text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0.01em;
 }
 
 * {
@@ -68,18 +71,18 @@ body {
 
 .sidebar {
   position: absolute;
-  left: 24px;
-  top: 24px;
-  bottom: 24px;
-  width: 320px;
-  border-radius: 16px;
+  left: 16px;
+  top: 16px;
+  bottom: 16px;
+  width: 300px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .sidebar-header {
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--border);
   text-align: center;
 }
@@ -171,11 +174,11 @@ body {
 
 .top-header {
   position: absolute;
-  top: 24px;
-  left: 368px;
-  right: 24px;
-  height: 64px;
-  border-radius: 16px;
+  top: 16px;
+  left: 332px;
+  right: 16px;
+  height: 56px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -226,9 +229,9 @@ body {
 
 .floating-tabs {
   position: absolute;
-  top: 104px;
-  right: 24px;
-  border-radius: 12px;
+  top: 88px;
+  right: 16px;
+  border-radius: 10px;
   display: flex;
   overflow: hidden;
   background: var(--surface);
@@ -262,11 +265,11 @@ body {
 
 .floating-side-content {
   position: absolute;
-  top: 160px;
-  right: 24px;
-  bottom: 24px;
+  top: 144px;
+  right: 16px;
+  bottom: 16px;
   width: 400px;
-  border-radius: 16px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -447,8 +450,8 @@ body {
 /* Graph Overlays */
 .graph-legend {
   position: absolute;
-  top: 104px;
-  left: 368px;
+  top: 88px;
+  left: 332px;
   background: rgba(15, 17, 26, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid var(--border);
@@ -474,7 +477,7 @@ body {
 }
 
 .graph-legend-text {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 

@@ -64,6 +64,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     handleUnloadSession().then(sendResponse);
     return true;
   }
+  if (message.type === "TOGGLE_PAUSE") {
+    handleTogglePause().then(sendResponse);
+    return true;
+  }
 });
 
 async function handleSaveChat(payload: {
@@ -253,4 +257,23 @@ async function handleGetPauseState(): Promise<{ paused: boolean }> {
 async function handleSetPauseState(payload: { paused: boolean }) {
   await chrome.storage.local.set({ synq_paused: payload.paused });
   return { ok: true };
+}
+
+async function handleTogglePause() {
+  const result = await chrome.storage.local.get("synq_paused");
+  const newState = result.synq_paused !== true;
+  await chrome.storage.local.set({ synq_paused: newState });
+  
+  // Broadcast to all tabs so they update their badge and detached state
+  const type = newState ? "PAUSE_SYNQ" : "RESUME_SYNQ";
+  const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*"];
+  chrome.tabs.query({ url: AI_URLS }, (tabs) => {
+    for (const tab of tabs) {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, { type }, () => { chrome.runtime.lastError; });
+      }
+    }
+  });
+
+  return { paused: newState };
 }

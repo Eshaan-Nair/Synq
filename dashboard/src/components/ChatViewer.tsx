@@ -21,13 +21,13 @@ const C = {
   cream:   "#F1F5F9",
   surface: "#1A1D27",
   border:  "rgba(255, 255, 255, 0.08)",
-  muted:   "#94A3B8",
-  dim:     "#475569",
+  muted:   "#CBD5E1",
+  dim:     "#64748B",
   bg:      "#0B0E14",
-  userBg:  "rgba(129, 140, 248, 0.12)",
-  userBorder: "rgba(129, 140, 248, 0.25)",
-  asstBg: "rgba(99, 102, 241, 0.08)",
-  asstBorder: "rgba(99, 102, 241, 0.2)",
+  userBg:  "rgba(129, 140, 248, 0.18)",
+  userBorder: "rgba(129, 140, 248, 0.35)",
+  asstBg: "rgba(99, 102, 241, 0.14)",
+  asstBorder: "rgba(99, 102, 241, 0.25)",
 };
 
 interface Turn {
@@ -74,12 +74,13 @@ export default function ChatViewer({ rawText, messageCount, createdAt, platform 
         flexShrink: 0,
         background: "rgba(0,0,0,0.1)",
       }}>
-        <div style={{ fontSize: "11px", color: C.muted }}>
+        <div style={{ fontSize: "12px", color: C.muted, fontWeight: 500 }}>
           {turns.length} turn{turns.length !== 1 ? "s" : ""} · {messageCount} messages · saved {new Date(createdAt).toLocaleDateString()}
         </div>
         <div style={{
-          fontSize: "9px",
-          color: C.dim,
+          fontSize: "10px",
+          color: "#CBD5E1",
+          fontWeight: 700,
           background: `rgba(255,255,255,0.05)`,
           padding: "3px 8px",
           borderRadius: 4,
@@ -112,9 +113,9 @@ export default function ChatViewer({ rawText, messageCount, createdAt, platform 
             >
               {/* Role label */}
               <div style={{
-                fontSize: "9px",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
+                fontSize: "11px",
+                fontWeight: 800,
+                letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 color: isUser ? C.indigo : C.cyan,
                 marginBottom: 4,
@@ -131,12 +132,13 @@ export default function ChatViewer({ rawText, messageCount, createdAt, platform 
                 borderRadius: isUser ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
                 background: isUser ? C.userBg : C.asstBg,
                 border: `1px solid ${isUser ? C.userBorder : C.asstBorder}`,
-                fontSize: "13px",
-                lineHeight: "1.7",
-                color: C.cream,
+                fontSize: "14.5px",
+                lineHeight: "1.6",
+                color: "#FFFFFF",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
-                fontFamily: "system-ui, sans-serif",
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 500,
               }}>
                 {turn.text}
               </div>

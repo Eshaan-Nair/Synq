@@ -444,7 +444,7 @@ export default function GraphView({ nodes, links }: Props) {
 
       {/* Zoom controls & Settings Toggle */}
       <div style={{
-        position: "absolute", bottom: 24, left: 368,
+        position: "absolute", bottom: 16, left: 332,
         display: "flex", flexDirection: "column", gap: 6,
       }}>
         {(() => {
@@ -471,7 +471,7 @@ export default function GraphView({ nodes, links }: Props) {
       {/* Settings Panel */}
       {showSettings && (
         <div style={{
-          position: "absolute", bottom: 24, left: 412,
+          position: "absolute", bottom: 16, left: 376,
           background: "rgba(15, 17, 26, 0.95)", backdropFilter: "blur(12px)",
           border: "1px solid rgba(129, 140, 248, 0.3)", borderRadius: 12, padding: "16px 20px", width: 260,
           color: "#F1F5F9", fontSize: 13,

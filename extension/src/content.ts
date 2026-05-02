@@ -497,6 +497,10 @@ function injectSidebarUI() {
   <div id="synq-badge">SYNQ</div>
   <div id="synq-toast"></div>
   `;
+
+  synqShadow.getElementById("synq-badge")?.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ type: "TOGGLE_PAUSE" });
+  });
 }
 
 function updateBadge(active: boolean) {
@@ -560,6 +564,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       attachPromptInterceptor();
       updateBadge(true);
       showToast("SYNQ resumed — context injection active");
+    } else {
+      updateBadge(false);
+      showToast("SYNQ resumed — waiting for session");
     }
     sendResponse({ ok: true });
     return true;
