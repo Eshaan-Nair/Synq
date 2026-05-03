@@ -199,7 +199,14 @@ export default function App() {
           </div>
           <div className="session-list">
             {sessions.length === 0 ? (
-              <div className="empty-state">No sessions yet.</div>
+              <div className="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.2, marginBottom: "12px" }}>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+                <span>No sessions found.<br/>Capture context using the extension to get started.</span>
+              </div>
             ) : (
               sessions.map((s) => {
                 const isActive = activeSession?._id === s._id;
@@ -280,8 +287,14 @@ export default function App() {
             className={`load-ext-btn ${loadedToExtension ? "success" : ""}`}
             onClick={loadIntoExtension}
           >
-            {loadedToExtension ? "✓ Synced" : "Load Extension"}
+            {loadedToExtension ? (
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Synced
+              </span>
+            ) : "Load Extension"}
           </button>
+
 
           <div className="tab-divider" />
 
@@ -341,12 +354,19 @@ export default function App() {
                   {loadingSession ? (
                     <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
                       {["90%", "75%", "85%", "60%", "80%"].map((w, i) => (
-                        <div key={i} className="skeleton-box skeleton-pulse" style={{ height: 44, width: w, animationDelay: `${i * 0.12}s` }} />
+                        <div key={i} className="skeleton-box skeleton-pulse" style={{ height: 64, width: w, borderRadius: "12px", animationDelay: `${i * 0.12}s` }} />
                       ))}
                     </div>
                   ) : triples.length === 0 ? (
-                    <div className="empty-state">No facts captured for this session yet.</div>
+                    <div className="empty-state" style={{ height: "100%", flexDirection: "column" }}>
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.1, marginBottom: "16px" }}>
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                      </svg>
+                      No facts captured for this session.
+                    </div>
                   ) : (
+
                     <>
                       {[...triples]
                         .reverse()

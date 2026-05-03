@@ -483,85 +483,68 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId }:
       <svg ref={svgRef} style={{ width: "100%", height: "100%", background: "transparent" }} />
 
       {/* Zoom controls & Settings Toggle */}
-      <div style={{
-        position: "absolute", bottom: 16, left: 332,
-        display: "flex", flexDirection: "column", gap: 6,
-      }}>
-        {(() => {
-          const btnStyle = {
-            width: 32, height: 32, borderRadius: 8,
-            background: "rgba(26,29,39,0.9)", border: "1px solid #292D3E",
-            color: "#94A3B8", fontSize: 16, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.15s",
-          };
-          return (
-            <>
-              <button title="Zoom in" onClick={zoomIn} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>+</button>
-              <button title="Zoom out" onClick={zoomOut} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>−</button>
-              <button title="Reset zoom" onClick={zoomReset} style={btnStyle} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#292D3E")}>⊙</button>
-              <button title="Graph Settings" onClick={() => setShowSettings(!showSettings)} style={{...btnStyle, marginTop: 8, borderColor: showSettings ? "#818CF8" : "#292D3E", color: showSettings ? "#818CF8" : "#94A3B8"}} onMouseEnter={e => (e.currentTarget.style.borderColor = "#818CF8")} onMouseLeave={e => (e.currentTarget.style.borderColor = showSettings ? "#818CF8" : "#292D3E")}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-              </button>
-            </>
-          );
-        })()}
+      <div className="graph-controls">
+        <button title="Zoom in" onClick={zoomIn} className="graph-btn">+</button>
+        <button title="Zoom out" onClick={zoomOut} className="graph-btn">−</button>
+        <button title="Reset zoom" onClick={zoomReset} className="graph-btn">⊙</button>
+        <button 
+          title="Graph Settings" 
+          onClick={() => setShowSettings(!showSettings)} 
+          className={`graph-btn ${showSettings ? "active" : ""}`}
+          style={{ marginTop: "8px" }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
       </div>
+
 
       {/* Settings Panel */}
       {showSettings && (
-        <div style={{
-          position: "absolute", bottom: 16, left: 376,
-          background: "rgba(15, 17, 26, 0.95)", backdropFilter: "blur(12px)",
-          border: "1px solid rgba(129, 140, 248, 0.3)", borderRadius: 12, padding: "16px 20px", width: 260,
-          color: "#F1F5F9", fontSize: 13,
-          display: "flex", flexDirection: "column", gap: 16,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
-        }}>
-          <div style={{ fontWeight: 700, fontSize: 14, textTransform: "uppercase", letterSpacing: "0.05em", color: "#818CF8" }}>Graph Settings</div>
+        <div className="graph-settings-panel">
+          <div className="settings-title">Graph Settings</div>
           
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "#94A3B8" }}>Node Size</span>
+          <div className="settings-row">
+            <span className="settings-label">Node Size</span>
             <select 
               value={settingNodeSize} 
               onChange={e => setSettingNodeSize(e.target.value as any)}
-              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+              className="settings-select"
             >
               <option value="normal">Normal</option>
               <option value="large">Large</option>
             </select>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "#94A3B8" }}>Node Labels</span>
+          <div className="settings-row">
+            <span className="settings-label">Node Labels</span>
             <select 
               value={settingNodeLabels} 
               onChange={e => setSettingNodeLabels(e.target.value as any)}
-              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+              className="settings-select"
             >
               <option value="hover">On Hover</option>
               <option value="always">Always Show</option>
             </select>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "#94A3B8" }}>Edge Facts</span>
+          <div className="settings-row">
+            <span className="settings-label">Edge Facts</span>
             <select 
               value={settingEdgeLabels} 
               onChange={e => setSettingEdgeLabels(e.target.value as any)}
-              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+              className="settings-select"
             >
               <option value="hover">On Hover</option>
               <option value="always">Always Show</option>
             </select>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "#94A3B8" }}>Physics Tension</span>
+          <div className="settings-row">
+            <span className="settings-label">Physics Tension</span>
             <select 
               value={settingTension} 
               onChange={e => setSettingTension(e.target.value as any)}
-              style={{ background: "#0B0E14", color: "#F8FAFC", border: "1px solid #292D3E", borderRadius: 6, padding: "4px 8px", outline: "none", cursor: "pointer" }}
+              className="settings-select"
             >
               <option value="tight">Tight</option>
               <option value="loose">Loose</option>
@@ -569,6 +552,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId }:
           </div>
         </div>
       )}
+
 
       {/* Legend — shows full type name with color dot */}
       {usedTypes.length > 0 && (
