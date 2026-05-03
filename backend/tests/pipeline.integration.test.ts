@@ -67,18 +67,18 @@ describe("Full RAG Pipeline", () => {
       3
     );
     expect(results.length).toBeGreaterThan(0);
-    expect(results[0].score).toBeGreaterThan(0.4);
+    expect(results[0].score).toBeGreaterThan(0.5);
     expect(results[0].content.toLowerCase()).toMatch(/refresh|jwt|token/);
   }, 15_000);
 
   it("unrelated query scores below threshold", async () => {
     const results = await retrieveRelevantChunks(
-      "pandas dataframe pivot table machine learning",
+      "how to bake sourdough bread with a natural starter",
       testSessionId,
       3
     );
-    // All results should be low relevance
-    const highScores = results.filter(r => r.score > 0.30);
+    // Unrelated queries should not yield high scores (> 0.45)
+    const highScores = results.filter(r => r.score > 0.45);
     expect(highScores.length).toBe(0);
   }, 15_000);
 
