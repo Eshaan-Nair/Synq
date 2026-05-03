@@ -15,7 +15,7 @@ Every time you open a new chat, your AI starts from zero. You re-explain your st
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/issues)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Synq/ci.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.3.2-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.3.3-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
@@ -89,7 +89,7 @@ How do we fix the refresh token issue?
 - [Usage Guide](#usage-guide)
 - [Tech Stack](#tech-stack)
 - [Privacy & Security](#privacy--security)
-- [What's New in v1.3.2](#whats-new-in-v132)
+- [What's New in v1.3.3](#whats-new-in-v133)
 - [Self-Hosting](#self-hosting)
 - [Contributing](#contributing)
 - [License](#license)
@@ -362,9 +362,9 @@ The only external service is **Groq**, used solely for graph triple extraction â
 
 ---
 
-## What's New in v1.3.2
+## What's New in v1.3.3
 
-### UI/UX & Extension Refinements (v1.3.2)
+### UI/UX & Extension Refinements (v1.3.3)
 
 - **Collapsible Sidebar:** Left sidebar with Facts and Chat tabs is now collapsible for a better viewing experience.
 - **Graph Settings:** Added granular controls for dashboard graph parameters (node size, position, tension).

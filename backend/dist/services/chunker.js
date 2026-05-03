@@ -1,6 +1,6 @@
 "use strict";
 /**
- * chunker.ts — Sliding Window Chunker (v1.3)
+ * chunker.ts — Sliding Window Chunker (v1.3.3)
  *
  * Fix: Added guard against infinite loop when overlapWords >= windowWords.
  * If step would be <= 0, the function now clamps overlap to windowWords - 1.

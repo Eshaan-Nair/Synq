@@ -1,4 +1,5 @@
 #!/bin/bash
+export COMPOSE_PROJECT_NAME=synq
 # Error handling is done explicitly per-section.
 # Top-level `set -e` is intentionally omitted -- it causes the script to
 # silently exit on non-zero returns (e.g. ollama not running) before any
@@ -8,7 +9,7 @@ echo ""
 echo " Starting SYNQ..."
 echo ""
 
-# -- Check .env exists -------------------------------------------------------
+# Check .env exists
 if [ ! -f "backend/.env" ]; then
   echo " MISSING: backend/.env not found."
   echo " Run: cp backend/.env.example backend/.env"
@@ -16,7 +17,7 @@ if [ ! -f "backend/.env" ]; then
   exit 1
 fi
 
-# -- Check GROQ_API_KEY is not the placeholder --------------------------------
+# Check GROQ_API_KEY is not the placeholder
 if grep -q "gsk_your_key_here" "backend/.env"; then
   echo " WARNING: backend/.env still has the placeholder GROQ_API_KEY."
   echo " Edit backend/.env and replace gsk_your_key_here with your real key."
@@ -24,7 +25,7 @@ if grep -q "gsk_your_key_here" "backend/.env"; then
   echo ""
 fi
 
-# -- Check Ollama is installed and model is pulled ----------------------------
+# Check Ollama is installed and model is pulled
 echo " Checking Ollama..."
 if ! command -v ollama &>/dev/null; then
   echo ""
@@ -53,7 +54,7 @@ else
 fi
 echo ""
 
-# -- Start databases ----------------------------------------------------------
+# Start databases
 echo " Starting Docker containers (Neo4j + MongoDB + ChromaDB)..."
 # Try modern `docker compose` (Docker Desktop v4+), fall back to legacy CLI.
 if docker compose up -d 2>/dev/null; then
@@ -69,10 +70,10 @@ else
 fi
 echo ""
 
-# -- Give DBs a moment to initialise -----------------------------------------
+# Give DBs a moment to initialise
 sleep 3
 
-# -- Build extension with esbuild --------------------------------------------
+# Build extension with esbuild
 echo " Building extension..."
 cd extension
 if [ ! -f "node_modules/.bin/esbuild" ]; then
@@ -104,7 +105,7 @@ fi
 cd ..
 echo ""
 
-# -- Start backend in background ---------------------------------------------
+# Start backend in background
 echo " Starting backend on port 3001..."
 cd backend
 if [ ! -f "node_modules/.bin/ts-node-dev" ]; then
@@ -117,7 +118,7 @@ cd ..
 echo " Backend started (PID $BACKEND_PID)"
 echo ""
 
-# -- Wait for backend to become healthy --------------------------------------
+# Wait for backend to become healthy
 echo " Waiting for backend to start..."
 HEALTH_OK=0
 for i in $(seq 1 10); do
@@ -135,7 +136,7 @@ else
 fi
 echo ""
 
-# -- Start dashboard in background -------------------------------------------
+# Start dashboard in background
 echo " Starting dashboard on port 5173..."
 cd dashboard
 if [ ! -f "node_modules/.bin/vite" ]; then
@@ -148,20 +149,19 @@ cd ..
 echo " Dashboard started (PID $DASHBOARD_PID)"
 echo ""
 
-echo "========================================="
 echo " SYNQ is running"
 echo "   Dashboard  >  http://localhost:5173"
 echo "   Backend    >  http://localhost:3001/health"
 echo "   Neo4j UI   >  http://localhost:7474"
 echo "   ChromaDB   >  http://localhost:8000"
 echo "   MongoDB    >  mongodb://localhost:27017"
-echo "========================================="
+echo ""
 echo ""
 echo " Extension: load the /extension folder in chrome://extensions (Developer mode)"
 echo " Press Ctrl+C to stop everything."
 echo ""
 
-# -- Trap Ctrl+C and kill children cleanly -----------------------------------
+# Trap Ctrl+C and kill children cleanly
 # Trap only INT and TERM (not EXIT) -- trapping EXIT causes the cleanup
 # function to also run on normal script completion, stopping databases
 # unexpectedly when nothing went wrong.
