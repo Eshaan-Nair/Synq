@@ -24,6 +24,12 @@ const router = Router();
 router.post("/retrieve", async (req: Request, res: Response) => {
   let { prompt, sessionId, topN = 3 } = req.body;
 
+  // v1.4.1: Strict validation of sessionId as string
+  if (typeof sessionId !== "string" || !sessionId.match(/^[0-9a-fA-F]{24}$/)) {
+    res.status(400).json({ error: "Invalid sessionId format (must be 24-char hex string)" });
+    return;
+  }
+
   if (!prompt || !sessionId) {
     res.status(400).json({ error: "prompt and sessionId are required" });
     return;

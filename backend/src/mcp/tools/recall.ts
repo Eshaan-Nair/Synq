@@ -15,12 +15,14 @@ export async function recall(
   topN: number = 3
 ): Promise<string> {
   try {
+    // v1.4.1: Force project to be a string to avoid NoSQL injection
+    const projectStr = typeof project === "string" ? project : undefined;
     const clampedN = Math.max(1, Math.min(topN, 6));
 
     // Find the session for the given project (most recent)
     let sessionId: string | undefined;
-    if (project) {
-      const session = await Session.findOne({ projectName: project })
+    if (projectStr) {
+      const session = await Session.findOne({ projectName: projectStr })
         .sort({ updatedAt: -1 })
         .select("_id");
       sessionId = session?._id?.toString();

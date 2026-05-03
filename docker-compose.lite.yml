@@ -12,7 +12,7 @@ services:
     image: mongo:7.0
     container_name: synq_mongo
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-synq}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-synqpassword123}
@@ -23,7 +23,7 @@ services:
     image: chromadb/chroma:0.6.3
     container_name: synq_chroma
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - chroma_data:/chroma/chroma
     environment:
