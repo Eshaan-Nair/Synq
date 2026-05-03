@@ -13,7 +13,8 @@
  */
 
 // Helpers — import from actual service files
-import { chunkAndEmbed, retrieveRelevantChunks } from "../src/services/chroma";
+import { storeWindowChunks, retrieveRelevantChunks } from "../src/services/chroma";
+import { slidingWindowChunks } from "../src/services/chunker";
 import { connectChroma } from "../src/services/chroma";
 import { connectMongo } from "../src/services/mongo";
 import { Session } from "../src/services/mongo";
@@ -44,8 +45,9 @@ beforeAll(async () => {
   });
   testSessionId = session._id.toString();
 
-  // Seed the known fixture
-  await chunkAndEmbed(FIXTURE_TEXT, testSessionId);
+  // Seed the known fixture using sliding window chunker
+  const chunks = slidingWindowChunks(FIXTURE_TEXT, testSessionId);
+  await storeWindowChunks(chunks);
 
   // Allow embeddings to settle
   await new Promise(r => setTimeout(r, 2000));
