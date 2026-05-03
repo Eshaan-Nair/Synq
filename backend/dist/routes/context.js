@@ -67,11 +67,26 @@ router.post("/session", async (req, res) => {
         return;
     }
     try {
-        const session = await mongo_1.Session.create({ projectName: projectName.trim(), platform });
-        res.json({ sessionId: session._id, projectName });
+        const { sessionId } = req.body;
+        if (sessionId) {
+            if (!isValidObjectId(sessionId)) {
+                res.status(400).json({ error: "Invalid sessionId format" });
+                return;
+            }
+            const updated = await mongo_1.Session.findByIdAndUpdate(sessionId, { projectName: projectName.trim(), platform }, { returnDocument: 'after' });
+            if (!updated) {
+                res.status(404).json({ error: "Session not found" });
+                return;
+            }
+            res.json({ sessionId: updated._id, projectName: updated.projectName });
+        }
+        else {
+            const session = await mongo_1.Session.create({ projectName: projectName.trim(), platform });
+            res.json({ sessionId: session._id, projectName });
+        }
     }
     catch (err) {
-        res.status(500).json({ error: "Failed to create session" });
+        res.status(500).json({ error: "Failed to create/update session" });
     }
 });
 // GET /api/context/retrieve/:sessionId
@@ -95,7 +110,7 @@ router.get("/retrieve/:sessionId", async (req, res) => {
             await mongo_1.Session.findByIdAndUpdate(sessionId, {
                 summary: structuredSummary,
                 tripleCount: triples.length,
-            });
+            }, { returnDocument: 'after' });
         }
         res.json({ sessionId, tripleCount: triples.length, contextBlock, structuredSummary, triples });
     }
@@ -118,11 +133,11 @@ router.get("/sessions", async (req, res) => {
 // POST /api/context/active
 router.post("/active", async (req, res) => {
     const { sessionId } = req.body;
-    if (!sessionId) {
-        res.status(400).json({ error: "sessionId required" });
+    if (sessionId === undefined) {
+        res.status(400).json({ error: "sessionId required (can be null)" });
         return;
     }
-    if (!isValidObjectId(sessionId)) {
+    if (sessionId !== null && !isValidObjectId(sessionId)) {
         res.status(400).json({ error: "Invalid sessionId format" });
         return;
     }

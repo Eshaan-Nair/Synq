@@ -42,6 +42,7 @@ app.use(express_1.default.json({ limit: "5mb" }));
 // Issue #3 Fix: Restrict CORS to trusted origins only
 const ALLOWED_ORIGINS = [
     "http://localhost:5173", // Vite dashboard (dev)
+    "http://localhost:5174", // Vite dashboard (dev alternative)
     "http://localhost:4173", // Vite dashboard (preview)
     "http://localhost:3000", // alternative dev port
 ];
@@ -112,7 +113,7 @@ app.use("/api/rag", rag_1.default);
 app.get("/health", (_req, res) => {
     res.json({
         status: "SYNQ backend running",
-        version: "1.3.0",
+        version: "1.3.3",
         services: {
             backend: "ok",
             port: PORT,

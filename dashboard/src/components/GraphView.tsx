@@ -1,5 +1,5 @@
 /**
- * GraphView.tsx — v1.3.2
+ * GraphView.tsx — v1.3.3
  *
  * Fix: Node labels were broken in two ways:
  *

@@ -1,9 +1,10 @@
 @echo off
+set COMPOSE_PROJECT_NAME=synq
 echo.
 echo  Starting SYNQ...
 echo.
 
-REM ── Check .env exists ─────────────────────────────────────────────
+REM Check .env exists
 if not exist "backend\.env" (
   echo  MISSING: backend\.env not found.
   echo  Run: copy backend\.env.example backend\.env
@@ -12,7 +13,7 @@ if not exist "backend\.env" (
   exit /b 1
 )
 
-REM ── Check GROQ_API_KEY is not the placeholder ──────────────────────
+REM Check GROQ_API_KEY is not the placeholder
 findstr /C:"gsk_your_key_here" "backend\.env" >nul 2>&1
 if %errorlevel%==0 (
   echo  WARNING: backend\.env still has the placeholder GROQ_API_KEY.
@@ -22,7 +23,7 @@ if %errorlevel%==0 (
   pause
 )
 
-REM ── Check Ollama is installed and model is pulled ──────────────────
+REM Check Ollama is installed and model is pulled
 echo  Checking Ollama...
 where ollama >nul 2>&1
 if %errorlevel% neq 0 (
@@ -54,7 +55,7 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-REM ── Start Docker databases ─────────────────────────────────────────
+REM Start Docker databases
 echo  Starting Docker containers (Neo4j + MongoDB + ChromaDB)...
 REM Try modern `docker compose` first (Docker Desktop v4+), fall back to legacy
 docker compose up -d >nul 2>&1
@@ -70,10 +71,10 @@ if %errorlevel% neq 0 (
 echo  Databases running
 echo.
 
-REM ── Give DBs a moment to initialise ───────────────────────────────
+REM Give DBs a moment to initialise
 timeout /t 3 /nobreak >nul
 
-REM ── Build extension with esbuild ──────────────────────────────────
+REM Build extension with esbuild
 echo  Building extension...
 cd extension
 
@@ -116,7 +117,7 @@ if %errorlevel% neq 0 (
 cd ..
 echo.
 
-REM ── Start backend ─────────────────────────────────────────────────
+REM Start backend
 echo  Starting backend on port 3001...
 cd backend
 
@@ -138,7 +139,7 @@ cd ..
 echo  Backend window opened
 echo.
 
-REM ── Wait for backend to become healthy ─────────────────────────────
+REM Wait for backend to become healthy
 echo  Waiting for backend to start...
 timeout /t 4 /nobreak >nul
 REM Try a simple health check (curl may not be available on all Windows PCs)
@@ -155,7 +156,7 @@ if %errorlevel%==0 (
 )
 echo.
 
-REM ── Start dashboard ────────────────────────────────────────────────
+REM Start dashboard
 echo  Starting dashboard on port 5173...
 cd dashboard
 
@@ -177,14 +178,13 @@ cd ..
 echo  Dashboard window opened
 echo.
 
-echo =========================================
 echo  SYNQ is running
 echo    Dashboard  ^>  http://localhost:5173
 echo    Backend    ^>  http://localhost:3001/health
 echo    Neo4j UI   ^>  http://localhost:7474
 echo    ChromaDB   ^>  http://localhost:8000
 echo    MongoDB    ^>  mongodb://localhost:27017
-echo =========================================
+echo.
 echo.
 echo  Extension: load the /extension folder in chrome://extensions (Developer mode)
 echo  Close the backend and dashboard windows to stop.

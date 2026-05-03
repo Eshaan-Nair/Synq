@@ -4,6 +4,16 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ---
 
+## [1.3.3] — 2026-05-03 — Startup Robustness & Compatibility
+
+### Scripts & Docker
+
+- **Folder Independence** — forced Docker Compose project name to `synq` to prevent startup errors when the repository folder contains dots or version numbers
+- **Windows Compatibility** — removed Unicode decorative characters from `start.bat` that caused syntax errors in legacy code pages
+- **Visual Cleanup** — simplified script output and internal comments for a cleaner terminal experience
+
+---
+
 ## [1.3.2] — 2026-05-03 — UI Refinement & Extension Features
 
 ### Dashboard UI/UX

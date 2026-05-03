@@ -55,7 +55,6 @@ async function getActiveSessionId() {
     return doc?.sessionId ?? null;
 }
 async function setActiveSessionId(sessionId) {
-    // FIX (Issue #2): Mongoose 9 deprecated `returnDocument: 'after'`.
-    // Use `new: true` instead, which is the correct Mongoose option.
-    await exports.ActiveSessionModel.findByIdAndUpdate("singleton", { sessionId }, { upsert: true, new: true });
+    // Use `returnDocument: 'after'` instead, which is the correct Mongoose option.
+    await exports.ActiveSessionModel.findByIdAndUpdate("singleton", { sessionId }, { upsert: true, returnDocument: 'after' });
 }
