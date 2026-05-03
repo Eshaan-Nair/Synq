@@ -114,7 +114,7 @@ app.use("/api/rag", ragRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "SYNQ backend running",
-    version: "1.3.0",
+    version: "1.3.2",
     services: {
       backend: "ok",
       port: PORT,

@@ -1,5 +1,5 @@
 /**
- * rag.test.ts — v1.3
+ * rag.test.ts — v1.3.2
  *
  * Rewrote from scratch to test the ACTUAL production logic in chroma.ts:
  *
