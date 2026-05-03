@@ -43,7 +43,7 @@ jobs:
           ollama pull nomic-embed-text
 
       - name: Run integration tests
-        run: npm test -- --testPathPattern=pipeline.integration
+        run: npm test -- --testPathPatterns=pipeline.integration
         working-directory: backend
         env:
           MONGO_URI: mongodb://synq:synqpassword123@localhost:27017/synqdb_test

@@ -1,6 +1,6 @@
 {
   "testEnvironment": "node",
-  "roots": ["<rootDir>/src/__tests__"],
+  "roots": ["<rootDir>/src", "<rootDir>/tests"],
   "moduleFileExtensions": ["ts", "js"],
   "transform": {
     "^.+\\.ts$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
