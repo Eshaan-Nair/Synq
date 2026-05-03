@@ -56,7 +56,6 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 - New: `.github/workflows/integration-tests.yml` — full RAG pipeline integration test on every PR
 - New: `.github/workflows/selector-check.yml` — weekly headless check for selector staleness; auto-creates GitHub issues
 - New: `.github/workflows/release.yml` — auto-creates GitHub Release with extension zip on version tags
-- New: `.github/dependabot.yml` — weekly npm + Docker dependency updates
 - New: `backend/tests/pipeline.integration.test.ts` — seeds a fixture and asserts end-to-end retrieval
 - New: `ROADMAP.md` — versioned milestones and planned features
 

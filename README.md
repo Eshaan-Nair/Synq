@@ -308,7 +308,6 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 - **One-command installers** — `install.sh` and `install.bat`
 - **Full pipeline integration test** — end-to-end RAG test in CI on every PR
 - **GitHub Releases** — extension zip auto-attached on every version tag
-- **Dependabot** — weekly npm + Docker dependency updates
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
 

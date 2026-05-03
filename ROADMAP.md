@@ -15,7 +15,7 @@ Current version: **v1.4.0**
 - Lite mode — Docker Compose profiles for < 8 GB RAM machines
 - One-command installers (install.sh + install.bat)
 - Full pipeline integration test in CI
-- GitHub Releases + Dependabot
+- GitHub Releases automation
 
 ### v1.3.x
 - Collapsible sidebar, graph settings panel
