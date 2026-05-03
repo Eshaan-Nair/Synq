@@ -41,7 +41,7 @@ beforeAll(async () => {
   // Create a test session
   const session = await Session.create({
     projectName: TEST_PROJECT,
-    platform: "test",
+    platform: "claude",
   });
   testSessionId = session._id.toString();
 
