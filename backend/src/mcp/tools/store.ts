@@ -25,9 +25,10 @@ export async function store(
     }
 
     // Find or create session for this project
-    let session = await Session.findOne({ projectName: project }).sort({ updatedAt: -1 });
+    const projectStr = String(project); // v1.4.1: ensure string
+    let session = await Session.findOne({ projectName: projectStr }).sort({ updatedAt: -1 });
     if (!session) {
-      session = await Session.create({ projectName: project, platform: "mcp" });
+      session = await Session.create({ projectName: projectStr, platform: "mcp" });
     }
     const sessionId = session._id.toString();
 

@@ -5,8 +5,8 @@ services:
     container_name: synq_neo4j
     profiles: ["full"]          # skipped in lite mode — saves ~2 GB RAM
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
     environment:
       - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-synqpassword123}
     volumes:
@@ -17,7 +17,7 @@ services:
     container_name: synq_mongo
     profiles: ["full", "lite"]  # always starts
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-synq}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-synqpassword123}
@@ -29,7 +29,7 @@ services:
     container_name: synq_chroma
     profiles: ["full", "lite"]  # always starts
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - chroma_data:/chroma/chroma
     environment:
