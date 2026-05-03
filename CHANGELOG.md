@@ -4,6 +4,44 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ---
 
+## [1.3.2] — 2026-05-03 — UI Refinement & Extension Features
+
+### Dashboard UI/UX
+
+- **UI Overhaul** — complete redesign of the dashboard layout and color palette
+- **Graph Settings** — added granular controls for dashboard graph parameters (node size, position, tension, etc.)
+- **Collapsible Sidebar** — left sidebar with Facts and Chat tabs is now collapsible for a better viewing experience
+- **Performance** — fixed staggered graph rendering causing lag in large knowledge graphs
+- **Visual Fixes** — resolved UI arrow connection errors and removed excess whitespace from the header and sidebar
+
+### Extension Features
+
+- **Multi-Save** — added the ability to save the same chat multiple times without creating multiple duplicate sessions
+- **Unload Session** — added an 'Unload' button to explicitly disconnect from the active session
+- **Always Available Toggle** — the Pause/Resume button is now always available in a compact UI layout
+- **Badge Toggle** — the SYNQ extension badge can now be clicked to instantly toggle SYNQ on and off
+- **Contrast Fix** — fixed the save button contrast issue for better visibility
+- **Code Cleanup** — removed dead code from `content.ts` and fixed minor errors
+
+---
+
+## [1.3.1] — 2026-05-01 — Scripts & Documentation Improvements
+
+### Scripts & Backend
+
+- **Windows Scripts** — fixed parenthesis and pipe parsing errors in `start.bat` and `start.sh`
+- **Dependency Checks** — added automatic checks for Ollama and backend installation errors in startup scripts
+- **Clean Build** — suppressed NPM deprecation warnings and cleaned up build artifacts
+- **Backend Install** — fixed backend NPM install sequence in `start.bat` and `start.sh`
+
+### Documentation
+
+- **README** — added project logo and demonstration video
+- **General** — improved project documentation across all `.md` files
+- **Git** — added `.gitattributes` and updated `.gitignore` for extension `/dist`
+
+---
+
 ## [1.3.0] — 2026-04-27 — UI/UX Overhaul & Open Source Readiness
 
 ### Dashboard — Graph Visualization
