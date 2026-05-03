@@ -31,7 +31,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Run unit tests
-        run: npm test
+        run: npm run test:unit
         env:
           # Tests are pure-function only — no real credentials needed
           GROQ_API_KEY: test-key
