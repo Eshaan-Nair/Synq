@@ -1,0 +1,58 @@
+name: Weekly Selector Staleness Check
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"   # Every Monday at 9:00 AM UTC
+  workflow_dispatch:       # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  selector-check:
+    name: Check AI Platform Selectors
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        run: npm install -g playwright && npx playwright install --with-deps chromium
+
+      - name: Run selector smoke test
+        id: test
+        run: node scripts/check-selectors.js
+        continue-on-error: true
+
+      - name: Create GitHub issue if selectors are stale
+        if: steps.test.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `[Selector Alert] Platform UI may have changed — ${today}`,
+              body: [
+                "## Selector Staleness Detected",
+                "",
+                "The weekly selector smoke test failed. One or more AI platforms may have",
+                "updated their UI, breaking SYNQ's ability to find the input or response elements.",
+                "",
+                "**Platforms checked:** Claude.ai, ChatGPT, Gemini",
+                "",
+                "**Action required:**",
+                "1. Open the failed workflow run (link below) to see which platform failed",
+                "2. Open DevTools on the affected platform and inspect the input element",
+                "3. Update `extension/src/platform/resolver.ts` — add the new selector to the front of the strategy array",
+                "4. Rebuild the extension and verify the fix",
+                "",
+                "**Reference:** PLATFORM_SELECTORS.md",
+                "",
+                `**Workflow run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              ].join("\n"),
+              labels: ["bug", "selector-stale", "automated"],
+            });

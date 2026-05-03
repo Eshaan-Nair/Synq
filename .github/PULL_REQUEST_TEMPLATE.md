@@ -1,31 +1,31 @@
-## Description
+## What does this PR do?
 
-Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. 
+Brief description of the change and why it was made.
 
-Fixes # (issue)
+Fixes # (issue number, if applicable)
 
 ## Type of change
 
-Please delete options that are not relevant.
+- [ ] Bug fix
+- [ ] New feature
+- [ ] New platform support
+- [ ] Documentation update
+- [ ] Refactor / performance
+- [ ] CI / tooling
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+## Testing
 
-## How Has This Been Tested?
+How did you verify this works?
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration.
+- [ ] `npx tsc --noEmit` in `backend/` — 0 errors
+- [ ] `cd backend && npm test` — all tests pass
+- [ ] Manually saved a chat and verified chunks stored
+- [ ] Manually triggered Auto-Connect and verified context injected
+- [ ] Rebuilt extension and tested in Chrome
 
-- [ ] Test A
-- [ ] Test B
+## Checklist
 
-## Checklist:
-
-- [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
+- [ ] `PLATFORM_SELECTORS.md` updated (if selectors changed)
+- [ ] `CHANGELOG.md` entry added
+- [ ] No new `console.log` — use `logger` utility in backend
+- [ ] TypeScript strict — no new `any` without a comment

@@ -1,81 +1,122 @@
 #!/usr/bin/env node
 /**
- * #10: Platform selector smoke test
+ * scripts/check-selectors.js
  *
- * Verifies that the CSS selectors defined in content.ts still match elements
- * on the live platform pages. Run this periodically or before a release.
+ * Playwright smoke test that verifies CSS selectors still resolve on each
+ * supported AI platform. Runs headlessly — no login needed to check that
+ * the input box and response container exist on the page.
  *
- * Usage:
+ * Called by .github/workflows/selector-check.yml every Monday at 09:00 UTC.
+ * Exit 1 triggers the workflow to auto-create a GitHub issue.
+ *
+ * Run manually:
+ *   npx playwright install chromium --with-deps
  *   node scripts/check-selectors.js
  *
- * Requirements:
- *   npm install -g playwright
- *   npx playwright install chromium
- *
  * Exit codes:
- *   0 — all selectors found on all platforms
- *   1 — one or more selectors are broken (platforms updated their DOM)
+ *   0 - all selectors found on all platforms
+ *   1 - one or more selectors broken
  */
 
 const { chromium } = require("playwright");
 
-// Mirror of the selectors in extension/src/content.ts
-// Update these when you update content.ts
+// Mirrors INPUT_SELECTOR_STRATEGIES in extension/src/platform/resolver.ts
+// and the user/response selectors in each platform file.
+// Keep these in sync when you update resolver.ts or a platform file.
 const PLATFORMS = [
   {
     name: "Claude",
     url: "https://claude.ai/new",
-    selectors: {
-      input:    '[contenteditable="true"]',
-      response: ".font-claude-message, [data-test-render-count], .prose",
-    },
+    inputSelectors: [
+      'div.ProseMirror',
+      '[data-placeholder][contenteditable]',
+      '[data-testid="composer-input"]',
+      '[aria-label="Message Claude"][contenteditable]',
+      'div[role="textbox"][contenteditable]',
+      '[contenteditable="true"]',
+    ],
+    responseSelectors: [
+      '.font-claude-response',
+      '.font-claude-message',
+      '[data-is-streaming]',
+    ],
   },
   {
     name: "ChatGPT",
     url: "https://chatgpt.com",
-    selectors: {
-      input:    "#prompt-textarea, [contenteditable='true']",
-      response: '[data-message-author-role="assistant"], .markdown',
-    },
+    inputSelectors: [
+      '#prompt-textarea',
+      '[data-testid="prompt-textarea"]',
+      'div[placeholder*="Message"][contenteditable]',
+      '[contenteditable="true"]',
+    ],
+    responseSelectors: [
+      '[data-message-author-role="assistant"]',
+      '.markdown.prose',
+      '.agent-turn',
+    ],
   },
   {
     name: "Gemini",
     url: "https://gemini.google.com",
-    selectors: {
-      input:    ".ql-editor, [contenteditable='true']",
-      response: "model-response, .model-response-text",
-    },
+    inputSelectors: [
+      '.ql-editor',
+      'rich-textarea [contenteditable="true"]',
+      '[aria-label*="message"][contenteditable]',
+      'div[role="textbox"][contenteditable]',
+      '[contenteditable="true"]',
+    ],
+    responseSelectors: [
+      'model-response',
+      '.response-content',
+      '.model-response-text',
+    ],
   },
 ];
 
 async function checkPlatform(browser, platform) {
   const context = await browser.newContext({
     userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
   });
   const page = await context.newPage();
   const results = { name: platform.name, passed: [], failed: [] };
 
   try {
-    await page.goto(platform.url, { waitUntil: "domcontentloaded", timeout: 15000 });
-    await page.waitForTimeout(3000); // let React/Angular hydrate
+    await page.goto(platform.url, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await page.waitForTimeout(4000); // let React/Angular hydrate
 
-    for (const [role, selector] of Object.entries(platform.selectors)) {
-      // Try each comma-separated fallback selector
-      const candidates = selector.split(",").map((s) => s.trim());
-      let found = false;
-      for (const s of candidates) {
-        const count = await page.locator(s).count();
-        if (count > 0) { found = true; break; }
-      }
-      if (found) {
-        results.passed.push(`  ✅ ${role}: ${selector}`);
-      } else {
-        results.failed.push(`  ❌ ${role}: ${selector} — NOT FOUND`);
-      }
+    // Input: at least one strategy must match
+    let inputFound = false;
+    for (const sel of platform.inputSelectors) {
+      try {
+        const count = await page.locator(sel).count();
+        if (count > 0) { inputFound = true; break; }
+      } catch { /* invalid selector — skip */ }
     }
+    if (inputFound) {
+      results.passed.push(`  OK  input: resolved`);
+    } else {
+      results.failed.push(`  FAIL input: no strategy matched — ${platform.inputSelectors.join(", ")}`);
+    }
+
+    // Responses: checked but non-fatal on empty pages (no conversation loaded)
+    let responseFound = false;
+    for (const sel of platform.responseSelectors) {
+      try {
+        const count = await page.locator(sel).count();
+        if (count > 0) { responseFound = true; break; }
+      } catch { /* skip */ }
+    }
+    if (responseFound) {
+      results.passed.push(`  OK  response: resolved`);
+    } else {
+      // Non-fatal — new chat pages have no response elements yet
+      results.passed.push(`  --  response: not found (expected on empty page)`);
+    }
+
   } catch (err) {
-    results.failed.push(`  ❌ Page load failed: ${err.message}`);
+    results.failed.push(`  FAIL page load: ${err.message}`);
   } finally {
     await context.close();
   }
@@ -84,12 +125,12 @@ async function checkPlatform(browser, platform) {
 }
 
 (async () => {
-  console.log("\n🔍 SYNQ Platform Selector Smoke Test\n");
+  console.log("\nSYNQ Platform Selector Smoke Test\n");
   const browser = await chromium.launch({ headless: true });
   let totalFailed = 0;
 
   for (const platform of PLATFORMS) {
-    console.log(`📡 Checking ${platform.name} (${platform.url})...`);
+    console.log(`Checking ${platform.name} (${platform.url})...`);
     const result = await checkPlatform(browser, platform);
     result.passed.forEach((m) => console.log(m));
     result.failed.forEach((m) => console.log(m));
@@ -100,11 +141,11 @@ async function checkPlatform(browser, platform) {
   await browser.close();
 
   if (totalFailed === 0) {
-    console.log("✅ All selectors OK — no platform DOM changes detected.\n");
+    console.log("All selectors OK\n");
     process.exit(0);
   } else {
-    console.log(`❌ ${totalFailed} selector(s) broken. Update extension/src/content.ts.`);
-    console.log("   Reference: PLATFORM_SELECTORS.md\n");
+    console.log(`${totalFailed} selector(s) broken. Update extension/src/platform/resolver.ts`);
+    console.log("Reference: PLATFORM_SELECTORS.md\n");
     process.exit(1);
   }
 })();

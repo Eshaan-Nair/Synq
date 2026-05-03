@@ -1,0 +1,54 @@
+name: synq
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pipeline-tests:
+    name: Full RAG Pipeline Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      chromadb:
+        image: chromadb/chroma:0.6.3
+        ports:
+          - "8000:8000"
+        options: >-
+          --health-cmd "curl -sf http://localhost:8000/api/v1/heartbeat"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install Ollama
+        run: |
+          curl -fsSL https://ollama.ai/install.sh | sh
+          ollama serve &
+          sleep 5
+          ollama pull nomic-embed-text
+
+      - name: Run integration tests
+        run: npm test -- --testPathPattern=pipeline.integration
+        working-directory: backend
+        env:
+          MONGO_URI: mongodb://synq:synqpassword123@localhost:27017/synqdb_test
+          CHROMA_URL: http://localhost:8000
+          NEO4J_URI: ""       # Neo4j not used in lite CI
+          NEO4J_USER: ""
+          NEO4J_PASSWORD: ""
+          GRAPH_BACKEND: ollama

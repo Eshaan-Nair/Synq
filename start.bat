@@ -1,193 +1,112 @@
 @echo off
-set COMPOSE_PROJECT_NAME=synq
+setlocal EnableDelayedExpansion
+
+REM Always run from the script's own directory
+cd /d "%~dp0"
+
+set "COMPOSE_PROJECT_NAME=synq"
+
 echo.
-echo  Starting SYNQ...
+echo  ===================================
+echo   SYNQ v1.4.0 - Starting up
+echo  ===================================
 echo.
 
 REM Check .env exists
 if not exist "backend\.env" (
-  echo  MISSING: backend\.env not found.
+  echo  ERROR: backend\.env not found.
   echo  Run: copy backend\.env.example backend\.env
-  echo  Then open backend\.env and set GROQ_API_KEY to your key from console.groq.com
+  echo.
   pause
   exit /b 1
 )
 
-REM Check GROQ_API_KEY is not the placeholder
-findstr /C:"gsk_your_key_here" "backend\.env" >nul 2>&1
-if %errorlevel%==0 (
-  echo  WARNING: backend\.env still has the placeholder GROQ_API_KEY.
-  echo  Edit backend\.env and replace gsk_your_key_here with your real key.
-  echo  Get one free at https://console.groq.com
-  echo.
+REM Check Docker
+where docker >nul 2>&1
+if errorlevel 1 (
+  echo  ERROR: Docker not found.
   pause
+  exit /b 1
 )
 
-REM Check Ollama is installed and model is pulled
-echo  Checking Ollama...
+docker info >nul 2>&1
+if errorlevel 1 (
+  echo  ERROR: Docker Desktop is not running.
+  pause
+  exit /b 1
+)
+echo  Docker ready
+
+REM Check Ollama
 where ollama >nul 2>&1
-if %errorlevel% neq 0 (
-  echo.
-  echo  WARNING: Ollama is not installed or not in PATH.
-  echo  SYNQ needs Ollama for local embeddings ^(RAG context search^).
-  echo  Install from: https://ollama.com
-  echo  After installing, run: ollama pull nomic-embed-text
-  echo.
-  echo  Continuing without Ollama -- RAG features will be unavailable.
-  echo.
+if errorlevel 1 (
+  echo  Ollama not found - limited features.
 ) else (
-  REM Check if nomic-embed-text model is available
-  ollama show nomic-embed-text >nul 2>&1
-  if %errorlevel% neq 0 (
-    echo  Pulling nomic-embed-text model ^(one-time, ~270MB^)...
-    call ollama pull nomic-embed-text
-    if %errorlevel% neq 0 (
-      echo  WARNING: Failed to pull nomic-embed-text model.
-      echo  Make sure Ollama is running: ollama serve
-      echo  Then manually run: ollama pull nomic-embed-text
-      echo.
-    ) else (
-      echo  nomic-embed-text model ready
+  echo  Ollama ready
+)
+
+REM Detect RAM - safe version
+set "PROFILE=full"
+set "RAM_GB=0"
+set "RAM_KB="
+
+for /f "tokens=2 delims==" %%a in ('wmic OS get TotalVisibleMemorySize /value 2^>nul') do (
+    for /f "delims=" %%b in ("%%a") do set "RAM_KB=%%b"
+)
+
+if defined RAM_KB (
+    set "RAM_KB=!RAM_KB: =!"
+    REM Only do math if RAM_KB is just digits
+    echo !RAM_KB!| findstr /r "^[0-9]*$" >nul
+    if !errorlevel! equ 0 (
+        set /a RAM_GB=!RAM_KB! / 1048576
+        if !RAM_GB! LSS 8 (
+            set "PROFILE=lite"
+        )
     )
-  ) else (
-    echo  Ollama + nomic-embed-text ready
-  )
+)
+
+if defined SYNQ_PROFILE set "PROFILE=%SYNQ_PROFILE%"
+
+if "!PROFILE!"=="lite" (
+  echo  Starting in LITE mode
+) else (
+  echo  Starting in FULL mode
 )
 echo.
 
-REM Start Docker databases
-echo  Starting Docker containers (Neo4j + MongoDB + ChromaDB)...
-REM Try modern `docker compose` first (Docker Desktop v4+), fall back to legacy
-docker compose up -d >nul 2>&1
-if %errorlevel% neq 0 (
-  docker-compose up -d
-  if %errorlevel% neq 0 (
-    echo  ERROR: Docker failed to start. Is Docker Desktop running?
-    echo  Enable WSL2 if on Windows: https://docs.microsoft.com/en-us/windows/wsl/install
-    pause
-    exit /b 1
-  )
-)
-echo  Databases running
+REM Start DBs
+echo  Starting databases...
+docker compose --profile %PROFILE% up -d
 echo.
 
-REM Give DBs a moment to initialise
-timeout /t 3 /nobreak >nul
-
-REM Build extension with esbuild
+REM Build extension
 echo  Building extension...
 cd extension
-
-if not exist "node_modules\.bin\esbuild.cmd" (
-  echo  Installing extension dependencies...
-  call npm install --loglevel error
-  if %errorlevel% neq 0 (
-    echo  ERROR: Extension dependency install failed.
-    echo  Check the error above and try: cd extension ^&^& npm install
-    cd ..
-    pause
-    exit /b 1
-  )
-)
-
-echo  Bundling content script...
-call npx esbuild src/content.ts --bundle --outfile=dist/content.js --format=iife --target=es2020
-if %errorlevel% neq 0 (
-  echo  WARNING: content.ts bundle failed.
-) else (
-  echo  content.js OK
-)
-
-echo  Bundling background script...
+if not exist "node_modules" call npm install --loglevel error
+call npx esbuild src/content.ts    --bundle --outfile=dist/content.js    --format=iife --target=es2020
 call npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020
-if %errorlevel% neq 0 (
-  echo  WARNING: background.ts bundle failed.
-) else (
-  echo  background.js OK
-)
-
-echo  Bundling popup...
-call npx esbuild popup/popup.ts --bundle --outfile=popup/popup.js --format=iife --target=es2020
-if %errorlevel% neq 0 (
-  echo  WARNING: popup.ts bundle failed.
-) else (
-  echo  popup.js OK
-)
-
+call npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020
 cd ..
-echo.
 
-REM Start backend
-echo  Starting backend on port 3001...
-cd backend
-
-if not exist "node_modules\.bin\ts-node-dev.cmd" (
-  echo  Installing backend dependencies...
-  call npm install --loglevel error
-  if %errorlevel% neq 0 (
-    echo  ERROR: Backend dependency install failed.
-    echo  Check the error above and try: cd backend ^&^& npm install
+REM Build dashboard
+if not exist "dashboard\dist" (
+    echo  Building dashboard...
+    cd dashboard
+    if not exist "node_modules" call npm install --loglevel error
+    call npm run build
     cd ..
-    pause
-    exit /b 1
-  )
-  echo  Backend dependencies installed
 )
 
+echo.
+echo  Starting backend...
+cd backend
+if not exist "node_modules" call npm install --loglevel error
 start "SYNQ Backend" cmd /k "npm run dev"
 cd ..
-echo  Backend window opened
-echo.
 
-REM Wait for backend to become healthy
-echo  Waiting for backend to start...
-timeout /t 4 /nobreak >nul
-REM Try a simple health check (curl may not be available on all Windows PCs)
-where curl >nul 2>&1
-if %errorlevel%==0 (
-  curl -s http://localhost:3001/health >nul 2>&1
-  if %errorlevel%==0 (
-    echo  Backend is healthy
-  ) else (
-    echo  WARNING: Backend health check failed. Check the backend window for errors.
-  )
-) else (
-  echo  Backend should be starting ^(install curl to enable health checks^)
-)
 echo.
-
-REM Start dashboard
-echo  Starting dashboard on port 5173...
-cd dashboard
-
-if not exist "node_modules\.bin\vite.cmd" (
-  echo  Installing dashboard dependencies...
-  call npm install --loglevel error
-  if %errorlevel% neq 0 (
-    echo  ERROR: Dashboard dependency install failed.
-    echo  Check the error above and try: cd dashboard ^&^& npm install
-    cd ..
-    pause
-    exit /b 1
-  )
-  echo  Dashboard dependencies installed
-)
-
-start "SYNQ Dashboard" cmd /k "npm run dev"
-cd ..
-echo  Dashboard window opened
-echo.
-
-echo  SYNQ is running
-echo    Dashboard  ^>  http://localhost:5173
-echo    Backend    ^>  http://localhost:3001/health
-echo    Neo4j UI   ^>  http://localhost:7474
-echo    ChromaDB   ^>  http://localhost:8000
-echo    MongoDB    ^>  mongodb://localhost:27017
-echo.
-echo.
-echo  Extension: load the /extension folder in chrome://extensions (Developer mode)
-echo  Close the backend and dashboard windows to stop.
-echo  To stop databases: docker compose stop
+echo  SYNQ is running!
+echo  Dashboard: http://localhost:3001
 echo.
 pause

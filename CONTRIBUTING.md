@@ -1,138 +1,168 @@
 # Contributing to SYNQ
 
-Thank you for your interest in contributing. Whether it's a typo fix, a bug report, a new platform, or a major feature — all contributions are genuinely appreciated.
-
-## Ways to Contribute
-
-- **Report bugs** — open an Issue using the bug report template with steps to reproduce
-- **Suggest features** — open an Issue tagged `enhancement` with a clear use-case description
-- **Fix bugs** — check Issues tagged `good first issue` for approachable starting points
-- **Add platform support** — the step-by-step guide is below
-- **Improve selectors** — platform UIs change; stale selectors are the most common breakage
-- **Write tests** — coverage is most needed in `src/routes/` and `src/services/`
-- **Improve documentation** — clearer install instructions, better examples, corrected links
+Thanks for your interest in contributing. Bug fixes, new platform support, UI improvements, documentation, and test coverage are all welcome.
 
 ---
 
 ## Getting Started
 
 ```bash
-# 1. Fork the repo on GitHub, then clone your fork
-git clone https://github.com/YOUR-USERNAME/Synq.git
+git clone https://github.com/Eshaan-Nair/Synq.git
 cd Synq
+git checkout -b your-branch-name
 
-# 2. Create a feature branch
-git checkout -b feature/what-you-are-building
-
-# 3. Ensure Docker Desktop is running, then start the full stack
-./start.sh          # macOS / Linux
-start.bat           # Windows
-
-# 4. Make your changes and commit
-git add .
-git commit -m "feat: describe what you did"
-
-# 5. Push and open a Pull Request against main
-git push origin feature/what-you-are-building
+# First-time setup
+./install.sh          # macOS/Linux
+# or: install.bat     # Windows
 ```
 
 ---
 
-## Commit Message Format
+## Project Structure
 
 ```
-feat: add Firefox extension support
-fix: correct Claude DOM selector after UI update
-docs: improve Windows setup instructions
-refactor: simplify triple deduplication logic
-test: add edge cases for slidingWindowChunks overlap guard
-chore: bump ChromaDB to 0.7.0
-```
+backend/src/
+  mcp/          MCP server + tools
+  middleware/   sanitize.ts
+  routes/       chat · context · graph · rag
+  services/     chroma · chunker · embeddings · extractor · mongo · neo4j
+  utils/        logger · privacy
 
-Use lowercase. Keep the first line under 72 characters. No trailing period.
+extension/src/
+  platform/     resolver.ts — input selector strategies
+  platforms/    claude · chatgpt · gemini · index
+
+dashboard/src/
+  components/   GraphView · ChatViewer
+```
 
 ---
 
-## Pull Request Checklist
+## Development Workflow
 
-Before opening a PR, confirm:
+### Backend
+```bash
+cd backend
+npm install
+npm run dev        # ts-node-dev with hot reload
+```
 
-- [ ] Tested manually on the affected platform(s)
-- [ ] `npm test` passes in `backend/` with no new failures
-- [ ] `npm run build` passes in `backend/` (TypeScript compiles clean)
-- [ ] `npm run lint` passes in `dashboard/` (no new ESLint errors)
-- [ ] No secrets, API keys, or personal data committed
-- [ ] Commit messages follow the format above
-- [ ] README or relevant docs updated if behaviour changed
+### Extension
+```bash
+cd extension
+npm install
+# After every change:
+npx esbuild src/content.ts    --bundle --outfile=dist/content.js    --format=iife --target=es2020
+npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020
+npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020
+# Then reload in chrome://extensions
+```
+
+### Dashboard (development)
+```bash
+cd dashboard
+npm install
+npm run dev    # Vite dev server on port 5173
+```
+
+### Dashboard (production build)
+```bash
+cd dashboard
+npm run build  # outputs to dashboard/dist/ — served by backend on port 3001
+```
 
 ---
 
-## Adding Support for a New AI Platform
+## Running Tests
 
-Adding a new platform requires changes in exactly three files.
+```bash
+# Unit tests
+cd backend && npm test
 
-> Before writing selectors, read [PLATFORM_SELECTORS.md](PLATFORM_SELECTORS.md) for guidance on finding stable selectors and understanding how the fallback system works.
+# Integration test (requires Ollama + ChromaDB running)
+cd backend && npm test -- --testPathPattern=pipeline.integration
+```
 
-### Step 1 — Create `extension/src/platforms/yourplatform.ts`
+---
 
-```ts
-import type { PlatformConfig } from "./index";
+## Commit Format
 
-export const yourplatform: PlatformConfig = {
-  name: "yourplatform" as const,
-  hostname: "yourplatform.com",
+```
+type(scope): short description
 
-  // User message containers — tried in order, results merged
-  userSelectors: [
-    "[data-message-role='user']",      // prefer data-* attributes — survive redesigns
-    ".user-message-container",         // class fallback
-  ],
+Examples:
+feat(extension): add Perplexity platform support
+fix(rag): lower similarity threshold for shorter queries
+docs(readme): update quick start for v1.4.0
+test(pipeline): add edge case for empty conversation
+chore(deps): bump chromadb to 0.6.4
+```
 
-  // AI response containers — tried in order, results merged
-  responseSelectors: [
-    "[data-message-role='assistant']",
-    ".ai-response-container",
-  ],
+Types: `feat` · `fix` · `docs` · `test` · `chore` · `refactor` · `perf`
 
-  // Chat input — the element that receives typed text
-  inputSelectors: [
-    "#chat-input",
-    "[contenteditable='true']",
-  ],
+---
 
-  // Send button — for intercepting submission
-  sendButtonSelectors: [
-    "button[aria-label='Send']",
-    "button[type='submit']",
+## Adding a New AI Platform
+
+This is a great first contribution. Here's the complete process:
+
+### 1. Add input selector strategies to `resolver.ts`
+
+```typescript
+// extension/src/platform/resolver.ts
+export const INPUT_SELECTOR_STRATEGIES = {
+  // ... existing platforms ...
+  perplexity: [
+    'textarea[placeholder*="Ask"]',
+    '[contenteditable="true"]',
   ],
 };
 ```
 
-**Selector tips:**
-- Prefer `data-*` attribute selectors over class names — classes change with every UI redesign; data attributes are intentional and stable
-- Good: `[data-message-author-role='assistant']`
-- Fragile: `.font-claude-response`
-- Add multiple fallbacks — the system tries all of them and deduplicates results
-- Use Chrome DevTools (F12) → Elements panel to inspect the live DOM
+### 2. Create the platform file
 
-### Step 2 — Register in `extension/src/platforms/index.ts`
+```typescript
+// extension/src/platforms/perplexity.ts
+import { INPUT_SELECTOR_STRATEGIES } from '../platform/resolver';
 
-```ts
-import { yourplatform } from "./yourplatform";
+export const perplexityPlatform = {
+  name: 'perplexity',
+  hostnames: ['perplexity.ai'],
 
-// Add to the platforms array
-const platforms: PlatformConfig[] = [claude, chatgpt, gemini, yourplatform];
+  userSelectors: [
+    '.user-query',
+    '[data-message-role="user"]',
+  ],
+
+  responseSelectors: [
+    '.prose',
+    '[data-message-role="assistant"]',
+  ],
+
+  sendSelectors: [
+    'button[aria-label="Submit"]',
+    'button[type="submit"]',
+  ],
+
+  inputSelectors: INPUT_SELECTOR_STRATEGIES.perplexity,
+};
 ```
 
-Also add the type to the `Platform` union:
+### 3. Register in index.ts
 
-```ts
-export type Platform = "claude" | "chatgpt" | "gemini" | "yourplatform" | "unknown";
+```typescript
+// extension/src/platforms/index.ts
+import { perplexityPlatform } from './perplexity';
+
+export const PLATFORMS = [
+  claudePlatform,
+  chatgptPlatform,
+  geminiPlatform,
+  perplexityPlatform,   // add here
+];
 ```
 
-### Step 3 — Update `extension/manifest.json`
-
-Add the new platform to both `host_permissions` and `content_scripts.matches`:
+### 4. Update manifest.json
 
 ```json
 {
@@ -140,58 +170,56 @@ Add the new platform to both `host_permissions` and `content_scripts.matches`:
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "https://yourplatform.com/*"
+    "https://www.perplexity.ai/*"
   ],
   "content_scripts": [{
     "matches": [
       "https://claude.ai/*",
       "https://chatgpt.com/*",
       "https://gemini.google.com/*",
-      "https://yourplatform.com/*"
-    ],
-    "js": ["dist/content.js"],
-    "run_at": "document_idle"
+      "https://www.perplexity.ai/*"
+    ]
   }]
 }
 ```
 
-### Step 4 — Test
+### 5. Update PLATFORM_SELECTORS.md
 
-1. Build the extension: `cd extension && npm run build`
-2. Reload the extension in `chrome://extensions`
-3. Open your new platform and verify:
-   - The SYNQ badge appears
-   - Save Chat captures messages correctly
-   - Context injection works on a new prompt
+Add a section for the new platform with selectors and stability notes.
+
+### 6. Test
+
+- Load extension → open the new platform → save a short chat → verify chunks stored
+- Type a prompt → verify context is prepended
 
 ---
 
-## Running Tests
+## Pull Request Checklist
 
-```bash
-cd backend
-npm test                    # run all unit tests
-npm run test:coverage       # with coverage report
-```
-
-Tests live in `backend/src/__tests__/`. The test suite covers:
-- `chunker.test.ts` — sliding window chunker (edge cases, overlap, zero data loss guarantee)
-- `privacy.test.ts` — PII scrubbing (JWTs, API keys, emails, connection strings, IPs)
-- `rag.test.ts` — cosine distance conversion, threshold filtering, deduplication pipeline
-
-New tests for route handlers and services are very welcome — those areas currently have no coverage.
+- [ ] Branch from `main`, not from another feature branch
+- [ ] `npx tsc --noEmit` in `backend/` passes with 0 errors
+- [ ] Existing tests pass: `cd backend && npm test`
+- [ ] PR description explains what changed and why
+- [ ] `PLATFORM_SELECTORS.md` updated if you changed selectors
+- [ ] `CHANGELOG.md` entry added under `[Unreleased]`
 
 ---
 
 ## Code Style
 
-- TypeScript strict mode is enforced in all three packages
-- The backend uses a shared `logger` utility — never use `console.log` directly
-- Route handlers validate all inputs before touching a database
-- Services are non-fatal by default — wrap external calls in try/catch and log warnings, don't crash the server
+- TypeScript strict mode — no `any` unless unavoidable (add a comment explaining why)
+- All backend logs through the `logger` utility — no bare `console.log`
+- Service functions should be non-fatal where possible (log warning and return gracefully rather than throwing)
+- Keep files focused — a service file should do one thing
 
 ---
 
-## Questions?
+## Good First Issues
 
-Open an Issue tagged `question`. Response time is typically within 48 hours.
+Labelled [`good first issue`](https://github.com/Eshaan-Nair/Synq/issues?q=is%3Aissue+label%3A%22good+first+issue%22) in the issue tracker. These are scoped, well-defined, and don't require deep system knowledge.
+
+---
+
+## Questions
+
+Open a [Discussion](https://github.com/Eshaan-Nair/Synq/discussions) for questions, ideas, or anything that isn't a bug.

@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"   # triggers on: git tag v1.4.0 && git push --tags
+
+jobs:
+  release:
+    name: Build & Publish GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create releases
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install extension dependencies
+        run: npm ci
+        working-directory: extension
+
+      - name: Build extension
+        run: npm run build
+        working-directory: extension
+
+      - name: Zip extension dist
+        run: |
+          cd extension
+          zip -r ../synq-extension-${{ github.ref_name }}.zip dist/ manifest.json
+          echo "Extension zipped: synq-extension-${{ github.ref_name }}.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: synq-extension-${{ github.ref_name }}.zip
+          generate_release_notes: true   # auto-generates changelog from commits
+          body: |
+            ## SYNQ ${{ github.ref_name }}
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full release notes.
+
+            ### Quick Install
+            1. Download `synq-extension-${{ github.ref_name }}.zip` below
+            2. Unzip it
+            3. Open `chrome://extensions` → Enable Developer Mode → Load unpacked → select the unzipped folder
+
+            ### Self-hosting
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd Synq
+            ./install.sh   # Linux/macOS
+            # or start.bat  # Windows
+            ```

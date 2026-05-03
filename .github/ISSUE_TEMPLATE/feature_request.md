@@ -1,19 +1,29 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest a new platform, tool, or improvement to SYNQ
 title: "[FEATURE] "
 labels: enhancement
 assignees: ''
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**What problem does this solve?**
+Describe the friction or missing capability you're experiencing.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Describe the feature**
+What should SYNQ do that it doesn't do today?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Which component would this affect?**
+- [ ] Chrome extension
+- [ ] Backend / RAG pipeline
+- [ ] Knowledge graph / extractor
+- [ ] Dashboard
+- [ ] MCP Server
+- [ ] New platform support (which one?)
+- [ ] Installer / launcher scripts
+- [ ] Documentation
+
+**Alternatives you've considered**
+Any workarounds or alternative approaches you've thought about.
 
 **Additional context**
-Add any other context or screenshots about the feature request here.
+Screenshots, mockups, or any other context.

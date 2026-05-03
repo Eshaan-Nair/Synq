@@ -2,132 +2,140 @@
 
 ## Overview
 
-SYNQ has three layers that work together:
+SYNQ has three layers:
 
 1. **Chrome Extension** — scrapes AI conversations, intercepts prompts, injects context
-2. **Node.js Backend** — processes text, orchestrates services, handles RAG retrieval
+2. **Node.js Backend** — processes text, orchestrates services, handles RAG retrieval, serves the dashboard, runs the MCP server
 3. **React Dashboard** — visualizes the knowledge graph, manages sessions
-
----
-
-## Security Model
-
-All security controls are enforced in the backend (`src/index.ts`):
-
-| Control | Implementation | Value |
-|---|---|---|
-| CORS | Explicit origin allowlist | `localhost:5173`, `localhost:4173`, `chrome-extension://` only |
-| Rate limiting | express-rate-limit | 200 req/min global; 10 req/min on `/api/chat/save` |
-| Input validation | All routes | `sessionId` as valid MongoDB ObjectId; `platform` as enum; text length minimum |
-| Body limit | express.json | 5MB cap — prevents trivial DoS on the save endpoint |
-| Security headers | helmet | All standard headers; CSP disabled (API-only, no HTML served) |
-| PII scrubbing | `src/utils/privacy.ts` | Runs client-side before transmission; catches JWTs, API keys, emails, connection strings, internal IPs |
-| Shared secret | `X-SYNQ-Secret` header | Optional. When `SYNQ_SECRET` is set, all non-health requests are authenticated. |
 
 ---
 
 ## Data Flow
 
-### Save Chat (full pipeline)
+### Save Chat
 
 ```
 Extension DOM scrape (user + AI turns)
-  → FNV-1a fingerprint deduplication (prevents re-saving unchanged chats)
-  → Privacy scrub — PII redacted client-side before leaving the browser
+  → FNV-1a fingerprint deduplication
+  → Privacy scrub — PII redacted in browser before transmission
   → POST /api/chat/save (rate limited: 10/min)
         │
         ├── Vector Track (RAG)
-        │     Sliding window chunker: 300-word windows, 80-word overlap
+        │     slidingWindowChunks() — 300-word windows, 80-word overlap
         │     Pure function — zero API calls, zero data loss
-        │     → generateEmbeddings() via Ollama nomic-embed-text (parallel, Promise.all)
+        │     → generateEmbeddings() via Ollama nomic-embed-text (parallel)
         │     → ChromaDB: deleteChunksBySession() then add() — clean re-save
         │
         └── Graph Track (Knowledge Graph)
-              Groq LLaMA 3.1: summarizeChunk() → extractTriplesFromSummary()
-              → Neo4j: MERGE (s:Entity) ... MERGE (s)-[r:RELATION]->(o) — idempotent
+              Auto-detect: Ollama llama3.1:8b (primary) or Groq (fallback)
+              summarizeChunk() → extractTriplesFromSummary()
+              → Neo4j: MERGE (s:Entity) ... MERGE (s)-[r:RELATION]->(o)
               → MongoDB: Session.findByIdAndUpdate() — tripleCount, hasFullChat
 ```
 
-### Auto-Connect (per prompt, automatic)
+### Auto-Connect (every prompt)
 
 ```
 Session loaded → content.ts init() → interceptor auto-attaches
-User types prompt → keydown (Enter) / send button click intercepted (debounced 300ms)
-  → POST /api/rag/retrieve  { prompt, sessionId, topN: 3 }
-  → Ollama: generateEmbedding(prompt) → 768-dim vector
-  → ChromaDB: cosine query, over-fetch (topN × 4), filter by sessionId
-  → Threshold filter: score = 1 − cosine_distance ≥ 0.30
-  → Deduplicate by chunkIndex (keep highest score per chunk)
-  → Top-3 chunks → contextBlock string
-  → Extension prepends to prompt → Selection API InputEvent injection → sent
+User types → keydown/send button intercepted (debounced 300ms)
+  → POST /api/rag/retrieve { prompt, sessionId, topN: 3 }
+  → generateEmbedding(prompt) via Ollama → 768-dim vector
+  → ChromaDB cosine query, filtered by sessionId
+  → threshold: score = 1 − cosine_distance >= 0.30
+  → sanitizeChunks() — injection patterns redacted
+  → wrapInContextBlock() — XML context delimiters
+  → Top-3 chunks prepended to prompt → sent
 ```
 
-> Full scoring logic, threshold tuning, and parameter reference: [RAG_PIPELINE.md](RAG_PIPELINE.md)
-
-### Classic Inject (one-time, on demand)
+### Classic Inject (on demand)
 
 ```
-Dashboard: "Load into Extension" → POST /api/context/active (sets active session in MongoDB)
-User: popup "Inject Context (one-time)" → GET /api/context/retrieve/:sessionId
+Dashboard: "Load into Extension" → POST /api/context/active
+User: popup "Inject Context" → GET /api/context/retrieve/:sessionId
   → getTriplesBySession() from Neo4j
-  → generateProjectSummary() via Groq (cached in Session.summary — not called if tripleCount unchanged)
-  → Structured markdown summary → Selection API paste → user sends manually
+  → generateProjectSummary() via Ollama/Groq (cached in Session.summary)
+  → Structured markdown → Selection API paste → user sends manually
 ```
+
+### MCP Tools (external AI tools)
+
+```
+AI tool (Cursor/Claude Code/etc.) → MCP stdio call
+  → recall_context:      ChromaDB vector search → sanitize → XML wrap
+  → store_memory:        slidingWindowChunks → ChromaDB + Neo4j + MongoDB
+  → search_memory:       ChromaDB cross-project semantic search
+  → list_projects:       MongoDB session listing
+  → get_project_summary: Neo4j triples → LLM summary (cached)
+```
+
+---
+
+## Security Model
+
+| Control | Implementation |
+|---|---|
+| CORS | `localhost:3001`, `localhost:5173`, `chrome-extension://` only |
+| Rate limiting | 200 req/min global; 10 req/min on `/api/chat/save` |
+| Input validation | sessionId as valid MongoDB ObjectId; platform as enum; text length minimum |
+| Body limit | 5 MB cap on express.json |
+| Security headers | helmet on every response |
+| PII scrubbing | `src/utils/privacy.ts` — runs before any transmission |
+| Prompt injection | `src/middleware/sanitize.ts` — 10 pattern scan + XML context delimiters |
+| Shared secret | Optional `X-SYNQ-Secret` header — when `SYNQ_SECRET` is set, all non-health requests authenticated |
 
 ---
 
 ## Services
 
-| Service | Port | Technology | Purpose |
+| Service | Port | Technology | Notes |
 |---|---|---|---|
-| Backend | 3001 | Node.js + Express 5 | Main application server |
-| Neo4j | 7474 / 7687 | Neo4j 5.18 | Semantic knowledge graph |
-| MongoDB | 27017 | MongoDB 7.0 (via Mongoose) | Sessions, FullChat, active session singleton |
-| ChromaDB | 8000 | ChromaDB 0.6.3 | Vector store (cosine similarity) |
-| Ollama | 11434 | Ollama | Local embedding generation |
-| Dashboard | 5173 | React 19 + Vite 7 | Frontend UI |
+| Backend + Dashboard | 3001 | Node.js, Express 5, sirv | API + static dashboard serving |
+| Neo4j | 7474 / 7687 | Neo4j 5.18 | Full mode only |
+| MongoDB | 27017 | MongoDB 7.0 / Mongoose | Always |
+| ChromaDB | 8000 | ChromaDB 0.6.3 | Always |
+| Ollama | 11434 | Ollama | Local embeddings + extraction |
+| MCP Server | stdio | @modelcontextprotocol/sdk | External AI tool integration |
 
 ---
 
 ## Data Models
 
-### MongoDB
+### MongoDB — Session
 
-**Session** — project metadata and cached summary
 ```
 {
   projectName: String (required),
-  platform: "claude" | "chatgpt" | "gemini",
+  platform:    "claude" | "chatgpt" | "gemini" | "mcp",
   tripleCount: Number,
-  topicCount: Number,
+  topicCount:  Number,
   hasFullChat: Boolean,
-  summary: String,           // cached Groq summary — regenerated only when tripleCount changes
-  createdAt: Date,
-  updatedAt: Date
+  summary:     String,   // cached — regenerated only when tripleCount changes
+  createdAt:   Date,
+  updatedAt:   Date
 }
 ```
 
-**FullChat** — complete conversation storage
+### MongoDB — FullChat
+
 ```
 {
-  sessionId: String (indexed),
-  rawText: String,           // PII-scrubbed full conversation
-  topics: [{ name, content, keywords }],  // lightweight chunk previews for the Chat tab
-  platform: String,
+  sessionId:    String (indexed),
+  rawText:      String,           // PII-scrubbed full conversation
+  topics:       [{ name, content, keywords }],  // chunk previews for Chat tab
+  platform:     String,
   messageCount: Number,
-  createdAt: Date,
-  updatedAt: Date
+  createdAt:    Date,
+  updatedAt:    Date
 }
 ```
 
-**ActiveSession** (singleton document) — which session the extension is currently using
+### MongoDB — ActiveSession (singleton)
+
 ```
 { _id: "singleton", sessionId: String | null }
 ```
 
 ### Neo4j
-
-All knowledge stored as typed triples:
 
 ```cypher
 (Entity {name, type}) -[RELATION {type, sessionId, timestamp}]-> (Entity)
@@ -143,44 +151,44 @@ All knowledge stored as typed triples:
 
 **Collection:** `synq_chunks_v2`
 
-Each document is a raw sliding window chunk (verbatim text from the conversation).
-
-**Metadata per chunk:**
 ```json
-{ "sessionId": "...", "chunkIndex": 2, "wordStart": 440, "wordEnd": 739 }
+{
+  "id": "sessionId-chunkIndex",
+  "document": "raw chunk text (verbatim)",
+  "metadata": { "sessionId": "...", "chunkIndex": 2, "wordStart": 440, "wordEnd": 739 },
+  "embedding": [768-dim float array]
+}
 ```
 
-**Embedding model:** `nomic-embed-text` via Ollama (768 dimensions, cosine similarity space)
+**Model:** `nomic-embed-text` via Ollama — 768 dimensions, cosine similarity, CPU-only.
 
 ---
 
 ## Extension Architecture
 
-### Message Types (content.ts ↔ background.ts ↔ popup.ts)
+### Message Types
 
 | Message | Direction | Purpose |
 |---|---|---|
-| `INGEST_TEXT` | content → background | Send scraped text for graph extraction |
-| `SAVE_CHAT` | content → background | Send full chat for dual-track storage |
-| `SAVE_CHAT_FROM_POPUP` | popup → content | Trigger scrape + save from popup button |
-| `RAG_RETRIEVE` | content → background | Retrieve context chunks for a prompt |
-| `GET_CONTEXT` | content → background | Get structured context summary |
-| `CREATE_SESSION` | popup → background | Create a new session on the backend |
-| `GET_ACTIVE_SESSION` | popup → background | Fetch active session from backend + sync local storage |
-| `SET_ACTIVE_SESSION` | popup → background | Set a session as active on the backend |
-| `SESSION_CHANGED` | background → content (broadcast) | Notify all open AI tabs of new active session |
-| `GET_PAUSE_STATE` | popup → background | Read current pause state from chrome.storage |
-| `SET_PAUSE_STATE` | popup → background | Write pause state to chrome.storage |
-| `PAUSE_SYNQ` | popup → content | Suspend prompt interception |
-| `RESUME_SYNQ` | popup → content | Resume prompt interception |
-| `INJECT_NOW` | popup → content | Trigger one-time context injection |
+| `SAVE_CHAT_FROM_POPUP` | popup → content | Trigger scrape + save |
+| `RAG_RETRIEVE` | content → background | Retrieve context for a prompt |
+| `GET_CONTEXT` | content → background | Get structured knowledge summary |
+| `CREATE_SESSION` | popup → background | Create new session |
+| `GET_ACTIVE_SESSION` | popup → background | Fetch active session |
+| `SET_ACTIVE_SESSION` | popup → background | Set active session |
+| `SESSION_CHANGED` | background → content (broadcast) | Notify all tabs of session change |
+| `GET_PAUSE_STATE` | popup → background | Read pause state |
+| `SET_PAUSE_STATE` | popup → background | Write pause state |
+| `PAUSE_SYNQ` | popup → content | Suspend interception |
+| `RESUME_SYNQ` | popup → content | Resume interception |
+| `INJECT_NOW` | popup → content | One-time injection |
 | `PING` | popup → content | Check if content script is alive |
 
-### Platform Selector Strategy
+### Selector Strategy
 
-`queryAll()` in `src/platforms/index.ts` tries all selectors and merges results, deduplicating by DOM ancestry (keeping the deepest/most-specific element when a parent and child both match). This means adding more fallback selectors is always safe — it won't break existing ones.
+`resolver.ts` in `extension/src/platform/` defines ordered fallback arrays for each platform's input box. Each platform tries up to 7 strategies in sequence (testid → aria-label → role → placeholder → generic contenteditable). A MutationObserver auto-retries if the input is not yet in the DOM (e.g. SPA navigation still loading).
 
-See [PLATFORM_SELECTORS.md](PLATFORM_SELECTORS.md) for per-platform selector reference and staleness tracking.
+`queryAll()` in `src/platforms/index.ts` tries all response/user selectors and deduplicates by DOM ancestry — keeping the most specific (deepest) element when parent and child both match.
 
 ---
 
@@ -190,13 +198,15 @@ All configured in `backend/.env`:
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `GROQ_API_KEY` | ✅ Yes | — | Groq API key for LLaMA 3.1 |
-| `NEO4J_URI` | ✅ Yes | `bolt://localhost:7687` | Neo4j Bolt connection string |
-| `NEO4J_USER` | ✅ Yes | `neo4j` | Neo4j username |
-| `NEO4J_PASSWORD` | ✅ Yes | — | Neo4j password |
-| `MONGO_URI` | ✅ Yes | `mongodb://localhost:27017/synqdb` | MongoDB connection string |
-| `CHROMA_URL` | No | `http://localhost:8000` | ChromaDB base URL |
+| `NEO4J_URI` | Yes | `bolt://localhost:7687` | Neo4j Bolt connection |
+| `NEO4J_USER` | Yes | `neo4j` | Neo4j username |
+| `NEO4J_PASSWORD` | Yes | — | Neo4j password |
+| `MONGO_URI` | Yes | `mongodb://localhost:27017/synqdb` | MongoDB connection |
+| `GROQ_API_KEY` | No | — | Groq fallback key (only needed if Ollama unavailable) |
+| `GRAPH_BACKEND` | No | auto-detect | `ollama` or `groq` — overrides auto-detection |
 | `OLLAMA_URL` | No | `http://localhost:11434` | Ollama base URL |
-| `SYNQ_SECRET` | No | — | Shared secret for request auth (optional) |
+| `OLLAMA_MODEL` | No | `llama3.1:8b` | Model for graph extraction |
+| `CHROMA_URL` | No | `http://localhost:8000` | ChromaDB base URL |
+| `SYNQ_SECRET` | No | — | Shared secret for request auth |
+| `SYNQ_PROFILE` | No | auto-detect | `full` or `lite` — overrides RAM detection |
 | `PORT` | No | `3001` | Backend server port |
-| `DEBUG` | No | `false` | Enable debug log output |
