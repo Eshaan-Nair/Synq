@@ -21,7 +21,7 @@ export interface ProjectSummary {
 const CHUNK_SIZE = 2000;
 
 function chunkText(text: string): string[] {
-  const chunks: string[] = [];
+  const chunks: string[] = []
   const paragraphs = text.split(/\n\n+/);
   let current = "";
   for (const para of paragraphs) {
@@ -36,7 +36,59 @@ function chunkText(text: string): string[] {
   return chunks;
 }
 
-async function groq(prompt: string, maxTokens = 1000): Promise<string> {
+// ── v1.4.0: Smart Backend Selection ───────────────────────────────
+//
+// Priority:
+//   1. GRAPH_BACKEND env var (explicit override — "ollama" | "groq")
+//   2. Auto-detect: probe Ollama at startup → use if available
+//   3. Fallback: Groq (requires GROQ_API_KEY — warns that data leaves machine)
+//
+// This serves all hardware tiers without manual configuration:
+//   - Full local setup:  Ollama runs  → fully private, zero external calls
+//   - Low-spec setup:    Ollama absent → Groq used, warning logged
+//   - Explicit override: GRAPH_BACKEND=groq forces Groq regardless of Ollama
+// ────────────────────────────────────────────────────────────────────
+
+let resolvedBackend: "ollama" | "groq" | null = null;
+
+async function detectBackend(): Promise<"ollama" | "groq"> {
+  // Explicit override takes highest priority
+  const envBackend = process.env.GRAPH_BACKEND?.toLowerCase();
+  if (envBackend === "groq")   return "groq";
+  if (envBackend === "ollama") return "ollama";
+
+  // Auto-detect: try to reach Ollama
+  try {
+    const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
+    await axios.get(`${ollamaUrl}/api/tags`, { timeout: 2000 });
+    logger.success("[SYNQ] Ollama detected — graph extraction will run locally (fully private)");
+    return "ollama";
+  } catch {
+    if (process.env.GROQ_API_KEY) {
+      logger.warn(
+        "[SYNQ] Ollama not available — falling back to Groq API for graph extraction. " +
+        "Note: PII-scrubbed conversation text will leave your machine via Groq."
+      );
+      return "groq";
+    } else {
+      logger.warn(
+        "[SYNQ] Neither Ollama nor GROQ_API_KEY available. " +
+        "Graph extraction disabled — install Ollama or set GROQ_API_KEY in backend/.env"
+      );
+      return "groq"; // Will fail gracefully in extractViaGroq when key is missing
+    }
+  }
+}
+
+async function getBackend(): Promise<"ollama" | "groq"> {
+  if (!resolvedBackend) {
+    resolvedBackend = await detectBackend();
+  }
+  return resolvedBackend;
+}
+
+// ── Groq LLM call ─────────────────────────────────────────────────
+async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
   const response = await axios.post(
     "https://api.groq.com/openai/v1/chat/completions",
     {
@@ -56,7 +108,30 @@ async function groq(prompt: string, maxTokens = 1000): Promise<string> {
   return response.data.choices[0].message.content;
 }
 
-// Step 1 — compress raw chat into ALL meaningful facts (technical + personal)
+// ── Ollama LLM call ───────────────────────────────────────────────
+async function callOllama(prompt: string, maxTokens = 1000): Promise<string> {
+  const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
+  const response = await axios.post(
+    `${ollamaUrl}/api/generate`,
+    {
+      model: process.env.OLLAMA_MODEL ?? "llama3.1:8b",
+      prompt,
+      stream: false,
+      options: { num_predict: maxTokens, temperature: 0.1 },
+    },
+    { timeout: 60000 } // Ollama can be slower on first call
+  );
+  return response.data.response;
+}
+
+// ── Unified LLM call (routes to active backend) ───────────────────
+async function llm(prompt: string, maxTokens = 1000): Promise<string> {
+  const backend = await getBackend();
+  if (backend === "ollama") return callOllama(prompt, maxTokens);
+  return callGroq(prompt, maxTokens);
+}
+
+// ── Step 1: compress raw chat into ALL meaningful facts ────────────
 async function summarizeChunk(text: string): Promise<string> {
   const prompt = `You are a fact extractor. Read this conversation and extract ALL meaningful facts including:
 - Technologies, libraries, frameworks, tools used
@@ -77,13 +152,13 @@ ${text}
 Facts:`;
 
   try {
-    return await groq(prompt, 600);
+    return await llm(prompt, 600);
   } catch {
     return text.slice(0, 600); // fallback to truncated raw text
   }
 }
 
-// Step 2 — extract triples from compressed summary
+// ── Step 2: extract triples from compressed summary ───────────────
 async function extractTriplesFromSummary(summary: string): Promise<Triple[]> {
   const prompt = `Extract semantic triples from these facts.
 Return ONLY a valid JSON array, no explanation, no markdown.
@@ -122,7 +197,7 @@ ${summary}
 Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
 
   try {
-    const raw = await groq(prompt, 1200);
+    const raw   = await llm(prompt, 1200);
     const clean = raw.replace(/```json|```/g, "").trim();
     return JSON.parse(clean) as Triple[];
   } catch {
@@ -130,7 +205,7 @@ Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"..
   }
 }
 
-// Step 3 — generate structured project summary for injection
+// ── Step 3: generate structured project summary ───────────────────
 export async function generateProjectSummary(
   triples: Triple[],
   projectName: string
@@ -153,7 +228,7 @@ Generate a structured summary with sections: Stack, Key Decisions, Features, and
 Keep it under 200 words total.`;
 
   try {
-    return await groq(prompt, 400);
+    return await llm(prompt, 400);
   } catch {
     // Fallback — format triples directly
     return triples
@@ -164,7 +239,6 @@ Keep it under 200 words total.`;
 
 export async function extractTriples(text: string): Promise<Triple[]> {
   const chunks = chunkText(text);
-  // Issue #4 Fix: Use logger instead of console.log
   logger.info(`Processing ${chunks.length} chunk(s) for triple extraction...`);
 
   const allTriples: Triple[] = [];
@@ -173,10 +247,7 @@ export async function extractTriples(text: string): Promise<Triple[]> {
     try {
       logger.info(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
 
-      // Step 1: compress
       const summary = await summarizeChunk(chunks[i]);
-
-      // Step 2: extract triples from summary
       const triples = await extractTriplesFromSummary(summary);
       allTriples.push(...triples);
 

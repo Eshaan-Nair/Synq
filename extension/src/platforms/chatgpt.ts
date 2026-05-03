@@ -1,3 +1,5 @@
+import { INPUT_SELECTOR_STRATEGIES } from "../platform/resolver";
+
 export const chatgpt = {
   name: "chatgpt" as const,
   hostname: "chatgpt.com",
@@ -10,12 +12,10 @@ export const chatgpt = {
     ".markdown.prose",
     ".agent-turn",
   ],
-  inputSelectors: [
-    "#prompt-textarea",
-    '[contenteditable="true"]',
-  ],
+  // v1.4.0: multi-strategy selectors via resolver — survives platform UI updates
+  inputSelectors: INPUT_SELECTOR_STRATEGIES.chatgpt,
   sendButtonSelectors: [
     'button[data-testid="send-button"]',
     'button[aria-label="Send prompt"]',
   ],
-};
+};

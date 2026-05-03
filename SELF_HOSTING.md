@@ -1,146 +1,205 @@
-# Self-Hosting Guide
+# SYNQ — Self-Hosting Guide
 
-SYNQ is designed to run entirely on your own machine. No data leaves your network except text sent to Groq for AI processing.
-
-## What runs locally
-
-| Component   | Technology  | Data stored |
-|-------------|-------------|-------------|
-| Knowledge graph | Neo4j 5.18 (Docker) | Semantic triples |
-| Session store   | MongoDB 7.0 (Docker) | Session metadata + full chats |
-| Vector store    | ChromaDB 0.6.3 (Docker) | Window chunk embeddings |
-| Embeddings      | Ollama (local binary) | `nomic-embed-text` model |
-| Backend         | Node.js / Express | No persistent state |
-| Dashboard       | React / Vite | No persistent state |
-
-## What goes to Groq
-
-Only the text you explicitly **Save Chat** is sent to Groq — and only for **graph extraction**, not for RAG. The pipeline:
-- **RAG chunking** — handled locally by the sliding window chunker (pure function, no API call)
-- **Graph extraction** — Groq compresses the text into fact bullets, then extracts semantic triples (technical + personal facts)
-- **Summary generation** — Groq generates a structured project summary (cached — not called on every read)
-
-Groq's privacy policy: https://groq.com/privacy-policy/
-
-> **Note:** If Groq is unavailable or rate-limited, chat data and RAG vectors are still saved successfully — only knowledge graph extraction is skipped. SYNQ degrades gracefully.
-
-PII (API keys, JWTs, emails, connection strings) is redacted **before** the text is sent to Groq.
+This guide covers custom configuration, port changes, backups, and running SYNQ behind a reverse proxy.
 
 ---
 
-## System requirements
+## Default Ports
 
-| Requirement | Minimum | Recommended |
+| Service | Port | Change via |
 |---|---|---|
-| RAM | 8 GB | 16 GB |
-| Disk | 5 GB free | 10 GB free |
-| OS | Windows 10 / macOS 12 / Ubuntu 22 | Any |
-| Docker | 24.x+ | Latest |
-| Node.js | 18.x | 20.x LTS |
-
-**Note:** Ollama runs the embedding model on CPU — no GPU required. On a modern laptop CPU, embedding 10 topics takes ~2–3 seconds total (parallel requests).
-
----
-
-## Ports used
-
-| Port  | Service   | Can be changed? |
-|-------|-----------|-----------------|
-| 3001  | Backend   | Yes — set `PORT` in `backend/.env` |
-| 5173  | Dashboard | Yes — Vite port, see `dashboard/vite.config.ts` |
-| 7474  | Neo4j HTTP | Yes — update `docker-compose.yml` |
-| 7687  | Neo4j Bolt | Yes — update `NEO4J_URI` in `.env` |
-| 27017 | MongoDB   | Yes — update `MONGO_URI` in `.env` |
-| 8000  | ChromaDB  | Yes — update `CHROMA_URL` in `.env` |
-| 11434 | Ollama    | Yes — update `OLLAMA_URL` in `.env` |
+| Backend + Dashboard | 3001 | `PORT=3002` in `backend/.env` |
+| Neo4j HTTP | 7474 | `docker-compose.yml` ports section |
+| Neo4j Bolt | 7687 | `docker-compose.yml` ports section |
+| MongoDB | 27017 | `docker-compose.yml` ports section |
+| ChromaDB | 8000 | `docker-compose.yml` ports section |
+| Ollama | 11434 | Ollama config / `OLLAMA_URL` in `.env` |
 
 ---
 
-## Customising passwords
+## Custom Passwords
 
-The default passwords in `docker-compose.yml` are environment variable references with fallbacks. To use custom passwords:
+Edit `backend/.env`:
 
-1. Add to `backend/.env`:
 ```env
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=your_secure_password
-MONGO_USER=synq
-MONGO_PASSWORD=your_secure_password
+NEO4J_PASSWORD=your-strong-password
+MONGO_URI=mongodb://synq:your-strong-password@localhost:27017/synqdb?authSource=admin
 ```
 
-2. The `docker-compose.yml` reads these via `${NEO4J_PASSWORD:-synqpassword123}` — the value after `:-` is only used if the variable is unset.
+And update `docker-compose.yml` to match:
 
-3. Update `MONGO_URI` in `.env` with the new password:
-```env
-MONGO_URI=mongodb://synq:your_secure_password@localhost:27017/synqdb?authSource=admin
+```yaml
+neo4j:
+  environment:
+    - NEO4J_AUTH=neo4j/your-strong-password
+
+mongodb:
+  environment:
+    - MONGO_INITDB_ROOT_USERNAME=synq
+    - MONGO_INITDB_ROOT_PASSWORD=your-strong-password
 ```
+
+Restart: `docker compose down && docker compose --profile full up -d`
 
 ---
 
-## Backing up your data
+## Docker Profiles
 
-All data is in named Docker volumes:
+SYNQ supports two Docker profiles:
+
+| Profile | Services | Use when |
+|---|---|---|
+| `full` | Neo4j + MongoDB + ChromaDB | 8 GB+ RAM, want knowledge graph |
+| `lite` | MongoDB + ChromaDB only | < 8 GB RAM, or don't need graph |
 
 ```bash
-# List volumes
-docker volume ls | grep synq
+# Full mode
+docker compose --profile full up -d
 
-# Backup Neo4j (macOS / Linux)
-docker run --rm -v synq_neo4j_data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/neo4j-backup.tar.gz /data
-
-# Backup Neo4j (Windows PowerShell)
-docker run --rm -v synq_neo4j_data:/data -v "${PWD}:/backup" alpine `
-  tar czf /backup/neo4j-backup.tar.gz /data
-
-# Backup MongoDB
-docker exec synq_mongo mongodump --out /dump
-docker cp synq_mongo:/dump ./mongo-backup
-
-# Backup ChromaDB (macOS / Linux)
-docker run --rm -v synq_chroma_data:/chroma/chroma -v $(pwd):/backup alpine \
-  tar czf /backup/chroma-backup.tar.gz /chroma/chroma
-
-# Backup ChromaDB (Windows PowerShell)
-docker run --rm -v synq_chroma_data:/chroma/chroma -v "${PWD}:/backup" alpine `
-  tar czf /backup/chroma-backup.tar.gz /chroma/chroma
+# Lite mode
+docker compose --profile lite up -d
+# or:
+docker compose -f docker-compose.lite.yml up -d
 ```
 
-> **Note:** `$(pwd)` is bash syntax. On Windows PowerShell use `"${PWD}"` instead.
+Override RAM auto-detection: `SYNQ_PROFILE=full` or `SYNQ_PROFILE=lite` before running a launcher.
 
 ---
 
-## Resetting everything
+## Data Backup
+
+All data lives in named Docker volumes:
+
+| Volume | Contains |
+|---|---|
+| `synq_neo4j_data` | Knowledge graph triples |
+| `synq_mongo_data` | Sessions, FullChat documents |
+| `synq_chroma_data` | Vector embeddings |
+
+### Backup
 
 ```bash
-# Stop all containers
-docker-compose down
+# Stop services first
+docker compose down
 
-# Delete all data volumes (DESTRUCTIVE — all sessions/graphs/vectors lost)
-docker volume rm synq_neo4j_data synq_mongo_data synq_chroma_data
+# Backup each volume
+docker run --rm -v synq_mongo_data:/data -v $(pwd)/backups:/backup alpine \
+  tar czf /backup/mongo_$(date +%Y%m%d).tar.gz /data
 
-# Restart fresh
-docker-compose up -d
+docker run --rm -v synq_neo4j_data:/data -v $(pwd)/backups:/backup alpine \
+  tar czf /backup/neo4j_$(date +%Y%m%d).tar.gz /data
+
+docker run --rm -v synq_chroma_data:/data -v $(pwd)/backups:/backup alpine \
+  tar czf /backup/chroma_$(date +%Y%m%d).tar.gz /data
+```
+
+### Restore
+
+```bash
+docker run --rm -v synq_mongo_data:/data -v $(pwd)/backups:/backup alpine \
+  tar xzf /backup/mongo_20260503.tar.gz -C /
 ```
 
 ---
 
-## Running behind a reverse proxy
+## Reset All Data
 
-If you want to expose the dashboard externally (e.g. on a home server):
+```bash
+docker compose down -v   # removes containers AND volumes
+docker compose --profile full up -d
+```
 
-1. Update CORS allowed origins in `backend/src/index.ts`:
-```ts
+> This deletes all conversations, graph triples, and embeddings permanently.
+
+---
+
+## Reverse Proxy (nginx)
+
+To expose the dashboard at a custom domain:
+
+```nginx
+server {
+    server_name synq.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+Update `ALLOWED_ORIGINS` in `backend/src/index.ts` to include your domain:
+
+```typescript
 const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
-  "https://your-domain.com",  // add your domain
+  "http://localhost:3001",
+  "https://synq.yourdomain.com",
+  // ...
 ];
 ```
 
-2. Configure Nginx/Caddy to proxy:
-   - `your-domain.com` → `localhost:5173` (dashboard)
-   - `your-domain.com/api` → `localhost:3001` (backend)
+Enable request authentication for production:
 
-3. Update `dashboard/src/api/synq.ts` and `dashboard/src/api/rag.ts` to use the full backend URL instead of `http://localhost:3001`.
+```env
+# backend/.env
+SYNQ_SECRET=your-random-secret-here
+```
 
-> ⚠️ Do not expose Neo4j, MongoDB, or ChromaDB ports externally. They have no authentication beyond the basic passwords.
+The extension and all API clients must then include the header:
+```
+X-SYNQ-Secret: your-random-secret-here
+```
+
+---
+
+## Custom Ollama URL
+
+If Ollama is running on a different machine or port:
+
+```env
+# backend/.env
+OLLAMA_URL=http://192.168.1.100:11434
+```
+
+---
+
+## Custom ChromaDB URL
+
+```env
+CHROMA_URL=http://your-chroma-host:8000
+```
+
+---
+
+## Force Extraction Backend
+
+```env
+# Force Ollama (ignore Groq fallback even if Ollama is down)
+GRAPH_BACKEND=ollama
+
+# Force Groq (requires GROQ_API_KEY)
+GRAPH_BACKEND=groq
+GROQ_API_KEY=gsk_your_key_here
+```
+
+---
+
+## Checking Service Health
+
+```bash
+# Backend
+curl http://localhost:3001/health
+
+# ChromaDB
+curl http://localhost:8000/api/v1/heartbeat
+
+# Neo4j
+curl http://localhost:7474
+
+# Ollama
+curl http://localhost:11434/api/tags
+
+# MongoDB
+docker exec synq_mongo mongosh --eval "db.adminCommand('ping')"
+```

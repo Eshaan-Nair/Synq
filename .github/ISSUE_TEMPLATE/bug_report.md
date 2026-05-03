@@ -1,31 +1,45 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Something is broken — selector failure, save not working, RAG not injecting
 title: "[BUG] "
 labels: bug
 assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+A clear description of what went wrong.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Which component failed?**
+- [ ] Save Chat (extension popup)
+- [ ] Auto-Connect / RAG injection
+- [ ] Classic Inject
+- [ ] Dashboard (graph, history, or chat tab)
+- [ ] MCP Server (Claude Code / Cursor / Windsurf)
+- [ ] start.bat / start.sh / install.sh
+- [ ] Other
+
+**Platform (if extension issue)**
+- [ ] Claude.ai
+- [ ] ChatGPT
+- [ ] Gemini
+
+**Steps to reproduce**
+1. 
+2. 
+3. 
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+What should have happened.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**What actually happened**
+What happened instead. Include any error messages from the browser console or backend terminal.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Environment**
+- OS: 
+- SYNQ version: 
+- Chrome version: 
+- Docker running: yes / no
+- Ollama running: yes / no
 
-**Additional context**
-Add any other context about the problem here.
+**Backend logs (if relevant)**
+Paste any errors from the backend terminal window.

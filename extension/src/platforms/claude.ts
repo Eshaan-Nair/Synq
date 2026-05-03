@@ -1,3 +1,5 @@
+import { INPUT_SELECTOR_STRATEGIES } from "../platform/resolver";
+
 export const claude = {
   name: "claude" as const,
   hostname: "claude.ai",
@@ -12,16 +14,12 @@ export const claude = {
     '.font-claude-response',           // inner content wrapper — confirmed present
     '[data-is-streaming]',             // response container (streaming + done)
   ],
-  inputSelectors: [
-    // ProseMirror confirmed in DOM (BR.ProseMirror-trailingBreak visible)
-    'div.ProseMirror',
-    '[contenteditable="true"][data-placeholder]',
-    '[contenteditable="true"]',
-  ],
+  // v1.4.0: multi-strategy selectors via resolver — survives platform UI updates
+  inputSelectors: INPUT_SELECTOR_STRATEGIES.claude,
   sendButtonSelectors: [
     'button[aria-label="Send Message"]',
     'button[aria-label="Send message"]',
     'button[data-testid="send-button"]',
     'button[type="submit"]',
   ],
-};
+};

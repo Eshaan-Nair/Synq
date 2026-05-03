@@ -1,7 +1,13 @@
 /**
- * rag.ts (backend route) — v1.2
+ * rag.ts (backend route) — v1.4.0
  *
- * Updated for sliding window chunks:
+ * v1.4.0 changes:
+ * - All retrieved chunks are now piped through sanitizeChunks() to redact
+ *   any prompt injection patterns before they reach the AI's context window.
+ * - Context block is wrapped in <synq_retrieved_context> XML delimiters
+ *   so LLMs treat the content as data, not instructions.
+ *
+ * Updated: v1.4.0
  * - Context header shows chunk position + relevance % (not topic name)
  * - topN default raised to 3 — window chunks are smaller so we need more
  * - topicsFound renamed to chunksFound for clarity
@@ -10,6 +16,7 @@
 import { Router, Request, Response } from "express";
 import { retrieveRelevantChunks } from "../services/chroma";
 import { logger } from "../utils/logger";
+import { wrapInContextBlock, sanitizeChunks } from "../middleware/sanitize";
 
 const router = Router();
 
@@ -28,33 +35,37 @@ router.post("/retrieve", async (req: Request, res: Response) => {
   try {
     logger.info(`RAG retrieve (topN=${topN}): "${String(prompt).slice(0, 60)}..." for session ${sessionId}`);
 
-    const chunks = await retrieveRelevantChunks(prompt, sessionId, topN);
+    const rawChunks = await retrieveRelevantChunks(prompt, sessionId, topN);
 
-    if (chunks.length === 0) {
+    if (rawChunks.length === 0) {
       logger.info("RAG: no chunks above threshold — skipping injection");
       res.json({ found: false, chunks: [] });
       return;
     }
 
-    // Cap each chunk at 1500 chars to avoid platform prompt length limits
+    // ── v1.4.0: Sanitise chunks before returning ───────────────────
+    // Cap each chunk at 1500 chars to avoid platform prompt length limits,
+    // then run injection filter + XML wrapping.
     const MAX_CONTEXT_CHARS = 1500;
-    const contextBlock = chunks
-      .map(c => {
-        const content = c.content.length > MAX_CONTEXT_CHARS
-          ? c.content.slice(0, MAX_CONTEXT_CHARS) + "\n… (truncated)"
-          : c.content;
-        return `### Context ${c.chunkIndex + 1} (relevance: ${(c.score * 100).toFixed(0)}%)\n${content}`;
-      })
-      .join("\n\n---\n\n");
+    const cappedChunks = rawChunks.map(c => ({
+      ...c,
+      content: c.content.length > MAX_CONTEXT_CHARS
+        ? c.content.slice(0, MAX_CONTEXT_CHARS) + "\n… (truncated)"
+        : c.content,
+    }));
 
-    logger.success(`RAG: ${chunks.length} chunk(s) found — scores: ${chunks.map(c => c.score.toFixed(2)).join(", ")}`);
+    // Sanitise (redact injection patterns) then wrap in XML delimiters
+    const safeChunks = sanitizeChunks(cappedChunks);
+    const contextBlock = wrapInContextBlock(safeChunks);
+
+    logger.success(`RAG: ${safeChunks.length} chunk(s) found — scores: ${safeChunks.map(c => c.score.toFixed(2)).join(", ")}`);
 
     res.json({
       found: true,
-      chunks,
+      chunks:      safeChunks,
       contextBlock,
-      chunksFound: chunks.map(c => c.chunkIndex),
-      scores:      chunks.map(c => c.score),
+      chunksFound: safeChunks.map(c => c.chunkIndex),
+      scores:      safeChunks.map(c => c.score),
     });
   } catch (err) {
     logger.error("RAG retrieve error:", err);
@@ -62,4 +73,4 @@ router.post("/retrieve", async (req: Request, res: Response) => {
   }
 });
 
-export default router;
+export default router;

@@ -1,21 +1,16 @@
-name: synq
-services:
-  neo4j:
-    image: neo4j:5.18
-    container_name: synq_neo4j
-    profiles: ["full"]          # skipped in lite mode — saves ~2 GB RAM
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    environment:
-      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-synqpassword123}
-    volumes:
-      - neo4j_data:/data
+# docker-compose.lite.yml — SYNQ Lite Mode
+#
+# Use when RAM < 8 GB. Skips Neo4j and knowledge graph extraction.
+# RAG (vector search) still works — you just won't get graph-based context.
+#
+# Usage: docker compose -f docker-compose.lite.yml up -d
+# Or:    start.bat will auto-select this if < 8 GB RAM is detected.
 
+name: synq-lite
+services:
   mongodb:
     image: mongo:7.0
     container_name: synq_mongo
-    profiles: ["full", "lite"]  # always starts
     ports:
       - "27017:27017"
     environment:
@@ -27,7 +22,6 @@ services:
   chromadb:
     image: chromadb/chroma:0.6.3
     container_name: synq_chroma
-    profiles: ["full", "lite"]  # always starts
     ports:
       - "8000:8000"
     volumes:
@@ -37,6 +31,5 @@ services:
       - ANONYMIZED_TELEMETRY=FALSE
 
 volumes:
-  neo4j_data:
   mongo_data:
   chroma_data:

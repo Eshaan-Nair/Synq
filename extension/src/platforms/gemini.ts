@@ -1,3 +1,5 @@
+import { INPUT_SELECTOR_STRATEGIES } from "../platform/resolver";
+
 export const gemini = {
   name: "gemini" as const,
   hostname: "gemini.google.com",
@@ -19,15 +21,11 @@ export const gemini = {
     ".model-response-text",
     "message-content",                      // custom element tag for responses
   ],
-  inputSelectors: [
-    ".ql-editor",
-    'rich-textarea [contenteditable="true"]',
-    'div[contenteditable="true"]',
-    '[contenteditable="true"]',
-  ],
+  // v1.4.0: multi-strategy selectors via resolver — survives platform UI updates
+  inputSelectors: INPUT_SELECTOR_STRATEGIES.gemini,
   sendButtonSelectors: [
     'button[aria-label="Send message"]',
     ".send-button",
     'button.send-button',
   ],
-};
+};
