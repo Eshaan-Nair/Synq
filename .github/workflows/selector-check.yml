@@ -8,6 +8,7 @@ on:
 jobs:
   selector-check:
     name: Check AI Platform Selectors
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
