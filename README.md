@@ -98,6 +98,9 @@ All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect
 Checks Docker + Node.js, opens Ollama download if missing,
 pulls models, installs npm deps, builds all packages,
 detects RAM, starts Docker with the correct profile.
+
+**Configure API Keys** (Optional)
+Copy `backend/.env.example` to `backend/.env` and add your `GROQ_API_KEY` for faster extraction if Ollama is slow or unavailable.
 ```
 
 **macOS / Linux:**
