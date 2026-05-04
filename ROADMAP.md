@@ -1,10 +1,16 @@
 # SYNQ — Roadmap
 
-Current version: **v1.4.0**
+Current version: **v1.4.1**
 
 ---
 
 ## Shipped
+
+### v1.4.1
+- New Platforms: Perplexity.ai and DeepSeek support
+- Resilient selectors for all 5 platforms with multi-strategy fallbacks
+- Enhanced weekly CI selector monitoring for Perplexity and DeepSeek
+- Version alignment across all packages to 1.4.1
 
 ### v1.4.0
 - Prompt injection defence (pattern scan + XML context delimiters)
@@ -42,8 +48,7 @@ Current version: **v1.4.0**
 ## In Progress — v1.5.0
 
 - **Session export** — download your memory as JSON or Markdown
-- **Manual memory editing** — edit or delete individual stored chunks from the dashboard
-- **Graph filtering** — filter the knowledge graph by entity type or relation
+- **Manual memory editing** — edit or delete individual stored chunks from the dashboar
 - **Conversation search** — full-text search across all saved FullChat documents
 
 ---
@@ -51,7 +56,7 @@ Current version: **v1.4.0**
 ## Planned — v1.6.0
 
 - **Firefox extension** — port the Chrome extension to Firefox MV3
-- **Perplexity support** — add Perplexity.ai as a supported platform
+- **Graph filtering** — filter the knowledge graph by entity type or relation
 - **Memory decay** — optional TTL on stored chunks; old context fades out automatically
 - **Multi-device sync** — optional encrypted sync across machines via a self-hosted relay
 
