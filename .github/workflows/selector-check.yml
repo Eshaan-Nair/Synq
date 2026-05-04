@@ -8,7 +8,9 @@ on:
 jobs:
   selector-check:
     name: Check AI Platform Selectors
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +21,9 @@ jobs:
           node-version: "20"
 
       - name: Install Playwright
-        run: npm install -g playwright && npx playwright install --with-deps chromium
+        run: |
+          npm install playwright
+          npx playwright install --with-deps chromium
 
       - name: Run selector smoke test
         id: test
