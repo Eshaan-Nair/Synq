@@ -12,7 +12,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const response = await axios.post(`${OLLAMA_URL}/api/embeddings`, {
       model: EMBED_MODEL,
       prompt: text,
-    }, { timeout: 20000 });
+    }, { timeout: 60000 });
     return response.data.embedding as number[];
   } catch (err: any) {
     logger.error("Embedding generation failed:", err?.message);

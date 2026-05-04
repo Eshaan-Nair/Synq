@@ -1,6 +1,8 @@
 import axios from "axios";
 import { logger } from "../utils/logger";
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export interface Triple {
   subject: string;
   subjectType: string;
@@ -92,7 +94,7 @@ async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
   const response = await axios.post(
     "https://api.groq.com/openai/v1/chat/completions",
     {
-      model: "llama-3.1-8b-instant",
+      model: "llama-3.3-70b-versatile",
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
       temperature: 0.1,
@@ -111,24 +113,60 @@ async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
 // ── Ollama LLM call ───────────────────────────────────────────────
 async function callOllama(prompt: string, maxTokens = 1000): Promise<string> {
   const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
+  const model = process.env.OLLAMA_MODEL ?? "llama3.1:8b";
+  
   const response = await axios.post(
     `${ollamaUrl}/api/generate`,
     {
-      model: process.env.OLLAMA_MODEL ?? "llama3.1:8b",
+      model,
       prompt,
       stream: false,
       options: { num_predict: maxTokens, temperature: 0.1 },
     },
-    { timeout: 60000 } // Ollama can be slower on first call
+    { timeout: 75000 } // Bumped to 75s for slower hardware
   );
   return response.data.response;
 }
 
-// ── Unified LLM call (routes to active backend) ───────────────────
+// ── Unified LLM call with Retry Logic (Backoff) ───────────────────
 async function llm(prompt: string, maxTokens = 1000): Promise<string> {
   const backend = await getBackend();
-  if (backend === "ollama") return callOllama(prompt, maxTokens);
-  return callGroq(prompt, maxTokens);
+  const MAX_RETRIES = 3;
+  let lastErr: any = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        const waitTime = attempt * 5000; // 5s, 10s, 15s...
+        logger.info(`[SYNQ] Rate limit hit. Retrying in ${waitTime/1000}s (Attempt ${attempt}/${MAX_RETRIES})...`);
+        await sleep(waitTime);
+      }
+
+      if (backend === "ollama") {
+        try {
+          return await callOllama(prompt, maxTokens);
+        } catch (err: any) {
+          if (process.env.GROQ_API_KEY) {
+            logger.warn(`[SYNQ] Ollama call failed (${err?.message}) — falling back to Groq.`);
+            return await callGroq(prompt, maxTokens);
+          }
+          throw err;
+        }
+      }
+      return await callGroq(prompt, maxTokens);
+    } catch (err: any) {
+      lastErr = err;
+      const isRateLimit = err?.response?.status === 429 || err?.message?.includes("429");
+      const isBadFormat = err?.message?.includes("JSON") || err?.message?.includes("formatting");
+      
+      if ((isRateLimit || isBadFormat) && attempt < MAX_RETRIES) {
+        if (isBadFormat) logger.warn("[SYNQ] Model returned malformed data. Retrying...");
+        continue; // Loop again (retry)
+      }
+      throw err; // Permanent failure or no retries left
+    }
+  }
+  throw lastErr;
 }
 
 // ── Step 1: compress raw chat into ALL meaningful facts ────────────
@@ -198,9 +236,24 @@ Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"..
 
   try {
     const raw   = await llm(prompt, 1200);
-    const clean = raw.replace(/```json|```/g, "").trim();
-    return JSON.parse(clean) as Triple[];
-  } catch {
+    const backend = await getBackend();
+    
+    // More robust JSON extraction: find the first '[' and last ']'
+    const start = raw.indexOf("[");
+    const end   = raw.lastIndexOf("]");
+    
+    if (start === -1 || end === -1) {
+      throw new Error("Bad formatting: No JSON array found in model output");
+    }
+    
+    const clean = raw.slice(start, end + 1).trim();
+    try {
+      return JSON.parse(clean) as Triple[];
+    } catch (jsonErr) {
+      throw new Error(`Bad formatting: JSON parse error - ${clean.slice(0, 50)}`);
+    }
+  } catch (err: any) {
+    logger.error(`[SYNQ] Triple extraction failed: ${err?.message}`);
     return [];
   }
 }
@@ -248,10 +301,17 @@ export async function extractTriples(text: string): Promise<Triple[]> {
       logger.info(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
 
       const summary = await summarizeChunk(chunks[i]);
+      
+      // Delay to stay under Groq TPM limit
+      await sleep(3000);
+      
       const triples = await extractTriplesFromSummary(summary);
       allTriples.push(...triples);
 
       logger.info(`  chunk ${i + 1} → ${triples.length} triples`);
+      
+      // Delay before next chunk
+      if (i < chunks.length - 1) await sleep(2000);
     } catch (err: any) {
       logger.error(`chunk ${i + 1} failed:`, JSON.stringify(err?.response?.data, null, 2));
     }

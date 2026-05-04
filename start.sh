@@ -1,174 +1,83 @@
-#!/usr/bin/env bash
-# start.sh - SYNQ Daily Launcher v1.4.0
-# For first-time setup, run ./install.sh instead.
+#!/bin/bash
 
-# Always run from the script's own directory
-cd "$(dirname "$0")"
+# SYNQ v1.4.1 - Startup Script (Linux/macOS)
+# ------------------------------------------
 
-export COMPOSE_PROJECT_NAME=synq
+set -e
 
 echo ""
-echo "  Starting SYNQ v1.4.0..."
+echo " ==================================="
+echo "  SYNQ v1.4.1 - Starting up"
+echo " ==================================="
 echo ""
 
-# Check .env exists
+# 1. Load .env settings
 if [ ! -f "backend/.env" ]; then
-  echo "  ERROR: backend/.env not found."
-  echo "  Run: cp backend/.env.example backend/.env"
-  echo "  Then open backend/.env and fill in your values."
-  exit 1
+    echo " ERROR: backend/.env not found. Run ./install.sh first."
+    exit 1
 fi
 
-# Check Ollama + models
-echo "  Checking Ollama..."
-if ! command -v ollama &>/dev/null; then
-  echo "  WARNING: Ollama not found. RAG and graph features will be unavailable."
-  echo "           Install from https://ollama.com then run install.sh"
-  echo ""
+GRAPH_BACKEND=$(grep "GRAPH_BACKEND=" backend/.env | cut -d'=' -f2)
+OLLAMA_MODEL=$(grep "OLLAMA_MODEL=" backend/.env | cut -d'=' -f2)
+GRAPH_BACKEND=${GRAPH_BACKEND:-ollama}
+
+# 2. Check Dependencies
+if ! command -v docker &> /dev/null; then
+    echo " ERROR: Docker not found."
+    exit 1
+fi
+echo " OK Docker ready"
+
+# 3. Check Backend Status
+if [ "$GRAPH_BACKEND" == "groq" ]; then
+    echo " OK Knowledge Graph: Groq (Cloud API)"
 else
-  if ollama show nomic-embed-text >/dev/null 2>&1; then
-    echo "  nomic-embed-text ready"
-  else
-    echo "  Pulling nomic-embed-text (~270 MB, one-time)..."
-    if ollama pull nomic-embed-text; then
-      echo "  nomic-embed-text ready"
+    if command -v ollama &> /dev/null; then
+        echo " OK Knowledge Graph: Ollama (Local: ${OLLAMA_MODEL})"
     else
-      echo "  WARNING: Failed to pull nomic-embed-text. Run: ollama pull nomic-embed-text"
+        echo " WARN Ollama not found - Graph extraction will fail."
     fi
-  fi
-
-  if ollama show llama3.1:8b >/dev/null 2>&1; then
-    echo "  llama3.1:8b ready"
-  else
-    echo "  Pulling llama3.1:8b (~4.7 GB, one-time graph extraction model)..."
-    if ollama pull llama3.1:8b; then
-      echo "  llama3.1:8b ready"
-    else
-      echo "  WARNING: Failed to pull llama3.1:8b."
-      echo "           Graph extraction will fall back to Groq if GROQ_API_KEY is set."
-    fi
-  fi
-fi
-echo ""
-
-# Detect RAM and pick Docker profile
-RAM_GB=16
-if [[ "$(uname)" == "Linux" ]]; then
-  RAM_GB=$(awk '/MemTotal/{printf "%.0f", $2/1024/1024}' /proc/meminfo)
-elif [[ "$(uname)" == "Darwin" ]]; then
-  RAM_GB=$(sysctl -n hw.memsize | awk '{printf "%.0f", $1/1024/1024/1024}')
 fi
 
+# 4. Detect RAM
+OS_TYPE=$(uname)
+RAM_GB=0
+if [ "$OS_TYPE" == "Darwin" ]; then
+    RAM_BYTES=$(sysctl -n hw.memsize)
+    RAM_GB=$((RAM_BYTES / 1024 / 1024 / 1024))
+else
+    RAM_GB=$(free -g | awk '/^Mem:/{print $2}')
+fi
+
+PROFILE="full"
 if [ "$RAM_GB" -lt 8 ]; then
-  PROFILE="${SYNQ_PROFILE:-lite}"
-  echo "  RAM: ~${RAM_GB} GB detected - starting LITE mode (no Neo4j)"
+    PROFILE="lite"
+    echo " OK Mode: LITE (${RAM_GB} GB RAM detected)"
 else
-  PROFILE="${SYNQ_PROFILE:-full}"
-  echo "  RAM: ~${RAM_GB} GB detected - starting FULL mode"
+    echo " OK Mode: FULL (${RAM_GB} GB RAM detected)"
 fi
 
-# Start databases
-echo "  Starting Docker containers (profile: $PROFILE)..."
-if docker compose --profile "$PROFILE" up -d 2>/dev/null; then
-  echo "  Databases running"
-else
-  echo "  Retrying with legacy docker-compose..."
-  if [ "$PROFILE" = "lite" ]; then
-    docker-compose -f docker-compose.lite.yml up -d || { echo "  ERROR: Docker failed to start."; exit 1; }
-  else
-    docker-compose up -d || { echo "  ERROR: Docker failed to start."; exit 1; }
-  fi
-  echo "  Databases running"
-fi
+# 5. Start DBs
 echo ""
+echo " Starting databases..."
+docker compose --profile $PROFILE up -d
 
-sleep 3
-
-# Build extension
-echo "  Building extension..."
-cd extension
-if [ ! -f "node_modules/.bin/esbuild" ]; then
-  echo "  Installing extension dependencies..."
-  npm install --loglevel warn || { echo "  ERROR: Extension install failed."; cd ..; exit 1; }
-fi
-
-npx esbuild src/content.ts    --bundle --outfile=dist/content.js    --format=iife --target=es2020 && echo "  content.js ready"    || echo "  WARNING: content.ts failed"
-npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020 && echo "  background.js ready" || echo "  WARNING: background.ts failed"
-npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020 && echo "  popup.js ready"      || echo "  WARNING: popup.ts failed"
-cd ..
+# 6. Build Extension (fast check)
 echo ""
+echo " Building extension..."
+(cd extension && npx esbuild src/content.ts --bundle --outfile=dist/content.js --format=iife --target=es2020 --log-level=error)
+(cd extension && npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020 --log-level=error)
+(cd extension && npx esbuild popup/popup.ts --bundle --outfile=popup/popup.js --format=iife --target=es2020 --log-level=error)
 
-# Build dashboard for production (if not already built)
-if [ ! -d "dashboard/dist" ]; then
-  echo "  Building dashboard for production (first time)..."
-  cd dashboard
-  if [ ! -f "node_modules/.bin/vite" ]; then
-    npm install --loglevel warn
-  fi
-  npm run build && echo "  Dashboard built" || echo "  WARNING: Dashboard build failed. Backend API will still work."
-  cd ..
-else
-  echo "  Dashboard already built - serving from backend at http://localhost:3001"
-fi
+# 7. Start Backend
 echo ""
+echo " Starting backend..."
+(cd backend && npm run dev) &
 
-# Start backend
-echo "  Starting backend on port 3001..."
-cd backend
-if [ ! -f "node_modules/.bin/ts-node-dev" ]; then
-  echo "  Installing backend dependencies..."
-  npm install --loglevel warn || { echo "  ERROR: Backend install failed."; cd ..; exit 1; }
-fi
-npm run dev &
-BACKEND_PID=$!
-cd ..
-echo "  Backend started (PID $BACKEND_PID)"
 echo ""
-
-# Wait for health
-echo "  Waiting for backend to start..."
-HEALTH_OK=0
-for i in $(seq 1 10); do
-  sleep 2
-  if curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health 2>/dev/null | grep -q "200"; then
-    HEALTH_OK=1
-    break
-  fi
-done
-
-if [ "$HEALTH_OK" -eq 0 ]; then
-  echo "  WARNING: Backend health check timed out. Check terminal for errors."
-else
-  echo "  Backend is healthy"
-fi
+echo " ==================================="
+echo "  SYNQ is running!"
+echo " ==================================="
+echo "  Dashboard: http://localhost:3001"
 echo ""
-
-# Summary
-echo "  SYNQ is ready!
-
-  To start SYNQ daily, just run: ./start.sh
-
-  Dashboard     : http://localhost:3001 (after starting)
-  Backend       : http://localhost:3001/health"
-if [ "$PROFILE" = "full" ]; then
-echo "  Neo4j UI   : http://localhost:7474"
-fi
-echo "  ChromaDB   : http://localhost:8000"
-echo "  MongoDB    : mongodb://localhost:27017"
-echo ""
-echo "  Extension  : load /extension/dist in chrome://extensions (Developer mode)"
-echo "  MCP setup  : see MCP_SETUP.md"
-echo ""
-echo "  Press Ctrl+C to stop everything."
-echo ""
-
-# Cleanup on Ctrl+C
-cleanup() {
-  echo ""
-  echo "  Stopping SYNQ..."
-  kill $BACKEND_PID 2>/dev/null || true
-  docker compose stop 2>/dev/null || docker-compose stop 2>/dev/null || true
-  echo "  Done."
-}
-trap cleanup INT TERM
 wait

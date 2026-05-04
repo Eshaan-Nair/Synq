@@ -8,105 +8,86 @@ set "COMPOSE_PROJECT_NAME=synq"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.0 - Starting up
+echo   SYNQ v1.4.1 - Starting up
 echo  ===================================
 echo.
 
-REM Check .env exists
+REM 1. Load .env settings
 if not exist "backend\.env" (
-  echo  ERROR: backend\.env not found.
-  echo  Run: copy backend\.env.example backend\.env
-  echo.
+  echo  ERROR: backend\.env not found. Run install.bat first.
   pause
   exit /b 1
 )
 
-REM Check Docker
+for /f "tokens=1,2 delims==" %%a in (backend\.env) do (
+    if "%%a"=="GRAPH_BACKEND" set "GRAPH_BACKEND=%%b"
+    if "%%a"=="OLLAMA_MODEL" set "OLLAMA_MODEL=%%b"
+)
+if "!GRAPH_BACKEND!"=="" set "GRAPH_BACKEND=ollama"
+
+REM 2. Check Docker
 where docker >nul 2>&1
 if errorlevel 1 (
   echo  ERROR: Docker not found.
   pause
   exit /b 1
 )
-
 docker info >nul 2>&1
 if errorlevel 1 (
   echo  ERROR: Docker Desktop is not running.
   pause
   exit /b 1
 )
-echo  Docker ready
+echo  OK Docker ready
 
-REM Check Ollama
-where ollama >nul 2>&1
-if errorlevel 1 (
-  echo  Ollama not found - limited features.
+REM 3. Check Backend Status
+if "!GRAPH_BACKEND!"=="groq" (
+    echo  OK Knowledge Graph: Groq (Cloud API)
 ) else (
-  echo  Ollama ready
-)
-
-REM Detect RAM - safe version
-set "PROFILE=full"
-set "RAM_GB=0"
-set "RAM_KB="
-
-for /f "tokens=2 delims==" %%a in ('wmic OS get TotalVisibleMemorySize /value 2^>nul') do (
-    for /f "delims=" %%b in ("%%a") do set "RAM_KB=%%b"
-)
-
-if defined RAM_KB (
-    set "RAM_KB=!RAM_KB: =!"
-    REM Only do math if RAM_KB is just digits
-    echo !RAM_KB!| findstr /r "^[0-9]*$" >nul
-    if !errorlevel! equ 0 (
-        set /a RAM_GB=!RAM_KB! / 1048576
-        if !RAM_GB! LSS 8 (
-            set "PROFILE=lite"
-        )
+    where ollama >nul 2>&1
+    if errorlevel 1 (
+        echo  WARN Ollama not found - Graph extraction will fail.
+    ) else (
+        echo  OK Knowledge Graph: Ollama (Local: !OLLAMA_MODEL!)
     )
 )
 
-if defined SYNQ_PROFILE set "PROFILE=%SYNQ_PROFILE%"
+REM 4. Detect RAM (PowerShell for large number support)
+for /f "tokens=*" %%a in ('powershell -NoProfile -Command "[math]::Round((Get-CimInstance Win32_OperatingSystem).TotalVisibleMemorySize / 1MB)"') do set "RAM_GB=%%a"
 
-if "!PROFILE!"=="lite" (
-  echo  Starting in LITE mode
+set "PROFILE=full"
+if !RAM_GB! LSS 8 (
+    set "PROFILE=lite"
+    echo  OK Mode: LITE (!RAM_GB! GB RAM detected)
 ) else (
-  echo  Starting in FULL mode
+    echo  OK Mode: FULL (!RAM_GB! GB RAM detected)
 )
 echo.
 
-REM Start DBs
+REM 5. Start DBs
 echo  Starting databases...
 docker compose --profile %PROFILE% up -d
 echo.
 
-REM Build extension
+REM 6. Build extension (fast check)
 echo  Building extension...
 cd extension
-if not exist "node_modules" call npm install --loglevel error
-call npx esbuild src/content.ts    --bundle --outfile=dist/content.js    --format=iife --target=es2020
-call npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020
-call npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020
+call npx esbuild src/content.ts    --bundle --outfile=dist/content.js    --format=iife --target=es2020 --log-level=error
+call npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020 --log-level=error
+call npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020 --log-level=error
 cd ..
 
-REM Build dashboard
-if not exist "dashboard\dist" (
-    echo  Building dashboard...
-    cd dashboard
-    if not exist "node_modules" call npm install --loglevel error
-    call npm run build
-    cd ..
-)
-
+REM 7. Start backend
 echo.
 echo  Starting backend...
 cd backend
-if not exist "node_modules" call npm install --loglevel error
 start "SYNQ Backend" cmd /k "npm run dev"
 cd ..
 
 echo.
-echo  SYNQ is running!
-echo  Dashboard: http://localhost:3001
+echo  ===================================
+echo   SYNQ is running!
+echo  ===================================
+echo   Dashboard: http://localhost:3001
 echo.
 pause

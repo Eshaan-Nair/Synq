@@ -1,157 +1,150 @@
-#!/usr/bin/env bash
-# install.sh - SYNQ One-Command Installer v1.4.0
-# Full first-time setup for macOS / Linux
-# Re-run at any time - it is idempotent.
-#
-# Usage: chmod +x install.sh && ./install.sh
+#!/bin/bash
+
+# SYNQ v1.4.1 - Smart Installer (Linux/macOS)
+# -------------------------------------------
 
 set -e
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-
-GREEN="\033[0;32m"; YELLOW="\033[0;33m"; RED="\033[0;31m"; RESET="\033[0m"
-ok()   { echo -e "${GREEN}  OK  $*${RESET}"; }
-warn() { echo -e "${YELLOW}  WARN $*${RESET}"; }
-err()  { echo -e "${RED}  ERR  $*${RESET}" >&2; }
 
 echo ""
-echo "  SYNQ Installer v1.4.0"
-echo "  Setting up everything..."
+echo " ==================================="
+echo "  SYNQ v1.4.1 - Smart Installer"
+echo " ==================================="
 echo ""
 
-# 1. Check Docker
-if ! command -v docker &>/dev/null; then
-  err "Docker not found. Install from https://docker.com/get-started"; exit 1
+# 1. Check Dependencies
+if ! command -v docker &> /dev/null; then
+    echo " ERROR: Docker not found. Install Docker first."
+    exit 1
 fi
-if ! docker info &>/dev/null; then
-  err "Docker daemon not running. Start Docker Desktop first."; exit 1
-fi
-ok "Docker ready"
 
-# 2. Check Node.js
-if ! command -v node &>/dev/null; then
-  err "Node.js not found. Install v20 LTS from https://nodejs.org"; exit 1
+if ! command -v node &> /dev/null; then
+    echo " ERROR: Node.js not found. Install v20 LTS."
+    exit 1
 fi
-ok "Node.js $(node -e "process.stdout.write(process.version)")"
+echo " OK Docker & Node.js ready"
 
-# 3. Check / install Ollama
-if ! command -v ollama &>/dev/null; then
-  warn "Ollama not found - installing..."
-  if [[ "$(uname)" == "Darwin" ]]; then
-    brew install ollama 2>/dev/null || curl -fsSL https://ollama.ai/install.sh | sh
-  else
-    curl -fsSL https://ollama.ai/install.sh | sh
-  fi
-  ok "Ollama installed"
+# 2. Detect System Resources
+echo ""
+echo " Detecting system hardware..."
+
+OS_TYPE=$(uname)
+RAM_GB=0
+VRAM_GB=0
+
+if [ "$OS_TYPE" == "Darwin" ]; then
+    # macOS RAM
+    RAM_BYTES=$(sysctl -n hw.memsize)
+    RAM_GB=$((RAM_BYTES / 1024 / 1024 / 1024))
+    # macOS VRAM (Apple Silicon or Intel)
+    VRAM_GB=$(system_profiler SPDisplaysDataType | grep "VRAM" | head -1 | awk '{print $4}' || echo "0")
+    if [[ "$VRAM_GB" == "0" ]]; then
+        # On Apple Silicon, unified memory is often reported as 0 by system_profiler
+        # We can assume a portion of RAM is available for GPU
+        VRAM_GB=$((RAM_GB / 2))
+    fi
 else
-  ok "Ollama already installed"
+    # Linux RAM
+    RAM_GB=$(free -g | awk '/^Mem:/{print $2}')
+    # Linux VRAM (NVIDIA)
+    if command -v nvidia-smi &> /dev/null; then
+        VRAM_MB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | head -1)
+        VRAM_GB=$((VRAM_MB / 1024))
+    fi
 fi
 
-# Start Ollama if not running
-if ! curl -sf http://localhost:11434 &>/dev/null; then
-  warn "Starting Ollama server..."
-  ollama serve &>/dev/null &
-  sleep 4
-fi
-
-# 4. Pull required models
+echo " -----------------------------------"
+echo "  RAM:  ${RAM_GB} GB"
+echo "  VRAM: ${VRAM_GB} GB (estimated)"
+echo " -----------------------------------"
 echo ""
-echo "  Pulling Ollama models (one-time downloads)..."
 
-if ! ollama show nomic-embed-text &>/dev/null; then
-  echo "  Pulling nomic-embed-text (~270 MB - embedding model)..."
-  ollama pull nomic-embed-text
-  ok "nomic-embed-text ready"
+# 3. Backend Selection
+echo " Select your Knowledge Graph backend:"
+echo " [1] Groq API - Cloud (Recommended for Fast/Low-end PCs)"
+echo " [2] Ollama   - Local (Recommended for High-end/Privacy)"
+echo ""
+read -p " Enter choice [1-2] (default 1): " BACKEND_CHOICE
+BACKEND_CHOICE=${BACKEND_CHOICE:-1}
+
+GRAPH_BACKEND="groq"
+SELECTED_MODEL="llama3.1:8b"
+
+if [ "$BACKEND_CHOICE" == "2" ]; then
+    GRAPH_BACKEND="ollama"
+    echo ""
+    echo " Select Ollama Model (based on your ${VRAM_GB}GB VRAM):"
+    echo " [1] Llama 3.1 8b   - 8GB VRAM (Best Accuracy)"
+    echo " [2] Mistral 7b     - 6GB VRAM (Balanced)"
+    echo " [3] Phi-3.5 Mini   - 4GB VRAM (Lightweight)"
+    echo " [4] Qwen 2.5 1.5b  - 2GB VRAM (Ultra Fast)"
+    echo ""
+    read -p " Enter choice [1-4] (default 1): " MODEL_CHOICE
+    case $MODEL_CHOICE in
+        2) SELECTED_MODEL="mistral:7b" ;;
+        3) SELECTED_MODEL="phi3.5:3.8b" ;;
+        4) SELECTED_MODEL="qwen2.5:1.5b" ;;
+        *) SELECTED_MODEL="llama3.1:8b" ;;
+    esac
+
+    echo ""
+    echo " Pulling Ollama models: ${SELECTED_MODEL} + embeddings..."
+    if ! command -v ollama &> /dev/null; then
+        echo " ERROR: Ollama not found. Install from ollama.com first."
+        exit 1
+    fi
+    ollama pull nomic-embed-text
+    ollama pull $SELECTED_MODEL
 else
-  ok "nomic-embed-text already pulled"
+    echo ""
+    echo " Groq selected. Backend will use Cloud API."
 fi
 
-if ! ollama show llama3.1:8b &>/dev/null; then
-  echo "  Pulling llama3.1:8b (~4.7 GB - graph extraction model, one-time)..."
-  ollama pull llama3.1:8b
-  ok "llama3.1:8b ready"
+# 4. Setup .env
+if [ ! -f "backend/.env" ]; then
+    cp "backend/.env.example" "backend/.env"
+fi
+
+# Update .env (portable sed)
+if [[ "$OS_TYPE" == "Darwin" ]]; then
+    sed -i '' "s/GRAPH_BACKEND=.*/GRAPH_BACKEND=$GRAPH_BACKEND/" backend/.env
+    sed -i '' "s/OLLAMA_MODEL=.*/OLLAMA_MODEL=$SELECTED_MODEL/" backend/.env
 else
-  ok "llama3.1:8b already pulled"
+    sed -i "s/GRAPH_BACKEND=.*/GRAPH_BACKEND=$GRAPH_BACKEND/" backend/.env
+    sed -i "s/OLLAMA_MODEL=.*/OLLAMA_MODEL=$SELECTED_MODEL/" backend/.env
 fi
 
-# 5. Install npm dependencies
+# Ensure lines exist if not in example
+grep -q "GRAPH_BACKEND=" backend/.env || echo "GRAPH_BACKEND=$GRAPH_BACKEND" >> backend/.env
+grep -q "OLLAMA_MODEL=" backend/.env || echo "OLLAMA_MODEL=$SELECTED_MODEL" >> backend/.env
+
+# 5. Dependencies
 echo ""
-echo "  Installing npm dependencies..."
-npm install --prefix backend  --loglevel error && ok "backend deps installed"
-npm install --prefix dashboard --loglevel error && ok "dashboard deps installed"
-npm install --prefix extension --loglevel error && ok "extension deps installed"
+echo " Installing dependencies..."
+(cd backend && npm install --loglevel error)
+(cd dashboard && npm install --loglevel error)
+(cd extension && npm install --loglevel error)
 
-# 6. Build everything
+# 6. Build
 echo ""
-echo "  Building for production..."
-npm run build --prefix dashboard && ok "dashboard built -> dashboard/dist"
-(cd extension && npx esbuild src/content.ts    --bundle --outfile=dist/content.js    --format=iife --target=es2020)
-(cd extension && npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020)
-(cd extension && npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020)
-ok "extension built -> extension/dist"
+echo " Building components..."
+(cd dashboard && npm run build)
+(cd extension && npx esbuild src/content.ts --bundle --outfile=dist/content.js --format=iife --target=es2020 --log-level=error)
+(cd extension && npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020 --log-level=error)
+(cd extension && npx esbuild popup/popup.ts --bundle --outfile=popup/popup.js --format=iife --target=es2020 --log-level=error)
 
-(cd backend && npm run build 2>/dev/null || true)
-ok "backend compiled"
+# 7. Start DBs
+PROFILE="full"
+if [ "$RAM_GB" -lt 8 ]; then PROFILE="lite"; fi
+echo ""
+echo " Starting databases (Profile: $PROFILE)..."
+docker compose --profile $PROFILE up -d
 
-# 7. Set up .env
-if [ ! -f backend/.env ]; then
-  cp backend/.env.example backend/.env
-  warn "Created backend/.env from .env.example - review settings before production use"
+echo ""
+echo " ==================================="
+echo "  SYNQ Installed Successfully"
+echo " ==================================="
+if [ "$GRAPH_BACKEND" == "groq" ]; then
+    echo "  IMPORTANT: Ensure GROQ_API_KEY is set in backend/.env"
 fi
-
-# 8. Detect RAM and pick Docker profile
-echo ""
-RAM_GB=16
-if [[ "$(uname)" == "Linux" ]]; then
-  RAM_GB=$(awk '/MemTotal/{printf "%.0f", $2/1024/1024}' /proc/meminfo)
-elif [[ "$(uname)" == "Darwin" ]]; then
-  RAM_GB=$(sysctl -n hw.memsize | awk '{printf "%.0f", $1/1024/1024/1024}')
-fi
-
-if [ "$RAM_GB" -lt 8 ]; then
-  PROFILE="${SYNQ_PROFILE:-lite}"
-  warn "${RAM_GB} GB RAM detected - starting LITE mode (no Neo4j)"
-  warn "To run full mode: SYNQ_PROFILE=full ./install.sh"
-else
-  PROFILE="${SYNQ_PROFILE:-full}"
-  ok "${RAM_GB} GB RAM detected - starting FULL mode"
-fi
-
-# 9. Start Docker services
-echo ""
-echo "  Starting Docker containers (profile: $PROFILE)..."
-docker compose --profile "$PROFILE" up -d
-sleep 5
-
-# 10. Health checks
-echo ""
-echo "  Running health checks..."
-if curl -sf http://localhost:8000/api/v1/heartbeat &>/dev/null; then
-  ok "ChromaDB  - http://localhost:8000"
-else
-  warn "ChromaDB not yet healthy - check: docker compose logs chromadb"
-fi
-
-if [ "$PROFILE" = "full" ]; then
-  if curl -sf http://localhost:7474 &>/dev/null; then
-    ok "Neo4j     - http://localhost:7474"
-  else
-    warn "Neo4j may still be initialising - check: docker compose logs neo4j"
-  fi
-fi
-
-# 11. Next steps
-echo ""
-echo "  SYNQ is ready!
-
-  To start SYNQ daily, just run: ./start.sh
-
-  Dashboard     : http://localhost:3001 (after starting)
-"
-echo ""
-echo "  Extension:"
-echo "    Load $(pwd)/extension/dist in chrome://extensions (Developer mode)"
-echo ""
-echo "  MCP (Claude Code / Cursor / Windsurf):"
-echo "    See MCP_SETUP.md"
+echo "  Run ./start.sh to begin."
 echo ""
