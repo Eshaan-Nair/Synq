@@ -105,7 +105,7 @@ AI tool (Cursor/Claude Code/etc.) → MCP stdio call
 ```
 {
   projectName: String (required),
-  platform:    "claude" | "chatgpt" | "gemini" | "mcp",
+  platform:    "claude" | "chatgpt" | "gemini" | "perplexity" | "deepseek" | "mcp",
   tripleCount: Number,
   topicCount:  Number,
   hasFullChat: Boolean,
