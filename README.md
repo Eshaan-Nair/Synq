@@ -15,11 +15,11 @@ Every time you open a new chat, your AI starts from zero. SYNQ gives your AI per
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/issues)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Synq/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.0-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.1-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
-**Works with Claude · ChatGPT · Gemini — and Claude Code · Cursor · Windsurf via MCP.**
+**Works with Claude · ChatGPT · Gemini · Perplexity · DeepSeek — and Claude Code · Cursor · Windsurf via MCP.**
 
 https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
@@ -122,7 +122,7 @@ macOS/Linux:    ./start.sh
 1. Open Chrome → `chrome://extensions`
 2. Enable **Developer mode** (top-right toggle)
 3. **Load unpacked** → select `Synq/extension/dist`
-4. The SYNQ badge appears on Claude, ChatGPT, and Gemini
+4. The SYNQ badge appears on Claude, ChatGPT, Gemini, Perplexity, and DeepSeek
 
 ### Dashboard
 
@@ -134,7 +134,7 @@ The dashboard is a production build served by the backend — no separate window
 
 ## MCP Server
 
-> **v1.4.0** — SYNQ now works in any MCP-compatible AI tool.
+> **v1.4.1** — SYNQ now works in any MCP-compatible AI tool.
 
 Build the backend first:
 ```bash
@@ -174,7 +174,7 @@ Full guide: [MCP_SETUP.md](MCP_SETUP.md)
 
 ### Saving a Conversation
 
-1. Have a conversation on Claude, ChatGPT, or Gemini
+1. Have a conversation on Claude, ChatGPT, Gemini, Perplexity, or DeepSeek
 2. Click the SYNQ icon in the toolbar
 3. Enter a project name and click **Save Chat**
 4. SYNQ scrubs PII, chunks, embeds locally, and extracts graph triples — typically under 5 seconds

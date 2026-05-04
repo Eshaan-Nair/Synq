@@ -4,6 +4,24 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.4.1] — 2026-05-04 — Expanding Platform Support
+
+### Supported Platforms
+
+- **New: Perplexity (perplexity.ai)** — Full support for context injection and chat saving. Uses high-resiliency strategies targeting stable `textarea` placeholders and data-testids.
+- **New: DeepSeek (chat.deepseek.com)** — Full support. Leverages DeepSeek's stable `#chat-input` ID and product-specific `.ds-markdown` classes.
+- All platforms (Claude, ChatGPT, Gemini, Perplexity, DeepSeek) now share the same multi-strategy resolver architecture.
+
+### Automated Maintenance
+
+- **Expanded Selector Monitoring** — `scripts/check-selectors.js` and the weekly GitHub Action now monitor all 5 platforms.
+- **Fail-fast CI** — Selector staleness check updated to alert on Perplexity and DeepSeek regressions.
+
+### Version Alignment
+
+- Unified project versioning across extension manifest, extension package, backend, and dashboard to `1.4.1`.
+
+
 ## [1.4.0] — 2026-05-03 — Security, MCP & Production Hardening
 
 ### Security

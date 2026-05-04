@@ -14,7 +14,7 @@
  * Updated: v1.4.0
  */
 
-export type Platform = "claude" | "chatgpt" | "gemini";
+export type Platform = "claude" | "chatgpt" | "gemini" | "perplexity" | "deepseek";
 
 export const INPUT_SELECTOR_STRATEGIES: Record<Platform, string[]> = {
   claude: [
@@ -38,6 +38,22 @@ export const INPUT_SELECTOR_STRATEGIES: Record<Platform, string[]> = {
     '[aria-label*="message"]',                                // aria fallback
     'div[contenteditable][role="textbox"]',                   // role fallback
     'div[contenteditable="true"]',                            // generic fallback
+  ],
+  perplexity: [
+    'textarea[placeholder*="Ask"]',                           // primary — stable placeholder
+    '#ask-input',                                             // id fallback
+    'textarea[data-testid="search-input"]',                   // testid fallback
+    'textarea[aria-label*="Ask"]',                            // aria fallback
+    '[contenteditable="true"][aria-label*="Ask"]',            // contenteditable variant
+    'textarea',                                               // generic textarea fallback
+  ],
+  deepseek: [
+    '#chat-input',                                            // primary — stable id
+    'textarea[placeholder*="Send a message"]',                // placeholder fallback
+    'textarea[data-testid="chat-input"]',                     // testid fallback
+    '[contenteditable="true"][aria-label*="message"]',        // contenteditable variant
+    'div[contenteditable][role="textbox"]',                   // role fallback
+    'textarea',                                               // generic textarea fallback
   ],
 };
 

@@ -1,8 +1,10 @@
 import { claude } from "./claude";
 import { chatgpt } from "./chatgpt";
 import { gemini } from "./gemini";
+import { perplexity } from "./perplexity";
+import { deepseek } from "./deepseek";
 
-export type Platform = "claude" | "chatgpt" | "gemini" | "unknown";
+export type Platform = "claude" | "chatgpt" | "gemini" | "perplexity" | "deepseek" | "unknown";
 
 export type PlatformConfig = {
   name: Platform;
@@ -13,7 +15,7 @@ export type PlatformConfig = {
   sendButtonSelectors: string[];
 };
 
-const platforms: PlatformConfig[] = [claude, chatgpt, gemini];
+const platforms: PlatformConfig[] = [claude, chatgpt, gemini, perplexity, deepseek];
 
 export function detectPlatform(): Platform {
   const host = window.location.hostname;

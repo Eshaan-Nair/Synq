@@ -72,6 +72,37 @@ const PLATFORMS = [
       '.model-response-text',
     ],
   },
+  {
+    name: "Perplexity",
+    url: "https://www.perplexity.ai",
+    inputSelectors: [
+      'textarea[placeholder*="Ask"]',
+      '#ask-input',
+      'textarea[data-testid="search-input"]',
+      'textarea[aria-label*="Ask"]',
+      'textarea',
+    ],
+    responseSelectors: [
+      '[data-testid="answer"]',
+      '.answer-content',
+      '.prose',
+    ],
+  },
+  {
+    name: "DeepSeek",
+    url: "https://chat.deepseek.com",
+    inputSelectors: [
+      '#chat-input',
+      'textarea[placeholder*="Send a message"]',
+      'textarea[data-testid="chat-input"]',
+      'textarea',
+    ],
+    responseSelectors: [
+      '[data-message-author-role="assistant"]',
+      '.ds-markdown',
+      '.prose',
+    ],
+  },
 ];
 
 async function checkPlatform(browser, platform) {
