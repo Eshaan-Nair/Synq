@@ -97,7 +97,7 @@ docker run --rm -v synq_chroma_data:/data -v $(pwd)/backups:/backup alpine \
 
 ```bash
 docker run --rm -v synq_mongo_data:/data -v $(pwd)/backups:/backup alpine \
-  tar xzf /backup/mongo_20260503.tar.gz -C /
+  tar xzf /backup/mongo_20260505.tar.gz -C /
 ```
 
 ---

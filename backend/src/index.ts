@@ -46,9 +46,9 @@ const PORT = process.env.PORT || 3001;
 // Body parser — MUST be before routes. Raised limit for large chat saves.
 app.use(express.json({ limit: "5mb" }));
 // Issue #3 Fix: Restrict CORS to trusted origins only
-// v1.4.0: Added localhost:3001 — dashboard is now served from the same port as the API
+// v1.4.1: Added localhost:3001 — dashboard is now served from the same port as the API
 const ALLOWED_ORIGINS = [
-  "http://localhost:3001",   // Dashboard (production build via sirv — v1.4.0)
+  "http://localhost:3001",   // Dashboard (production build via sirv — v1.4.1)
   "http://localhost:5173",   // Vite dashboard (dev — legacy / still works)
   "http://localhost:5174",   // Vite dashboard (dev alternative)
   "http://localhost:4173",   // Vite dashboard (preview)
@@ -126,7 +126,7 @@ app.use("/api/rag", ragRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "SYNQ backend running",
-    version: "1.4.0",
+    version: "1.4.1",
     services: {
       backend: "ok",
       port: PORT,
@@ -134,7 +134,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// ── v1.4.0: Serve production dashboard build via sirv ─────────────
+// ── v1.4.1: Serve production dashboard build via sirv ─────────────
 // Eliminates the separate Vite dev server process for self-hosters.
 // Falls back gracefully with a clear message if the build hasn't run yet.
 const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");

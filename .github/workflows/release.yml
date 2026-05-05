@@ -41,4 +41,4 @@ jobs:
             ### Load the Extension
             1. After installation, open `chrome://extensions`
             2. Enable **Developer mode**
-            3. **Load unpacked** → select `Synq/extension/dist`
+            3. **Load unpacked** → select `Synq/extension`

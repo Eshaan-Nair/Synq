@@ -38,7 +38,7 @@ function chunkText(text: string): string[] {
   return chunks;
 }
 
-// ── v1.4.0: Smart Backend Selection ───────────────────────────────
+// ── v1.4.1: Smart Backend Selection ───────────────────────────────
 //
 // Priority:
 //   1. GRAPH_BACKEND env var (explicit override — "ollama" | "groq")

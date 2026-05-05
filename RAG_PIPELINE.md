@@ -52,7 +52,7 @@ User types → keydown/click intercepted (debounced 300ms)
 → Slice to topN (default: 3)
 ```
 
-### 4. Sanitisation (on every retrieval — v1.4.0)
+### 4. Sanitisation (on every retrieval — v1.4.1)
 
 Before the chunks are injected into the prompt:
 
