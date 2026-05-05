@@ -13,7 +13,6 @@
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "https://www.perplexity.ai/*",
     "https://chat.deepseek.com/*"
   ],
   "background": {
@@ -25,7 +24,6 @@
         "https://claude.ai/*",
         "https://chatgpt.com/*",
         "https://gemini.google.com/*",
-        "https://www.perplexity.ai/*",
         "https://chat.deepseek.com/*"
       ],
       "js": ["dist/content.js"],

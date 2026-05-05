@@ -69,7 +69,7 @@ router.post("/session", async (req: Request, res: Response) => {
     return;
   }
 
-  const VALID_PLATFORMS = ["claude", "chatgpt", "gemini"];
+  const VALID_PLATFORMS = ["claude", "chatgpt", "gemini", "deepseek"];
   if (platform && !VALID_PLATFORMS.includes(platform)) {
     res.status(400).json({ error: `platform must be one of: ${VALID_PLATFORMS.join(", ")}` });
     return;

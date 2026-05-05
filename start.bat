@@ -26,6 +26,7 @@ for /f "tokens=1,2 delims==" %%a in (backend\.env) do (
 if "!GRAPH_BACKEND!"=="" set "GRAPH_BACKEND=ollama"
 
 REM 2. Check Docker
+
 where docker >nul 2>&1
 if errorlevel 1 (
   echo  ERROR: Docker not found.

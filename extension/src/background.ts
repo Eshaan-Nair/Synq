@@ -205,7 +205,6 @@ function broadcastSessionChanged(sessionId: string | null, projectName?: string)
     "*://claude.ai/*",
     "*://gemini.google.com/*",
     "*://*.deepseek.com/*",
-    "*://*.perplexity.ai/*",
   ];
   chrome.tabs.query({ url: AI_URLS }, (tabs) => {
     for (const tab of tabs) {
@@ -268,7 +267,7 @@ async function handleTogglePause() {
   
   // Broadcast to all tabs so they update their badge and detached state
   const type = newState ? "PAUSE_SYNQ" : "RESUME_SYNQ";
-  const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*", "*://*.deepseek.com/*", "*://*.perplexity.ai/*"];
+  const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*", "*://*.deepseek.com/*"];
   chrome.tabs.query({ url: AI_URLS }, (tabs) => {
     for (const tab of tabs) {
       if (tab.id) {
@@ -279,3 +278,26 @@ async function handleTogglePause() {
 
   return { paused: newState };
 }
+
+// ── Reliable Sync: Listen for storage changes and broadcast ──────
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace !== "local") return;
+
+  if (changes.synq_session) {
+    const newSession = changes.synq_session.newValue;
+    broadcastSessionChanged(newSession?.sessionId || null, newSession?.projectName);
+  }
+
+  if (changes.synq_paused) {
+    const isPaused = changes.synq_paused.newValue === true;
+    const type = isPaused ? "PAUSE_SYNQ" : "RESUME_SYNQ";
+    const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*", "*://*.deepseek.com/*"];
+    chrome.tabs.query({ url: AI_URLS }, (tabs) => {
+      for (const tab of tabs) {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type }, () => { chrome.runtime.lastError; });
+        }
+      }
+    });
+  }
+});
