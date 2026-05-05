@@ -34,8 +34,10 @@ export const perplexity = {
     'button[aria-label="Submit"]',
     'button[aria-label="Send"]',
     'button[data-testid="send-button"]',
-    // Icon button at the end of the textarea row
+    'button[data-testid="search-input-submit"]',
     'textarea ~ button',
+    'textarea + button',
+    'button:has(svg)',
     'button[type="submit"]',
   ],
 };

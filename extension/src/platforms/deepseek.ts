@@ -31,9 +31,10 @@ export const deepseek = {
   sendButtonSelectors: [
     'button[aria-label="Send message"]',
     'button[aria-label="Send"]',
+    'button[data-testid="send-button"]',
     '[data-testid="send-button"]',
-    // DeepSeek uses an SVG icon button — target by position in the input row
     '#chat-input ~ button',
+    'button:has(svg[class*="send"])',
     'button[type="submit"]',
   ],
 };
