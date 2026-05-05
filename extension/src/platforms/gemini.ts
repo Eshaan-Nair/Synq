@@ -21,7 +21,7 @@ export const gemini = {
     ".model-response-text",
     "message-content",                      // custom element tag for responses
   ],
-  // v1.4.0: multi-strategy selectors via resolver — survives platform UI updates
+  // v1.4.1: multi-strategy selectors via resolver — survives platform UI updates
   inputSelectors: INPUT_SELECTOR_STRATEGIES.gemini,
   sendButtonSelectors: [
     'button[aria-label="Send message"]',

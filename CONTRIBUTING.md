@@ -30,7 +30,7 @@ backend/src/
 
 extension/src/
   platform/     resolver.ts — input selector strategies
-  platforms/    claude · chatgpt · gemini · perplexity · deepseek · index
+  platforms/    claude · chatgpt · gemini · deepseek · index
 
 dashboard/src/
   components/   GraphView · ChatViewer
@@ -91,7 +91,7 @@ cd backend && npm test -- --testPathPattern=pipeline.integration
 type(scope): short description
 
 Examples:
-feat(extension): add Perplexity platform support
+feat(extension): add Example platform support
 fix(rag): lower similarity threshold for shorter queries
 docs(readme): update quick start for v1.4.1
 test(pipeline): add edge case for empty conversation
@@ -112,7 +112,7 @@ This is a great first contribution. Here's the complete process:
 // extension/src/platform/resolver.ts
 export const INPUT_SELECTOR_STRATEGIES = {
   // ... existing platforms ...
-  perplexity: [
+  'new-platform': [
     'textarea[placeholder*="Ask"]',
     '[contenteditable="true"]',
   ],
@@ -122,12 +122,12 @@ export const INPUT_SELECTOR_STRATEGIES = {
 ### 2. Create the platform file
 
 ```typescript
-// extension/src/platforms/perplexity.ts
+// extension/src/platforms/new-platform.ts
 import { INPUT_SELECTOR_STRATEGIES } from '../platform/resolver';
 
-export const perplexityPlatform = {
-  name: 'perplexity',
-  hostnames: ['perplexity.ai'],
+export const newPlatformConfig = {
+  name: 'new-platform',
+  hostnames: ['example-ai.com'],
 
   userSelectors: [
     '.user-query',
@@ -144,7 +144,7 @@ export const perplexityPlatform = {
     'button[type="submit"]',
   ],
 
-  inputSelectors: INPUT_SELECTOR_STRATEGIES.perplexity,
+  inputSelectors: INPUT_SELECTOR_STRATEGIES['new-platform'],
 };
 ```
 
@@ -152,13 +152,14 @@ export const perplexityPlatform = {
 
 ```typescript
 // extension/src/platforms/index.ts
-import { perplexityPlatform } from './perplexity';
+import { newPlatformConfig } from './new-platform';
 
 export const PLATFORMS = [
-  claudePlatform,
-  chatgptPlatform,
-  geminiPlatform,
-  perplexityPlatform,   // add here
+  claude,
+  chatgpt,
+  gemini,
+  deepseek,
+  newPlatformConfig,   // add here
 ];
 ```
 
@@ -170,14 +171,16 @@ export const PLATFORMS = [
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "https://www.perplexity.ai/*"
+    "https://chat.deepseek.com/*",
+    "https://*.example-ai.com/*"
   ],
   "content_scripts": [{
     "matches": [
       "https://claude.ai/*",
       "https://chatgpt.com/*",
       "https://gemini.google.com/*",
-      "https://www.perplexity.ai/*"
+      "https://chat.deepseek.com/*",
+      "https://*.example-ai.com/*"
     ]
   }]
 }

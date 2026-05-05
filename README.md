@@ -19,7 +19,7 @@ Every time you open a new chat, your AI starts from zero. SYNQ gives your AI per
 
 <br/>
 
-**Works with Claude · ChatGPT · Gemini · Perplexity · DeepSeek — and Claude Code · Cursor · Windsurf via MCP.**
+**Works with Claude · ChatGPT · Gemini · DeepSeek — and Claude Code · Cursor · Windsurf via MCP.**
 
 https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
@@ -46,7 +46,7 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v140](#whats-new-in-v140)
+- [Whats New in v1.4.1](#whats-new-in-v141)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -122,7 +122,7 @@ macOS/Linux:    ./start.sh
 1. Open Chrome → `chrome://extensions`
 2. Enable **Developer mode** (top-right toggle)
 3. **Load unpacked** → select `Synq/extension/dist`
-4. The SYNQ badge appears on Claude, ChatGPT, Gemini, Perplexity, and DeepSeek
+4. The SYNQ badge appears on Claude, ChatGPT, Gemini, and DeepSeek
 
 ### Dashboard
 
@@ -174,7 +174,7 @@ Full guide: [MCP_SETUP.md](MCP_SETUP.md)
 
 ### Saving a Conversation
 
-1. Have a conversation on Claude, ChatGPT, Gemini, Perplexity, or DeepSeek
+1. Have a conversation on Claude, ChatGPT, Gemini, or DeepSeek
 2. Click the SYNQ icon in the toolbar
 3. Enter a project name and click **Save Chat**
 4. SYNQ scrubs PII, chunks, embeds locally, and extracts graph triples — typically under 5 seconds
@@ -300,7 +300,7 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## Whats New in v140
+## Whats New in v1.4.1
 
 - **Prompt injection defence** — pattern detection + XML context delimiters
 - **MCP Server** — 5 tools for Claude Code, Cursor, Windsurf, Claude Desktop

@@ -1,5 +1,5 @@
 /**
- * SYNQ content.ts — v1.4.0
+ * SYNQ content.ts — v1.4.1
  *
  * Fix: Context injection now works reliably on all platforms.
  *
@@ -206,7 +206,6 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
       .replace(/^ChatGPT said\s*/i, "")
       .replace(/^Claude said\s*/i, "")
       .replace(/^DeepSeek said\s*/i, "")
-      .replace(/^Perplexity said\s*/i, "")
       .trim();
     if (text.length < 3) continue;
     const fp = fingerprint(text);
@@ -422,7 +421,7 @@ async function injectAndSend(input: HTMLElement, text: string) {
 
   const sendBtn = queryOne(config!.sendButtonSelectors) as HTMLElement | null;
   if (sendBtn) {
-    // For Perplexity/DeepSeek, sometimes click() isn't enough or triggers double submit.
+    // For DeepSeek, sometimes click() isn't enough or triggers double submit.
     // We try to focus the button first, then click.
     sendBtn.focus();
     sendBtn.click();

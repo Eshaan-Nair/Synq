@@ -1,13 +1,13 @@
 /**
- * rag.ts (backend route) — v1.4.0
+ * rag.ts (backend route) — v1.4.1
  *
- * v1.4.0 changes:
+ * v1.4.1 changes:
  * - All retrieved chunks are now piped through sanitizeChunks() to redact
  *   any prompt injection patterns before they reach the AI's context window.
  * - Context block is wrapped in <synq_retrieved_context> XML delimiters
  *   so LLMs treat the content as data, not instructions.
  *
- * Updated: v1.4.0
+ * Updated: v1.4.1
  * - Context header shows chunk position + relevance % (not topic name)
  * - topN default raised to 3 — window chunks are smaller so we need more
  * - topicsFound renamed to chunksFound for clarity
@@ -49,7 +49,7 @@ router.post("/retrieve", async (req: Request, res: Response) => {
       return;
     }
 
-    // ── v1.4.0: Sanitise chunks before returning ───────────────────
+    // ── v1.4.1: Sanitise chunks before returning ───────────────────
     // Cap each chunk at 1500 chars to avoid platform prompt length limits,
     // then run injection filter + XML wrapping.
     const MAX_CONTEXT_CHARS = 1500;
