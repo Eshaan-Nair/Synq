@@ -17,7 +17,7 @@ services:
     container_name: synq_mongo
     profiles: ["full", "lite"]  # always starts
     ports:
-      - "127.0.0.1:27017:27017"
+      - "127.0.0.1:27018:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-synq}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-synqpassword123}

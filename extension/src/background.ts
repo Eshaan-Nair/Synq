@@ -204,6 +204,8 @@ function broadcastSessionChanged(sessionId: string | null, projectName?: string)
     "*://chatgpt.com/*",
     "*://claude.ai/*",
     "*://gemini.google.com/*",
+    "*://*.deepseek.com/*",
+    "*://*.perplexity.ai/*",
   ];
   chrome.tabs.query({ url: AI_URLS }, (tabs) => {
     for (const tab of tabs) {
@@ -266,7 +268,7 @@ async function handleTogglePause() {
   
   // Broadcast to all tabs so they update their badge and detached state
   const type = newState ? "PAUSE_SYNQ" : "RESUME_SYNQ";
-  const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*"];
+  const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*", "*://*.deepseek.com/*", "*://*.perplexity.ai/*"];
   chrome.tabs.query({ url: AI_URLS }, (tabs) => {
     for (const tab of tabs) {
       if (tab.id) {

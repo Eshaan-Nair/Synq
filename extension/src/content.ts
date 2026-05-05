@@ -205,6 +205,8 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
       .replace(/^Gemini said\s*/i, "")
       .replace(/^ChatGPT said\s*/i, "")
       .replace(/^Claude said\s*/i, "")
+      .replace(/^DeepSeek said\s*/i, "")
+      .replace(/^Perplexity said\s*/i, "")
       .trim();
     if (text.length < 3) continue;
     const fp = fingerprint(text);
@@ -411,15 +413,20 @@ async function injectAndSend(input: HTMLElement, text: string) {
   }
 
   // Small delay to let the framework process the input event before we submit
-  await new Promise(r => setTimeout(r, 250));
+  await new Promise(r => setTimeout(r, 300));
 
   const sendBtn = queryOne(config!.sendButtonSelectors) as HTMLElement | null;
   if (sendBtn) {
+    // For Perplexity/DeepSeek, sometimes click() isn't enough or triggers double submit.
+    // We try to focus the button first, then click.
+    sendBtn.focus();
     sendBtn.click();
   } else {
-    input.dispatchEvent(new KeyboardEvent("keydown", {
-      key: "Enter", code: "Enter", bubbles: true, cancelable: true,
-    }));
+    // Fallback: Dispatch a real Enter key event
+    const enterEv = new KeyboardEvent("keydown", {
+      key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true, cancelable: true,
+    });
+    input.dispatchEvent(enterEv);
   }
 }
 
@@ -474,35 +481,65 @@ function injectSidebarUI() {
   synqShadow = host.attachShadow({ mode: "open" });
   synqShadow.innerHTML = `
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&display=swap');
     
     #synq-badge {
       position: absolute; bottom: 24px; right: 24px;
-      background: #151822; color: #F8FAFC;
-      padding: 10px 18px; border-radius: 8px;
-      font-size: 12px; font-family: 'Inter', system-ui, sans-serif;
+      background: rgba(15, 18, 26, 0.8);
+      backdrop-filter: blur(12px);
+      color: #F8FAFC;
+      padding: 8px 16px; border-radius: 100px;
+      font-size: 11px; font-family: 'Outfit', system-ui, sans-serif;
       font-weight: 600; cursor: pointer;
-      border: 1px solid #1E2330; pointer-events: auto;
-      letter-spacing: 0.05em; transition: all 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 8px;
+      letter-spacing: 0.08em; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      user-select: none;
     }
-    #synq-badge:hover { background: #1E2330; border-color: #818CF8; }
+    #synq-badge:hover { 
+      transform: translateY(-2px) scale(1.02);
+      border-color: rgba(129, 140, 248, 0.5);
+      background: rgba(25, 28, 38, 0.9);
+    }
+    #synq-badge .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #475569; transition: all 0.3s;
+      box-shadow: 0 0 0 rgba(129, 140, 248, 0);
+    }
     #synq-badge.active {
-      border-color: #818CF8;
-      box-shadow: 0 0 10px rgba(129, 140, 248, 0.2);
+      border-color: rgba(129, 140, 248, 0.6);
+      box-shadow: 0 0 20px rgba(129, 140, 248, 0.15), 0 4px 12px rgba(0,0,0,0.3);
     }
-    #synq-badge.paused { color: #475569; border-color: transparent; }
+    #synq-badge.active .status-dot {
+      background: #818CF8;
+      box-shadow: 0 0 8px #818CF8;
+      animation: pulse 2s infinite;
+    }
+    #synq-badge.paused { color: #64748b; opacity: 0.8; }
+    #synq-badge.paused .status-dot { background: #334155; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(129, 140, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0); }
+    }
+
     #synq-toast {
       position: absolute; bottom: 76px; right: 24px;
       background: #0B0E14; color: #F1F5F9;
-      padding: 10px 16px; border-radius: 6px;
-      font-size: 12px; font-family: 'Inter', system-ui, sans-serif;
-      opacity: 0;
-      border: 1px solid rgba(129, 140, 248, 0.3); transition: opacity 0.3s;
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 12px; font-family: 'Outfit', system-ui, sans-serif;
+      opacity: 0; transform: translateY(10px);
+      border: 1px solid rgba(129, 140, 248, 0.3); 
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       pointer-events: none; max-width: 280px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
+    #synq-toast.show { opacity: 1; transform: translateY(0); }
   </style>
-  <div id="synq-badge">SYNQ</div>
+  <div id="synq-badge"><div class="status-dot"></div><span>SYNQ</span></div>
   <div id="synq-toast"></div>
   `;
 
@@ -514,16 +551,17 @@ function injectSidebarUI() {
 function updateBadge(active: boolean) {
   if (!synqShadow) return;
   const badge = synqShadow.getElementById("synq-badge") as HTMLElement;
-  if (!badge) return;
+  const label = badge?.querySelector("span");
+  if (!badge || !label) return;
   badge.classList.remove("active", "paused");
   if (isPaused) {
-    badge.textContent = "SYNQ OFF";
+    label.textContent = "SYNQ OFF";
     badge.classList.add("paused");
   } else if (active) {
-    badge.textContent = "SYNQ ON";
+    label.textContent = "SYNQ ON";
     badge.classList.add("active");
   } else {
-    badge.textContent = "SYNQ";
+    label.textContent = "SYNQ";
   }
 }
 
@@ -532,8 +570,8 @@ function showToast(message: string) {
   const toast = synqShadow.getElementById("synq-toast") as HTMLElement;
   if (!toast) return;
   toast.textContent = message;
-  toast.style.opacity = "1";
-  setTimeout(() => (toast.style.opacity = "0"), 4000);
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 4000);
 }
 
 // ── Messaging ─────────────────────────────────────────────────────
