@@ -7,21 +7,18 @@ Current version: **v1.4.1**
 ## Shipped
 
 ### v1.4.1
-- New Platforms: Perplexity.ai and DeepSeek support
-- Resilient selectors for all 5 platforms with multi-strategy fallbacks
-- Enhanced weekly CI selector monitoring for Perplexity and DeepSeek
-- Version alignment across all packages to 1.4.1
-
-### v1.4.0
+- New Platforms: DeepSeek support
 - Prompt injection defence (pattern scan + XML context delimiters)
 - MCP Server — Claude Code, Cursor, Windsurf, Claude Desktop
-- Resilient multi-strategy DOM selectors + weekly CI staleness check
+- Resilient multi-strategy DOM selectors for all 4 platforms + weekly CI staleness check
+- Enhanced weekly CI selector monitoring for DeepSeek
 - Smart Ollama/Groq auto-detect (Ollama primary, Groq fallback)
 - Production dashboard served from backend via sirv (port 3001)
 - Lite mode — Docker Compose profiles for < 8 GB RAM machines
 - One-command installers (install.sh + install.bat)
 - Full pipeline integration test in CI
 - GitHub Releases automation
+- Version alignment across all packages to 1.4.1
 
 ### v1.3.x
 - Collapsible sidebar, graph settings panel

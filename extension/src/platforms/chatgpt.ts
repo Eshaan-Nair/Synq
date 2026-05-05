@@ -12,7 +12,7 @@ export const chatgpt = {
     ".markdown.prose",
     ".agent-turn",
   ],
-  // v1.4.0: multi-strategy selectors via resolver — survives platform UI updates
+  // v1.4.1: multi-strategy selectors via resolver — survives platform UI updates
   inputSelectors: INPUT_SELECTOR_STRATEGIES.chatgpt,
   sendButtonSelectors: [
     'button[data-testid="send-button"]',

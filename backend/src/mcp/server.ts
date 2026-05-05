@@ -14,7 +14,7 @@
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
- * Updated: v1.4.0
+ * Updated: v1.4.1
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -113,7 +113,7 @@ const TOOLS = [
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "synq-memory", version: "1.4.0" },
+  { name: "synq-memory", version: "1.4.1" },
   { capabilities: { tools: {} } }
 );
 

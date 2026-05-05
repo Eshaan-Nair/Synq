@@ -1,5 +1,5 @@
 /**
- * chat.ts (backend route) — v1.4.0
+ * chat.ts (backend route) — v1.4.1
  *
  * RAG pipeline change:
  * - splitIntoTopics (Groq) replaced with slidingWindowChunks (pure function)

@@ -14,7 +14,7 @@ export const claude = {
     '.font-claude-response',           // inner content wrapper — confirmed present
     '[data-is-streaming]',             // response container (streaming + done)
   ],
-  // v1.4.0: multi-strategy selectors via resolver — survives platform UI updates
+  // v1.4.1: multi-strategy selectors via resolver — survives platform UI updates
   inputSelectors: INPUT_SELECTOR_STRATEGIES.claude,
   sendButtonSelectors: [
     'button[aria-label="Send Message"]',
