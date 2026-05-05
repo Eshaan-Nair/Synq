@@ -18,7 +18,7 @@ const COLL_BASE = `${CHROMA_URL}/api/v2/tenants/${TENANT}/databases/${DATABASE}/
 
 // Cosine similarity threshold — values are in [0, 1]
 // nomic-embed-text with cosine: 0.5+ is a good match, 0.3+ is loosely related
-const SIMILARITY_THRESHOLD = 0.30;
+const SIMILARITY_THRESHOLD = 0.55;
 
 // Collection UUID assigned by server on creation
 let collectionId: string | null = null;

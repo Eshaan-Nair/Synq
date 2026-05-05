@@ -278,7 +278,7 @@ function detachPromptInterceptor() {
 }
 
 async function handlePromptKeydown(e: KeyboardEvent) {
-  if (isPaused || isProcessingPrompt || !config) return;
+  if (isPaused || isProcessingPrompt || !config || !sessionId) return;
   if (e.key !== "Enter" || e.shiftKey) return;
   const now = Date.now();
   if (now - lastSendTimestamp < 300) return;
@@ -293,7 +293,7 @@ async function handlePromptKeydown(e: KeyboardEvent) {
 }
 
 async function handleSendButtonClick(e: MouseEvent) {
-  if (isPaused || isProcessingPrompt || !config) return;
+  if (isPaused || isProcessingPrompt || !config || !sessionId) return;
   const target = e.target as Element;
   const isSendButton = config.sendButtonSelectors.some(sel => target.closest(sel));
   if (!isSendButton) return;
@@ -375,40 +375,45 @@ function buildRAGPrompt(contextBlock: string, userPrompt: string): string {
 async function injectAndSend(input: HTMLElement, text: string) {
   input.focus();
 
-  if (input.isContentEditable) {
-    // Select all current content so our insertText replaces it entirely
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(input);
-    selection?.removeAllRanges();
-    selection?.addRange(range);
+  const currentText = input.textContent?.trim() || (input as HTMLTextAreaElement).value?.trim() || "";
+  const shouldInject = currentText !== text.trim();
 
-    // execCommand goes through the native editing pipeline — React/Angular/
-    // custom elements all intercept this correctly, unlike synthetic events.
-    const inserted = document.execCommand("insertText", false, text);
+  if (shouldInject) {
+    if (input.isContentEditable) {
+      // Select all current content so our insertText replaces it entirely
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(input);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
 
-    if (!inserted) {
-      // Fallback: clipboard paste simulation (works in most browsers when
-      // execCommand is disabled, e.g., in some sandboxed iframes)
-      try {
-        await navigator.clipboard.writeText(text);
-        document.execCommand("paste");
-      } catch {
-        // Last resort: direct assignment + native input event
-        // (may not work with React but better than nothing)
-        input.innerText = text;
+      // execCommand goes through the native editing pipeline — React/Angular/
+      // custom elements all intercept this correctly, unlike synthetic events.
+      const inserted = document.execCommand("insertText", false, text);
+
+      if (!inserted) {
+        // Fallback: clipboard paste simulation (works in most browsers when
+        // execCommand is disabled, e.g., in some sandboxed iframes)
+        try {
+          await navigator.clipboard.writeText(text);
+          document.execCommand("paste");
+        } catch {
+          // Last resort: direct assignment + native input event
+          // (may not work with React but better than nothing)
+          input.innerText = text;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+    } else {
+      // <textarea> or <input>: native value setter trick still works here
+      // because these are not framework-managed in the same way
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value");
+      if (nativeSetter?.set) {
+        nativeSetter.set.call(input, text);
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new Event("change", { bubbles: true }));
       }
-    }
-  } else {
-    // <textarea> or <input>: native value setter trick still works here
-    // because these are not framework-managed in the same way
-    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value");
-    if (nativeSetter?.set) {
-      nativeSetter.set.call(input, text);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
     }
   }
 
@@ -552,12 +557,15 @@ function updateBadge(active: boolean) {
   if (!synqShadow) return;
   const badge = synqShadow.getElementById("synq-badge") as HTMLElement;
   const label = badge?.querySelector("span");
-  if (!badge || !label) return;
+  const dot   = badge?.querySelector(".status-dot") as HTMLElement;
+  if (!badge || !label || !dot) return;
+
   badge.classList.remove("active", "paused");
+  
   if (isPaused) {
     label.textContent = "SYNQ OFF";
     badge.classList.add("paused");
-  } else if (active) {
+  } else if (active || !!sessionId) {
     label.textContent = "SYNQ ON";
     badge.classList.add("active");
   } else {
@@ -618,17 +626,27 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
   if (message.type === "SESSION_CHANGED") {
-    // Background broadcast: a new session was saved from another tab.
-    // Update our cached sessionId immediately so the next prompt uses it.
-    const { sessionId: newId, projectName } = message.payload as { sessionId: string; projectName: string };
-    if (newId && newId !== sessionId) {
+    // Background broadcast: a new session was saved (or session was unloaded).
+    const { sessionId: newId, projectName } = message.payload as { sessionId: string | null; projectName?: string };
+    
+    if (newId === null) {
+      console.log("[SYNQ] session unloaded via broadcast");
+      sessionId = null;
+      detachPromptInterceptor();
+      updateBadge(false);
+      showToast("SYNQ: session unloaded");
+    } else {
       console.log(`[SYNQ] session updated via broadcast: ${sessionId} → ${newId} (${projectName})`);
       sessionId = newId;
       if (config && !isPaused) {
         attachPromptInterceptor();
         updateBadge(true);
+      } else {
+        updateBadge(false);
       }
-      showToast(`SYNQ: session updated to "${projectName}"`);
+      if (projectName) {
+        showToast(`SYNQ: session updated to "${projectName}"`);
+      }
     }
     sendResponse({ ok: true });
     return true;

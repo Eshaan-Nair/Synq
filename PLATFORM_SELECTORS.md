@@ -38,13 +38,6 @@ export const INPUT_SELECTOR_STRATEGIES = {
     'div[role="textbox"][contenteditable]',
     '[contenteditable="true"]',
   ],
-  perplexity: [
-    'textarea[placeholder*="Ask"]',
-    '#ask-input',
-    'textarea[data-testid="search-input"]',
-    'textarea[aria-label*="Ask"]',
-    'textarea',
-  ],
   deepseek: [
     '#chat-input',
     'textarea[placeholder*="Send a message"]',
@@ -110,24 +103,6 @@ A `watchForInput()` function uses a MutationObserver — if the input is not yet
 - Gemini uses Angular's obfuscated class names — these change frequently
 - `model-response` and `user-query` are custom web component tags, more stable than class-based selectors
 - If Gemini capture fails, this is the most likely platform to have had a breaking DOM update
-
----
-
-## Perplexity (perplexity.ai)
-
-**Last verified:** May 2026 · **Stability:** Medium
-
-| Element | Selectors (in order) |
-|---|---|
-| User messages | `[data-testid="user-message"]`, `.group/user-message`, `[class*="UserMessage"]`, `[data-message-author-role="user"]` |
-| AI responses | `[data-testid="answer"]`, `.answer-content`, `.prose`, `[class*="AnswerBody"]` |
-| Chat input | See resolver.ts — `textarea[placeholder*="Ask"]` is most stable |
-| Send button | `button[aria-label="Submit"]`, `button[aria-label="Send"]`, `button[data-testid="send-button"]`, `button[type="submit"]` |
-
-**Notes:**
-- Perplexity uses a `<textarea>` (not contenteditable) — injection uses the native value setter path
-- `.prose` is a shared Tailwind class — pair with a parent selector if it starts matching nav elements
-- `#ask-input` may not exist in chat-thread mode; `textarea[placeholder*="Ask"]` covers both search and chat
 
 ---
 

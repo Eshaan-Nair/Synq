@@ -2,7 +2,7 @@
 // Replaced Connect/Disconnect with a Pause toggle
 // Auto-connect happens in content.ts on init — popup only shows state + pause control
 
-type Platform = "claude" | "chatgpt" | "gemini" | "unknown";
+type Platform = "claude" | "chatgpt" | "gemini" | "deepseek" | "unknown";
 
 interface SessionData {
   sessionId: string;
@@ -28,6 +28,7 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   claude:  "Claude (claude.ai)",
   chatgpt: "ChatGPT (chatgpt.com)",
   gemini:  "Gemini (gemini.google.com)",
+  deepseek: "DeepSeek (chat.deepseek.com)",
   unknown: "Not on a supported platform",
 };
 
@@ -40,6 +41,7 @@ async function detectPlatformFromTab(): Promise<Platform> {
   if (url.includes("claude.ai"))         return "claude";
   if (url.includes("chatgpt.com"))       return "chatgpt";
   if (url.includes("gemini.google.com")) return "gemini";
+  if (url.includes("deepseek.com"))      return "deepseek";
   return "unknown";
 }
 
@@ -108,8 +110,9 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
     });
   });
 
-  // Wait for both, then update the badge correctly
+  // Wait for both, then update the UI
   await Promise.all([sessionPromise, pausePromise]);
+  pauseToggleBtn.disabled = false; // Always allow pausing/resuming
   updatePauseUI();
 })();
 
@@ -123,7 +126,7 @@ saveBtn.addEventListener("click", async () => {
   if (!tabId) { setStatus("❌ No active tab", "error"); return; }
 
   const platform = await detectPlatformFromTab();
-  if (platform === "unknown") { setStatus("❌ Open Claude, ChatGPT, or Gemini first", "error"); return; }
+  if (platform === "unknown") { setStatus("❌ Open Claude, ChatGPT, Gemini, or DeepSeek first", "error"); return; }
 
   saveBtn.disabled = true;
   saveBtn.textContent = "⏳ Saving...";
@@ -242,7 +245,6 @@ saveBtn.addEventListener("click", async () => {
         }
 
         showSession(sessionData);
-        pauseToggleBtn.disabled = false;
         const chunks = response.topicsExtracted as number;
         const facts  = response.triplesExtracted as number;
         setStatus(`✅ Saved! ${chunks} chunks stored, ${facts} facts extracted. SYNQ auto-connected.`);
@@ -290,7 +292,6 @@ unloadBtn.addEventListener("click", async () => {
       currentSessionId = null;
       chrome.storage.local.remove("synq_session");
       sessionInfo.style.display = "none";
-      pauseToggleBtn.disabled = true;
       updatePauseUI();
       setStatus("🔌 Session unloaded");
     } else {
@@ -305,7 +306,7 @@ injectBtn.addEventListener("click", async () => {
   if (!tabId) { setStatus("❌ No active tab", "error"); return; }
 
   const platform = await detectPlatformFromTab();
-  if (platform === "unknown") { setStatus("❌ Open Claude, ChatGPT, or Gemini first", "error"); return; }
+  if (platform === "unknown") { setStatus("❌ Open Claude, ChatGPT, Gemini, or DeepSeek first", "error"); return; }
 
   const ready = await ensureContentScript(tabId);
   if (!ready) { setStatus("❌ Could not reach page. Refresh and try again.", "error"); return; }
@@ -326,7 +327,6 @@ function showSession(data: SessionData) {
   topicCountEl.textContent   = String(data.topicCount  ?? "—");
   if (data.sessionId) {
     currentSessionId = data.sessionId;
-    pauseToggleBtn.disabled = false;
     unloadBtn.disabled = false;
   }
 }

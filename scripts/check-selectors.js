@@ -73,22 +73,6 @@ const PLATFORMS = [
     ],
   },
   {
-    name: "Perplexity",
-    url: "https://www.perplexity.ai",
-    inputSelectors: [
-      'textarea[placeholder*="Ask"]',
-      '#ask-input',
-      'textarea[data-testid="search-input"]',
-      'textarea[aria-label*="Ask"]',
-      'textarea',
-    ],
-    responseSelectors: [
-      '[data-testid="answer"]',
-      '.answer-content',
-      '.prose',
-    ],
-  },
-  {
     name: "DeepSeek",
     url: "https://chat.deepseek.com",
     inputSelectors: [
