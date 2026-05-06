@@ -1,11 +1,8 @@
 /**
  * background.ts — v1.2
- *
- * Changes from v1.1:
- * - Removed GET_CONNECT_STATE / SET_CONNECT_STATE (connect button removed)
- * - Added GET_PAUSE_STATE / SET_PAUSE_STATE (pause toggle)
- * - RAG retrieve topN default raised to 3 (sliding window chunks are smaller)
  */
+
+import { SynqMessage } from "./types/messages";
 
 // v1.4.1+: Configurable backend URL and secret via storage
 async function getBackendConfig() {
@@ -42,59 +39,51 @@ const log = {
   error: (msg: string) => console.error(`[SYNQ bg] ${msg}`),
 };
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: SynqMessage, _sender, sendResponse) => {
   console.log(`[SYNQ bg] received: ${message.type}`);
-  if (message.type === "INGEST_TEXT") {
-    handleIngest(message.payload).then(sendResponse);
-    return true;
-  }
-  if (message.type === "SAVE_CHAT") {
-    handleSaveChat(message.payload).then(sendResponse);
-    return true;
-  }
-  if (message.type === "GET_CONTEXT") {
-    handleGetContext(message.payload.sessionId).then(sendResponse);
-    return true;
-  }
-  if (message.type === "RAG_RETRIEVE") {
-    handleRAGRetrieve(message.payload).then(sendResponse);
-    return true;
-  }
-  if (message.type === "CREATE_SESSION") {
-    handleCreateSession(message.payload).then(sendResponse);
-    return true;
-  }
-  if (message.type === "GET_SESSION") {
-    handleGetStoredSession().then(sendResponse);
-    return true;
-  }
-  if (message.type === "GET_ACTIVE_SESSION") {
-    handleGetActiveSession().then(sendResponse);
-    return true;
-  }
-  if (message.type === "SET_ACTIVE_SESSION") {
-    handleSetActiveSession(message.payload.sessionId).then(sendResponse);
-    return true;
-  }
-  if (message.type === "SESSION_CHANGED") {
-    // Content scripts send this to themselves — no handler needed in background
-    return false;
-  }
-  if (message.type === "GET_PAUSE_STATE") {
-    handleGetPauseState().then(sendResponse);
-    return true;
-  }
-  if (message.type === "SET_PAUSE_STATE") {
-    handleSetPauseState(message.payload).then(sendResponse);
-    return true;
-  }
-  if (message.type === "UNLOAD_SESSION") {
-    handleUnloadSession().then(sendResponse);
-    return true;
-  }
-  if (message.type === "TOGGLE_PAUSE") {
-    handleTogglePause().then(sendResponse);
-    return true;
+  
+  switch (message.type) {
+    case "INGEST_TEXT":
+      handleIngest(message.payload).then(sendResponse);
+      return true;
+    case "SAVE_CHAT":
+      handleSaveChat(message.payload).then(sendResponse);
+      return true;
+    case "GET_CONTEXT":
+      handleGetContext(message.payload.sessionId).then(sendResponse);
+      return true;
+    case "RAG_RETRIEVE":
+      handleRAGRetrieve(message.payload).then(sendResponse);
+      return true;
+    case "CREATE_SESSION":
+      handleCreateSession(message.payload).then(sendResponse);
+      return true;
+    case "GET_SESSION":
+      handleGetStoredSession().then(sendResponse);
+      return true;
+    case "GET_ACTIVE_SESSION":
+      handleGetActiveSession().then(sendResponse);
+      return true;
+    case "SET_ACTIVE_SESSION":
+      handleSetActiveSession(message.payload.sessionId).then(sendResponse);
+      return true;
+    case "GET_PAUSE_STATE":
+      handleGetPauseState().then(sendResponse);
+      return true;
+    case "SET_PAUSE_STATE":
+      handleSetPauseState(message.payload).then(sendResponse);
+      return true;
+    case "UNLOAD_SESSION":
+      handleUnloadSession().then(sendResponse);
+      return true;
+    case "TOGGLE_PAUSE":
+      handleTogglePause().then(sendResponse);
+      return true;
+    case "SESSION_CHANGED":
+      // Content scripts send this to themselves — no handler needed in background
+      return false;
+    default:
+      return false;
   }
 });
 

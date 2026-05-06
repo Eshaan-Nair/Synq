@@ -1,26 +1,34 @@
 import { Router, Request, Response } from "express";
 import { getDriver } from "../services/neo4j";
 import { logger } from "../utils/logger";
-import mongoose from "mongoose";
-
-function isValidObjectId(id: string): boolean {
-  return mongoose.Types.ObjectId.isValid(id);
-}
+import { isValidObjectId } from "../utils/validators";
 
 const router = Router();
 
 // GET /api/graph/all
 // Returns all nodes + edges for D3 visualization
 router.get("/all", async (req: Request, res: Response) => {
+  const { sessionId, limit = "200" } = req.query;
+  const cap = Math.min(parseInt(limit as string) || 200, 500);
+
   const session = getDriver().session();
   try {
-    const result = await session.run(`
-      MATCH (s:Entity)-[r:RELATION]->(o:Entity)
+    let query = `MATCH (s:Entity)-[r:RELATION]->(o:Entity)`;
+    const params: Record<string, any> = { limit: cap };
+
+    if (sessionId && typeof sessionId === "string" && isValidObjectId(sessionId)) {
+      query += ` WHERE r.sessionId = $sessionId`;
+      params.sessionId = sessionId;
+    }
+
+    query += `
       RETURN s.name AS source, s.type AS sourceType,
              r.type AS relation,
              o.name AS target, o.type AS targetType
-      LIMIT 500
-    `);
+      LIMIT $limit
+    `;
+
+    const result = await session.run(query, params);
 
     const nodes = new Map<string, object>();
     const links: object[] = [];
@@ -42,6 +50,7 @@ router.get("/all", async (req: Request, res: Response) => {
     res.json({
       nodes: Array.from(nodes.values()),
       links,
+      truncated: result.records.length === cap,
     });
   } catch (err) {
     logger.error("Graph /all query failed:", err);
