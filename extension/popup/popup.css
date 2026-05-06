@@ -253,20 +253,43 @@ button {
   margin: 0 16px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-drawer:hover {
+  border-color: rgba(129, 140, 248, 0.3);
 }
 
 .settings-drawer summary {
-  padding: 8px 12px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
   cursor: pointer;
   user-select: none;
-  transition: color 0.2s;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-drawer summary::after {
+  content: '▼';
+  font-size: 8px;
+  transition: transform 0.3s;
+  opacity: 0.5;
+}
+
+.settings-drawer[open] summary::after {
+  transform: rotate(180deg);
 }
 
 .settings-drawer summary:hover {
@@ -274,8 +297,14 @@ button {
 }
 
 .settings-content {
-  padding: 0 12px 12px;
+  padding: 4px 12px 14px;
   border-top: 1px solid var(--border);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .setting-group {
@@ -284,13 +313,18 @@ button {
 
 .setting-group label {
   font-size: 9px;
-  margin-bottom: 4px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+  letter-spacing: 0.05em;
 }
 
 .setting-group input {
   margin-bottom: 0;
-  padding: 8px;
+  padding: 8px 10px;
   font-size: 11px;
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--border);
 }
 
 #inject-btn {

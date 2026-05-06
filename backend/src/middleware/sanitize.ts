@@ -63,9 +63,7 @@ export function sanitizeChunks(chunks: Chunk[]): Chunk[] {
 export function wrapInContextBlock(chunks: Chunk[]): string {
   if (chunks.length === 0) return "";
 
-  const safe = sanitizeChunks(chunks);
-
-  const inner = safe
+  const inner = chunks
     .map(
       (c, i) =>
         `  <chunk index="${i + 1}" relevance="${(c.score * 100).toFixed(0)}%">\n${c.content}\n  </chunk>`
