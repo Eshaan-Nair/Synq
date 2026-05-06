@@ -37,13 +37,21 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 let currentSessionId: string | null = null;
 let isPaused = false;
 
+const PLATFORM_HOSTNAMES: Record<string, string> = {
+  claude: "claude.ai",
+  chatgpt: "chatgpt.com",
+  gemini: "gemini.google.com",
+  deepseek: "deepseek.com",
+};
+
 async function detectPlatformFromTab(): Promise<Platform> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url || "";
-  if (url.includes("claude.ai"))         return "claude";
-  if (url.includes("chatgpt.com"))       return "chatgpt";
-  if (url.includes("gemini.google.com")) return "gemini";
-  if (url.includes("deepseek.com"))      return "deepseek";
+  
+  for (const [name, host] of Object.entries(PLATFORM_HOSTNAMES)) {
+    if (url.includes(host)) return name as Platform;
+  }
+  
   return "unknown";
 }
 
