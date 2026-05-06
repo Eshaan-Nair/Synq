@@ -48,7 +48,7 @@ export async function store(
     // Extract knowledge graph triples
     let triplesCount = 0;
     try {
-      const triples = await extractTriples(cleanText);
+      const { triples } = await extractTriples(cleanText);
       for (const t of triples) {
         await saveTriple(
           t.subject, t.subjectType,
