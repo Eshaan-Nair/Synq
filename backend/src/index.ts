@@ -8,6 +8,7 @@ import fs from "fs";
 import { connectMongo } from "./services/mongo";
 import { connectNeo4j } from "./services/neo4j";
 import { connectChroma } from "./services/chroma";
+import { startWorker, clearAllJobs } from "./services/jobs";
 import { logger } from "./utils/logger";
 import contextRoutes from "./routes/context";
 import graphRoutes from "./routes/graph";
@@ -165,11 +166,19 @@ if (fs.existsSync(dashboardDist)) {
   );
 }
 
+app.post("/api/jobs/clear", async (req, res) => {
+  await clearAllJobs();
+  res.json({ success: true, message: "Job queue cleared" });
+});
+
 async function start() {
   try {
     await connectMongo();
     await connectNeo4j();
     await connectChroma(); // non-fatal if down
+    
+    // Start background job worker for extraction tasks
+    await startWorker();
   } catch (err) {
     logger.error("Fatal: Database connection failed. SYNQ cannot start.");
     logger.error(err instanceof Error ? err.message : String(err));

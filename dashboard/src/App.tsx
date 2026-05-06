@@ -21,6 +21,7 @@ interface Session {
   tripleCount: number;
   topicCount?: number;
   hasFullChat?: boolean;
+  isProcessingGraph?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -150,7 +151,7 @@ export default function App() {
 
   useEffect(() => {
     loadSessions();
-    const interval = setInterval(loadSessions, 10000);
+    const interval = setInterval(loadSessions, 5000); // v1.4.1+: Poll every 5s for job status
     return () => clearInterval(interval);
   }, [loadSessions]);
 
@@ -176,8 +177,20 @@ export default function App() {
             ))}
           </div>
         ) : nodes.length === 0 ? (
-          <div className="empty-state" style={{ height: "100%", justifyContent: "center" }}>
-            No graph data for this session.
+          <div className="empty-state" style={{ height: "100%", justifyContent: "center", flexDirection: "column", gap: "16px" }}>
+            {activeSession?.isProcessingGraph ? (
+              <>
+                <div className="processing-indicator large" style={{ background: "rgba(168, 85, 247, 0.1)", border: "1px solid rgba(168, 85, 247, 0.2)" }}>
+                  <span className="processing-dot"></span>
+                  Extracting semantic triples...
+                </div>
+                <div style={{ color: "var(--text-dim)", fontSize: "14px", maxWidth: "300px", textAlign: "center", lineHeight: "1.5" }}>
+                  This may take a few minutes for large chats. The graph will populate automatically.
+                </div>
+              </>
+            ) : (
+              "No graph data for this session."
+            )}
           </div>
         ) : (
           <GraphView
@@ -226,6 +239,12 @@ export default function App() {
                   >
                     <div className="session-header">
                       <div className="session-name">{s.projectName}</div>
+                      {s.isProcessingGraph && (
+                        <span className="processing-indicator" title="Graph extraction in progress...">
+                          <span className="processing-dot"></span>
+                          Updating...
+                        </span>
+                      )}
                       <button
                         className="delete-btn"
                         onClick={(e) => handleDelete(e, s._id)}
@@ -254,7 +273,15 @@ export default function App() {
           <div className="header-left">
             {activeSession ? (
               <>
-                <span className="header-project-name">{activeSession.projectName}</span>
+                <span className="header-project-name">
+                  {activeSession.projectName}
+                  {activeSession.isProcessingGraph && (
+                    <span className="processing-indicator large">
+                      <span className="processing-dot"></span>
+                      Knowledge Graph Update in Progress...
+                    </span>
+                  )}
+                </span>
                 <span className="header-meta">
                   {activeSession.tripleCount} facts
                   {activeSession.topicCount ? ` · ${activeSession.topicCount} topics` : ""}

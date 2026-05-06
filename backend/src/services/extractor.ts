@@ -22,7 +22,7 @@ export interface ProjectSummary {
 
 const CHUNK_SIZE = 2000;
 
-function chunkText(text: string): string[] {
+export function chunkText(text: string): string[] {
   const chunks: string[] = []
   const paragraphs = text.split(/\n\n+/);
   let current = "";
@@ -131,13 +131,13 @@ async function callOllama(prompt: string, maxTokens = 1000): Promise<string> {
 // ── Unified LLM call with Retry Logic (Backoff) ───────────────────
 async function llm(prompt: string, maxTokens = 1000): Promise<string> {
   const backend = await getBackend();
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 5;
   let lastErr: any = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       if (attempt > 0) {
-        const waitTime = attempt * 5000; // 5s, 10s, 15s...
+        const waitTime = attempt * 10000; // 10s, 20s, 30s...
         logger.info(`[SYNQ] Rate limit hit. Retrying in ${waitTime/1000}s (Attempt ${attempt}/${MAX_RETRIES})...`);
         await sleep(waitTime);
       }
@@ -170,7 +170,7 @@ async function llm(prompt: string, maxTokens = 1000): Promise<string> {
 }
 
 // ── Step 1: compress raw chat into ALL meaningful facts ────────────
-async function summarizeChunk(text: string): Promise<string> {
+export async function summarizeChunk(text: string): Promise<string> {
   const prompt = `You are a fact extractor. Read this conversation and extract ALL meaningful facts including:
 - Technologies, libraries, frameworks, tools used
 - Technical decisions, bugs, features, architecture patterns
@@ -189,15 +189,11 @@ ${text}
 
 Facts:`;
 
-  try {
-    return await llm(prompt, 600);
-  } catch {
-    return text.slice(0, 600); // fallback to truncated raw text
-  }
+  return await llm(prompt, 600);
 }
 
 // ── Step 2: extract triples from compressed summary ───────────────
-async function extractTriplesFromSummary(summary: string): Promise<Triple[]> {
+export async function extractTriplesFromSummary(summary: string): Promise<Triple[]> {
   const prompt = `Extract semantic triples from these facts.
 Return ONLY a valid JSON array, no explanation, no markdown.
 
@@ -234,27 +230,22 @@ ${summary}
 
 Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
 
+  const raw   = await llm(prompt, 1200);
+  const backend = await getBackend();
+  
+  // More robust JSON extraction: find the first '[' and last ']'
+  const start = raw.indexOf("[");
+  const end   = raw.lastIndexOf("]");
+  
+  if (start === -1 || end === -1) {
+    throw new Error("Bad formatting: No JSON array found in model output");
+  }
+  
+  const clean = raw.slice(start, end + 1).trim();
   try {
-    const raw   = await llm(prompt, 1200);
-    const backend = await getBackend();
-    
-    // More robust JSON extraction: find the first '[' and last ']'
-    const start = raw.indexOf("[");
-    const end   = raw.lastIndexOf("]");
-    
-    if (start === -1 || end === -1) {
-      throw new Error("Bad formatting: No JSON array found in model output");
-    }
-    
-    const clean = raw.slice(start, end + 1).trim();
-    try {
-      return JSON.parse(clean) as Triple[];
-    } catch (jsonErr) {
-      throw new Error(`Bad formatting: JSON parse error - ${clean.slice(0, 50)}`);
-    }
-  } catch (err: any) {
-    logger.error(`[SYNQ] Triple extraction failed: ${err?.message}`);
-    return [];
+    return JSON.parse(clean) as Triple[];
+  } catch (jsonErr) {
+    throw new Error(`Bad formatting: JSON parse error - ${clean.slice(0, 50)}`);
   }
 }
 
@@ -290,13 +281,13 @@ Keep it under 200 words total.`;
   }
 }
 
-export async function extractTriples(text: string): Promise<Triple[]> {
+export async function extractTriples(text: string, startIndex = 0): Promise<{ triples: Triple[], nextIndex: number }> {
   const chunks = chunkText(text);
   logger.info(`Processing ${chunks.length} chunk(s) for triple extraction...`);
 
   const allTriples: Triple[] = [];
 
-  for (let i = 0; i < chunks.length; i++) {
+  for (let i = startIndex; i < chunks.length; i++) {
     try {
       logger.info(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
 
@@ -327,5 +318,5 @@ export async function extractTriples(text: string): Promise<Triple[]> {
   });
 
   logger.success(`Extracted ${unique.length} unique triples from ${chunks.length} chunks`);
-  return unique;
+  return { triples: unique, nextIndex: chunks.length };
 }

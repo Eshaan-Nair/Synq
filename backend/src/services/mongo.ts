@@ -62,3 +62,19 @@ export async function setActiveSessionId(sessionId: string | null): Promise<void
     { upsert: true, returnDocument: 'after' }
   );
 }
+
+// ── Job queue schema ──────────────────────────────────────────────
+const jobSchema = new mongoose.Schema({
+  type: { type: String, enum: ["triple_extraction"], required: true },
+  payload: { type: Object, required: true },
+  status: { type: String, enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED"], default: "PENDING" },
+  error: { type: String },
+  attempts: { type: Number, default: 0 },
+}, { timestamps: true });
+
+// Index for the worker to find pending jobs quickly
+jobSchema.index({ status: 1, createdAt: 1 });
+// Index for checking session-specific processing status
+jobSchema.index({ "payload.sessionId": 1, status: 1 });
+
+export const Job = mongoose.model("Job", jobSchema);

@@ -4,6 +4,7 @@ import { extractTriples, generateProjectSummary } from "../services/extractor";
 import { saveTriple, getTriplesBySession, getDriver } from "../services/neo4j";
 import { Session, getActiveSessionId, setActiveSessionId, FullChat } from "../services/mongo";
 import { deleteChunksBySession } from "../services/chroma";
+import { isSessionProcessing, cancelSessionJobs } from "../services/jobs";
 import { logger } from "../utils/logger";
 import mongoose from "mongoose";
 
@@ -37,8 +38,8 @@ router.post("/ingest", async (req: Request, res: Response) => {
   }
 
   try {
-    const cleanText = scrubPII(text);
-    const triples = await extractTriples(cleanText);
+    const cleanText = text.trim();
+    const { triples } = await extractTriples(cleanText);
 
     for (const t of triples) {
       await saveTriple(
@@ -147,7 +148,17 @@ router.get("/sessions", async (req: Request, res: Response) => {
     const sessions = await Session.find()
       .sort({ updatedAt: -1 })
       .select("_id projectName platform tripleCount topicCount hasFullChat createdAt updatedAt");
-    res.json({ sessions });
+    
+    // v1.4.1+: Add processing status for each session
+    const sessionsWithStatus = await Promise.all(sessions.map(async (s) => {
+      const isProcessing = await isSessionProcessing(s._id.toString());
+      return {
+        ...s.toObject(),
+        isProcessingGraph: isProcessing
+      };
+    }));
+
+    res.json({ sessions: sessionsWithStatus });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch sessions" });
   }
@@ -182,7 +193,18 @@ router.get("/active", async (req: Request, res: Response) => {
     }
     const session = await Session.findById(activeSessionId)
       .select("_id projectName platform tripleCount topicCount");
-    res.json({ activeSession: session || null });
+    
+    if (!session) {
+      res.json({ activeSession: null });
+      return;
+    }
+
+    res.json({ 
+      activeSession: {
+        ...session.toObject(),
+        isProcessingGraph: await isSessionProcessing(session._id.toString())
+      } 
+    });
   } catch {
     res.json({ activeSession: null });
   }
@@ -212,7 +234,9 @@ router.delete("/session/:sessionId", async (req: Request, res: Response) => {
       await neo4jSession.close();
     }
 
-    // FIX (Bug #7): Use statically imported FullChat and deleteChunksBySession
+    // v1.4.1+: Cancel any background jobs for this session
+    await cancelSessionJobs(sid);
+
     try {
       await FullChat.findOneAndDelete({ sessionId: sid });
       await deleteChunksBySession(sid);

@@ -76,11 +76,9 @@ if errorlevel 1 (
     echo  WARN SYNQ_SECRET not found in .env. API will be unauthorized.
 )
 
-REM 7. Build components if missing
-if not exist "dashboard\dist" (
-    echo  Dashboard build missing. Building...
-    cd dashboard && call npm run build && cd ..
-)
+REM 7. Build components (Ensure UI is always up-to-date)
+echo  Building Dashboard...
+cd dashboard && call npm run build && cd ..
 
 echo  Building extension...
 cd extension
