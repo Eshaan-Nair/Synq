@@ -16,6 +16,13 @@ export type PlatformConfig = {
 
 const platforms: PlatformConfig[] = [claude, chatgpt, gemini, deepseek];
 
+export const PLATFORM_HOSTNAMES: Record<string, string> = {
+  claude: "claude.ai",
+  chatgpt: "chatgpt.com",
+  gemini: "gemini.google.com",
+  deepseek: "chat.deepseek.com",
+};
+
 export function detectPlatform(): Platform {
   const host = window.location.hostname;
   const match = platforms.find(p => host.includes(p.hostname));

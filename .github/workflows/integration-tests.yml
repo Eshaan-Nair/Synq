@@ -16,7 +16,7 @@ jobs:
         ports:
           - "8000:8000"
         options: >-
-          --health-cmd "curl -sf http://localhost:8000/api/v1/heartbeat"
+          --health-cmd "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/api/v1/heartbeat\")'"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
@@ -33,6 +33,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - "11434:11434"
+        options: >-
+          --health-cmd "ollama list"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
@@ -48,12 +57,8 @@ jobs:
         run: npm ci
         working-directory: backend
 
-      - name: Install Ollama
-        run: |
-          curl -fsSL https://ollama.ai/install.sh | sh
-          ollama serve &
-          sleep 5
-          ollama pull nomic-embed-text
+      - name: Pull embedding model
+        run: curl -s http://localhost:11434/api/pull -d '{"name":"nomic-embed-text"}'
 
       - name: Run integration tests
         run: npm run test:integration

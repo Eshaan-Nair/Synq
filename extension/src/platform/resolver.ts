@@ -67,19 +67,30 @@ export function resolveInputSelector(platform: Platform): Element | null {
 }
 
 /**
- * Try each selector in priority order across an array of candidate selectors.
- * Used for user-message and response selectors (NodeList).
+ * Try all selectors and return all matching elements.
+ * Filters out ancestor/descendant duplicates to keep only the most specific elements.
  */
 export function resolveAll(selectors: string[]): Element[] {
+  const seen = new Set<Element>();
+  const results: Element[] = [];
   for (const selector of selectors) {
     try {
       const nodes = document.querySelectorAll(selector);
-      if (nodes.length > 0) return Array.from(nodes);
+      for (const el of Array.from(nodes)) {
+        if (!seen.has(el)) {
+          seen.add(el);
+          results.push(el);
+        }
+      }
     } catch {
       // Invalid selector — skip silently
     }
   }
-  return [];
+  
+  // Remove ancestor/descendant duplicates — keep the most specific (deepest) element.
+  return results.filter(el =>
+    !results.some(other => other !== el && other.contains(el))
+  );
 }
 
 /**

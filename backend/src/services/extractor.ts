@@ -89,6 +89,11 @@ async function getBackend(): Promise<"ollama" | "groq"> {
   return resolvedBackend;
 }
 
+/** @internal - For test cleanup only */
+export function _resetBackendForTest() {
+  resolvedBackend = null;
+}
+
 // ── Groq LLM call ─────────────────────────────────────────────────
 async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
   const response = await axios.post(
