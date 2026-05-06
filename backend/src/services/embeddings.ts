@@ -20,11 +20,30 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 }
 
-// Issue #6 Fix: Generate embeddings in parallel instead of sequentially.
-// Previously, 10 topics = 10 sequential HTTP calls (slow).
-// Now all embeddings are fired concurrently and awaited together.
+/**
+ * Generate embeddings in batches to prevent overwhelming local hardware/Ollama.
+ * Previously, 100 chunks = 100 concurrent HTTP calls (timed out).
+ * Now we process in chunks of 5 with a tiny rest between batches.
+ */
 export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
-  return Promise.all(texts.map(text => generateEmbedding(text)));
+  const BATCH_SIZE = 5;
+  const results: number[][] = [];
+  
+  for (let i = 0; i < texts.length; i += BATCH_SIZE) {
+    const batch = texts.slice(i, i + BATCH_SIZE);
+    logger.info(`[SYNQ] Embedding batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(texts.length/BATCH_SIZE)}...`);
+    
+    // Process this batch in parallel
+    const batchResults = await Promise.all(batch.map(text => generateEmbedding(text)));
+    results.push(...batchResults);
+    
+    // Tiny rest to let CPU breathe if there's a lot more to go
+    if (i + BATCH_SIZE < texts.length) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+  
+  return results;
 }
 
 export async function checkOllamaHealth(): Promise<boolean> {

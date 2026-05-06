@@ -16,6 +16,7 @@ import { slidingWindowChunks } from "../services/chunker";
 import { storeWindowChunks, deleteChunksBySession } from "../services/chroma";
 import { extractTriples } from "../services/extractor";
 import { saveTriple } from "../services/neo4j";
+import { enqueueJob } from "../services/jobs";
 import { Session, FullChat } from "../services/mongo";
 import { logger } from "../utils/logger";
 import mongoose from "mongoose";
@@ -73,54 +74,54 @@ router.post("/save", async (req: Request, res: Response) => {
       { upsert: true, returnDocument: 'after' }
     );
 
-    // Store all window chunks in ChromaDB for RAG (non-fatal — Ollama may be down)
+    // ── RAG: Vector Storage (Hybrid Sync/Async) ───────────────────
+    const CHUNK_THRESHOLD = 10;
+    const isLargeChat = windowChunks.length > CHUNK_THRESHOLD;
     let vectorsStored = false;
-    try {
-      await storeWindowChunks(windowChunks);
-      vectorsStored = true;
-    } catch (vecErr: any) {
-      logger.warn(`Vector storage failed (Ollama may be down): ${vecErr?.message || vecErr}`);
-      logger.warn("RAG recall will not work until Ollama is running. Chat data still saved.");
+
+    if (!isLargeChat) {
+      try {
+        logger.info(`Storing ${windowChunks.length} chunks in ChromaDB (sync)...`);
+        await storeWindowChunks(windowChunks);
+        vectorsStored = true;
+      } catch (vecErr: any) {
+        logger.warn(`Sync vector storage failed: ${vecErr?.message}`);
+      }
+    } else {
+      logger.info(`Mega chat detected (${windowChunks.length} chunks) — offloading vector storage to background.`);
     }
 
-    // ── Graph: Groq extraction pipeline (non-fatal — Groq may be rate-limited) ──
-    let triplesCount = 0;
+    // ── Graph: Async Triple Extraction (v1.4.1+) ───────────────────
+    let jobId = null;
     try {
-      logger.info("Extracting triples for knowledge graph...");
-      const triples = await extractTriples(cleanText);
-
-      for (const t of triples) {
-        await saveTriple(
-          t.subject, t.subjectType,
-          t.relation,
-          t.object, t.objectType,
-          sessionId
-        );
-      }
-      triplesCount = triples.length;
-    } catch (graphErr: any) {
-      logger.warn(`Graph extraction failed (Groq may be down): ${graphErr?.message || graphErr}`);
-      logger.warn("Knowledge graph will not update. Chat data still saved.");
+      jobId = await enqueueJob("triple_extraction", { 
+        sessionId: sessionId.toString(), 
+        text: cleanText,
+        windowChunks: isLargeChat ? windowChunks : undefined, // Pass chunks if we need to process them in background
+        processVectors: isLargeChat 
+      });
+    } catch (jobErr: any) {
+      logger.error(`Failed to enqueue extraction job: ${jobErr.message}`);
     }
 
     await Session.findByIdAndUpdate(sessionId, {
       updatedAt:  new Date(),
       hasFullChat: true,
       topicCount:  windowChunks.length,
-      $inc: { tripleCount: triplesCount },
     });
 
     const warnings: string[] = [];
     if (!vectorsStored) warnings.push("RAG vectors not stored (Ollama down)");
-    if (triplesCount === 0) warnings.push("No triples extracted (Groq may be down)");
+    if (!jobId) warnings.push("Background extraction task failed to start");
 
-    logger.success(`Chat saved: ${windowChunks.length} chunks, ${triplesCount} triples${warnings.length ? ` [${warnings.join(", ")}]` : ""}`);
+    logger.success(`Chat saved: ${windowChunks.length} chunks enqueued for graph extraction${warnings.length ? ` [${warnings.join(", ")}]` : ""}`);
 
     res.json({
       success: true,
       chunksStored:     windowChunks.length,
-      triplesExtracted: triplesCount,
+      triplesExtracted: 0, // Now 0 initially because it's async
       topicsExtracted:  windowChunks.length,
+      jobId,
       warnings: warnings.length > 0 ? warnings : undefined,
     });
   } catch (err) {

@@ -59,6 +59,13 @@ echo " -----------------------------------"
 echo ""
 
 # 3. Backend Selection
+echo " -----------------------------------"
+echo "  [RECOMMENDED] Use Ollama (Local) if:"
+echo "  - You have long chats (100k+ chars)"
+echo "  - You use offline tools (Claude Code, Windsurf)"
+echo "  - You want 100% privacy (Local-only)"
+echo " -----------------------------------"
+echo ""
 echo " Select your Knowledge Graph backend:"
 echo " [1] Groq API - Cloud (Recommended for Fast/Low-end PCs)"
 echo " [2] Ollama   - Local (Recommended for High-end/Privacy)"
