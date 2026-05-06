@@ -1,18 +1,7 @@
-import axios, { AxiosError } from "axios";
-
-const BASE = "http://localhost:3001";
-
-// Issue #10 Fix: Centralized error extraction so all API calls return
-// consistent error shapes instead of throwing unhandled promise rejections.
-function extractErrorMessage(err: unknown): string {
-  if (err instanceof AxiosError) {
-    return err.response?.data?.error || err.message || "Request failed";
-  }
-  return "Unknown error";
-}
+import { apiClient, extractErrorMessage } from "./client";
 
 export async function fetchGraphBySession(sessionId: string) {
-  const res = await axios.get(`${BASE}/api/graph/session/${sessionId}`);
+  const res = await apiClient.get(`/api/graph/session/${sessionId}`);
   return res.data as {
     nodes: { id: string; type: string }[];
     links: { source: string; target: string; relation: string }[];
@@ -20,12 +9,12 @@ export async function fetchGraphBySession(sessionId: string) {
 }
 
 export async function fetchContext(sessionId: string) {
-  const res = await axios.get(`${BASE}/api/context/retrieve/${sessionId}`);
+  const res = await apiClient.get(`/api/context/retrieve/${sessionId}`);
   return res.data;
 }
 
 export async function fetchSessions() {
-  const res = await axios.get(`${BASE}/api/context/sessions`);
+  const res = await apiClient.get(`/api/context/sessions`);
   return res.data as {
     sessions: {
       _id: string;
@@ -41,12 +30,12 @@ export async function fetchSessions() {
 }
 
 export async function setActiveSession(sessionId: string) {
-  const res = await axios.post(`${BASE}/api/context/active`, { sessionId });
+  const res = await apiClient.post(`/api/context/active`, { sessionId });
   return res.data;
 }
 
 export async function deleteSession(sessionId: string) {
-  const res = await axios.delete(`${BASE}/api/context/session/${sessionId}`);
+  const res = await apiClient.delete(`/api/context/session/${sessionId}`);
   return res.data;
 }
 
