@@ -248,6 +248,51 @@ button {
   margin: 8px 16px; 
 }
 
+/* Settings Drawer */
+.settings-drawer {
+  margin: 0 16px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.settings-drawer summary {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.settings-drawer summary:hover {
+  color: var(--text-main);
+}
+
+.settings-content {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.setting-group {
+  margin-top: 12px;
+}
+
+.setting-group label {
+  font-size: 9px;
+  margin-bottom: 4px;
+}
+
+.setting-group input {
+  margin-bottom: 0;
+  padding: 8px;
+  font-size: 11px;
+}
+
 #inject-btn {
   background: var(--surface); 
   border: 1px solid var(--border);

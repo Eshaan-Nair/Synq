@@ -62,7 +62,16 @@ echo ""
 echo " Starting databases..."
 docker compose --profile $PROFILE up -d
 
-# 6. Build Extension (fast check)
+# 6. Security & Build Check
+if ! grep -q "SYNQ_SECRET=" backend/.env; then
+    echo " WARN SYNQ_SECRET not found in .env. API will be unauthorized."
+fi
+
+if [ ! -d "dashboard/dist" ]; then
+    echo " Dashboard build missing. Building..."
+    (cd dashboard && npm run build)
+fi
+
 echo ""
 echo " Building extension..."
 (cd extension && npx esbuild src/content.ts --bundle --outfile=dist/content.js --format=iife --target=es2020 --log-level=error)

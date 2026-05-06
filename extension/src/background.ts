@@ -7,7 +7,35 @@
  * - RAG retrieve topN default raised to 3 (sliding window chunks are smaller)
  */
 
-const BACKEND = "http://localhost:3001";
+// v1.4.1+: Configurable backend URL and secret via storage
+async function getBackendConfig() {
+  const r = await chrome.storage.local.get(["synq_backend_url", "synq_secret"]);
+  return {
+    url: (String(r.synq_backend_url || "http://localhost:3001")).replace(/\/$/, ""),
+    secret: String(r.synq_secret || "")
+  };
+}
+
+/**
+ * synqFetch — wrapper around fetch that injects the configurable backend URL
+ * and the X-SYNQ-Secret auth header if present.
+ */
+async function synqFetch(path: string, options: RequestInit = {}) {
+  const { url, secret } = await getBackendConfig();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  } as Record<string, string>;
+
+  if (secret) {
+    headers["X-SYNQ-Secret"] = secret;
+  }
+
+  return fetch(`${url}${path}`, {
+    ...options,
+    headers,
+  });
+}
 
 const log = {
   warn:  (msg: string) => console.warn(`[SYNQ bg] ${msg}`),
@@ -77,9 +105,8 @@ async function handleSaveChat(payload: {
   messageCount: number;
 }) {
   try {
-    const res = await fetch(`${BACKEND}/api/chat/save`, {
+    const res = await synqFetch("/api/chat/save", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
@@ -99,9 +126,8 @@ async function handleRAGRetrieve(payload: {
   topN?: number;
 }) {
   try {
-    const res = await fetch(`${BACKEND}/api/rag/retrieve`, {
+    const res = await synqFetch("/api/rag/retrieve", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt:    payload.prompt,
         sessionId: payload.sessionId,
@@ -122,9 +148,8 @@ async function handleRAGRetrieve(payload: {
 
 async function handleIngest(payload: { text: string; sessionId: string; platform: string }) {
   try {
-    const res = await fetch(`${BACKEND}/api/context/ingest`, {
+    const res = await synqFetch("/api/context/ingest", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
@@ -139,7 +164,7 @@ async function handleIngest(payload: { text: string; sessionId: string; platform
 
 async function handleGetContext(sessionId: string) {
   try {
-    const res = await fetch(`${BACKEND}/api/context/retrieve/${sessionId}`);
+    const res = await synqFetch(`/api/context/retrieve/${sessionId}`);
     return await res.json();
   } catch {
     return { error: "Backend unreachable" };
@@ -148,7 +173,11 @@ async function handleGetContext(sessionId: string) {
 
 async function handleGetActiveSession() {
   try {
-    const res = await fetch(`${BACKEND}/api/context/active`);
+    const res = await synqFetch("/api/context/active");
+    if (!res.ok) {
+      log.warn(`Get active session returned ${res.status}`);
+      return { activeSession: null };
+    }
     const data = await res.json();
     if (data.activeSession) {
       const sessionData = {
@@ -160,7 +189,7 @@ async function handleGetActiveSession() {
       };
       await chrome.storage.local.set({ synq_session: sessionData });
     } else {
-      // Active session was deleted or never set — clear stale local data
+      // Only clear if explicitly null (not an error)
       await chrome.storage.local.remove("synq_session");
     }
     return data;
@@ -172,9 +201,8 @@ async function handleGetActiveSession() {
 async function handleCreateSession(payload: { projectName: string; platform: string; sessionId?: string }) {
   try {
     console.log(`[SYNQ bg] creating/updating session: ${payload.projectName} on ${payload.platform} (ID: ${payload.sessionId || "new"})`);
-    const res = await fetch(`${BACKEND}/api/context/session`, {
+    const res = await synqFetch("/api/context/session", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
@@ -193,7 +221,7 @@ async function handleCreateSession(payload: { projectName: string; platform: str
     return data;
   } catch (err) {
     log.error(`Create session fetch failed: ${err}`);
-    return { error: "Backend unreachable — is it running on port 3001?" };
+    return { error: "Backend unreachable — verify URL in Synq settings." };
   }
 }
 
@@ -221,9 +249,8 @@ function broadcastSessionChanged(sessionId: string | null, projectName?: string)
 
 async function handleSetActiveSession(sessionId: string | null) {
   try {
-    await fetch(`${BACKEND}/api/context/active`, {
+    await synqFetch("/api/context/active", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
     });
     return { ok: true };
@@ -284,7 +311,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace !== "local") return;
 
   if (changes.synq_session) {
-    const newSession = changes.synq_session.newValue;
+    const newSession = changes.synq_session.newValue as any;
     broadcastSessionChanged(newSession?.sessionId || null, newSession?.projectName);
   }
 

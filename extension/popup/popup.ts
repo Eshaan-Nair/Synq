@@ -23,6 +23,8 @@ const injectBtn          = document.getElementById("inject-btn")       as HTMLBu
 const detectedPlatformEl = document.getElementById("detected-platform") as HTMLElement;
 const platformDot        = document.getElementById("platform-dot")     as HTMLElement;
 const synqStatusBadge    = document.getElementById("synq-status-badge") as HTMLElement;
+const backendUrlInput    = document.getElementById("backend-url")    as HTMLInputElement;
+const synqSecretInput     = document.getElementById("synq-secret")     as HTMLInputElement;
 
 const PLATFORM_LABELS: Record<Platform, string> = {
   claude:  "Claude (claude.ai)",
@@ -110,11 +112,32 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
     });
   });
 
-  // Wait for both, then update the UI
-  await Promise.all([sessionPromise, pausePromise]);
+  const settingsPromise = new Promise<void>((resolve) => {
+    chrome.storage.local.get(["synq_backend_url", "synq_secret"], (r) => {
+      if (backendUrlInput) backendUrlInput.value = String(r.synq_backend_url || "");
+      if (synqSecretInput)  synqSecretInput.value  = String(r.synq_secret || "");
+      resolve();
+    });
+  });
+
+  // Wait for all, then update the UI
+  await Promise.all([sessionPromise, pausePromise, settingsPromise]);
   pauseToggleBtn.disabled = false; // Always allow pausing/resuming
   updatePauseUI();
 })();
+
+// ── Settings ──────────────────────────────────────────────────────
+if (backendUrlInput && synqSecretInput) {
+  backendUrlInput.addEventListener("input", () => {
+    const val = backendUrlInput.value.trim();
+    chrome.storage.local.set({ synq_backend_url: val });
+  });
+
+  synqSecretInput.addEventListener("input", () => {
+    const val = synqSecretInput.value.trim();
+    chrome.storage.local.set({ synq_secret: val });
+  });
+}
 
 // ── Save Chat ─────────────────────────────────────────────────────
 saveBtn.addEventListener("click", async () => {
@@ -205,7 +228,7 @@ saveBtn.addEventListener("click", async () => {
     } else {
       saveBtn.disabled = false;
       saveBtn.textContent = "💾 Save Chat";
-      setStatus(`❌ ${sessionResult?.error || "Failed to create session. Is the backend running on port 3001?"}`, "error");
+      setStatus(`❌ ${sessionResult?.error || "Failed to create session. Is the backend running?"}`, "error");
       return;
     }
   }

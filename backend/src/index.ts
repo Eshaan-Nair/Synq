@@ -48,11 +48,11 @@ app.use(express.json({ limit: "5mb" }));
 // Issue #3 Fix: Restrict CORS to trusted origins only
 // v1.4.1: Added localhost:3001 — dashboard is now served from the same port as the API
 const ALLOWED_ORIGINS = [
-  "http://localhost:3001",   // Dashboard (production build via sirv — v1.4.1)
-  "http://localhost:5173",   // Vite dashboard (dev — legacy / still works)
-  "http://localhost:5174",   // Vite dashboard (dev alternative)
+  `http://localhost:${PORT}`, // Dashboard (production build — v1.4.1)
+  "http://localhost:3001",   // Default port fallback
+  "http://localhost:5173",   // Vite dashboard (dev)
+  "http://localhost:5174",   // Vite dashboard (dev alt)
   "http://localhost:4173",   // Vite dashboard (preview)
-  "http://localhost:3000",   // alternative dev port
 ];
 
 app.use(cors({
@@ -94,22 +94,32 @@ const saveLimiter = rateLimit({
 app.use(helmet({ contentSecurityPolicy: false })); // CSP off — API-only server, no HTML
 
 // #3: Shared-secret auth — extension and dashboard set X-SYNQ-Secret header
-// Skip auth if SYNQ_SECRET is not configured (dev mode / first run)
+// Flip the default to secure — require an explicit SYNQ_NO_AUTH=true to disable
 const SYNQ_SECRET = process.env.SYNQ_SECRET;
-if (SYNQ_SECRET) {
+const NO_AUTH = process.env.SYNQ_NO_AUTH === "true";
+
+if (NO_AUTH) {
+  logger.warn("SYNQ_NO_AUTH=true — request auth is disabled (dev mode)");
+} else if (SYNQ_SECRET) {
   app.use((req, res, next) => {
-    // Skip health check so Docker / start scripts can probe without the secret
-    if (req.path === "/health") return next();
+    // Only enforce auth on API routes. Static dashboard assets and health check are public.
+    if (!req.path.startsWith("/api") || req.path === "/health") return next();
+    
     const provided = req.headers["x-synq-secret"];
     if (provided !== SYNQ_SECRET) {
+      logger.warn(`Auth failed: provided=${String(provided).slice(0, 4)}... expected=${String(SYNQ_SECRET).slice(0, 4)}...`);
       res.status(401).json({ error: "Unauthorized — invalid or missing X-SYNQ-Secret" });
       return;
     }
     next();
   });
-  logger.info("Request auth enabled (X-SYNQ-Secret)");
+  logger.info("Request auth enabled (X-SYNQ-Secret) for /api/*");
 } else {
-  logger.warn("SYNQ_SECRET not set — request auth is disabled (dev mode)");
+  app.use((req, res, next) => {
+    if (!req.path.startsWith("/api") || req.path === "/health") return next();
+    res.status(401).json({ error: "Unauthorized — SYNQ_SECRET not configured." });
+  });
+  logger.error("SYNQ_SECRET is not set. All API requests will fail with 401.");
 }
 
 // Apply global rate limit across ALL routes (200 req/min per IP)
@@ -156,13 +166,23 @@ if (fs.existsSync(dashboardDist)) {
 }
 
 async function start() {
-  await connectMongo();
-  await connectNeo4j();
-  await connectChroma(); // non-fatal if down
+  try {
+    await connectMongo();
+    await connectNeo4j();
+    await connectChroma(); // non-fatal if down
+  } catch (err) {
+    logger.error("Fatal: Database connection failed. SYNQ cannot start.");
+    logger.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
 
   app.listen(PORT, () => {
     logger.success(`SYNQ backend running on port ${PORT}`);
   });
 }
 
-start();
+start().catch(err => {
+  logger.error("Unhandled error during startup:");
+  logger.error(err);
+  process.exit(1);
+});
