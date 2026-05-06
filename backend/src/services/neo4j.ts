@@ -22,8 +22,7 @@ export async function connectNeo4j() {
         logger.warn(`Neo4j not ready (attempt ${attempt}/${MAX_RETRIES}) — retrying in ${delay / 1000}s...`);
         await new Promise(res => setTimeout(res, delay));
       } else {
-        logger.error("Neo4j connection failed after all retries:", err);
-        process.exit(1);
+        throw new Error(`Neo4j connection failed after ${MAX_RETRIES} retries: ${err}`);
       }
     }
   }

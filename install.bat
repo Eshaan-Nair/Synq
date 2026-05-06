@@ -98,9 +98,12 @@ REM 5. Setup .env
 if not exist "backend\.env" (
   copy "backend\.env.example" "backend\.env" >nul
 )
+if not exist "dashboard\.env" (
+  copy "dashboard\.env.example" "dashboard\.env" >nul
+)
 
 REM Update .env with choices (PowerShell safe method)
-powershell -NoProfile -Command "$c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; $c | Set-Content backend\.env -Encoding UTF8"
+powershell -NoProfile -Command "$c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; if ($c -notmatch '^SYNQ_SECRET=.') { $s = [System.Convert]::ToBase64String((1..32|%%{Get-Random -Max 256})); if ($c -match '^SYNQ_SECRET=') { $c = $c -replace '^SYNQ_SECRET=.*', \"SYNQ_SECRET=$s\" } else { $c += \"SYNQ_SECRET=$s\" }; Write-Host ' OK Generated random SYNQ_SECRET' }; $c | Set-Content backend\.env -Encoding UTF8; $s = ($c | Select-String '^SYNQ_SECRET=(.*)' | ForEach-Object { $_.Matches.Groups[1].Value }).Trim(); if ($s) { $dc = Get-Content dashboard\.env; if ($dc -match 'VITE_SYNQ_SECRET=') { $dc = $dc -replace 'VITE_SYNQ_SECRET=.*', \"VITE_SYNQ_SECRET=$s\" } else { $dc += \"VITE_SYNQ_SECRET=$s\" }; $dc | Set-Content dashboard\.env -Encoding UTF8; Write-Host ' OK Synced secret to dashboard' }"
 
 REM 6. Dependencies
 echo.

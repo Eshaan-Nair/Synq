@@ -1,7 +1,4 @@
-import axios from "axios";
-import { extractErrorMessage } from "./synq";
-
-const BASE = "http://localhost:3001";
+import { apiClient, extractErrorMessage } from "./client";
 
 export async function fetchFullChat(sessionId: string): Promise<{
   found: boolean;
@@ -12,7 +9,7 @@ export async function fetchFullChat(sessionId: string): Promise<{
   error?: string;
 }> {
   try {
-    const res = await axios.get(`${BASE}/api/chat/${sessionId}`);
+    const res = await apiClient.get(`/api/chat/${sessionId}`);
     return res.data;
   } catch (err) {
     // If the backend is down or the session has no full chat, return a safe empty state
