@@ -16,7 +16,7 @@ jobs:
         ports:
           - "8000:8000"
         options: >-
-          --health-cmd "curl -sf http://localhost:8000/api/v1/heartbeat"
+          --health-cmd "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/api/v1/heartbeat\")'"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
@@ -38,7 +38,7 @@ jobs:
         ports:
           - "11434:11434"
         options: >-
-          --health-cmd "curl -sf http://localhost:11434/api/tags"
+          --health-cmd "ollama list"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
