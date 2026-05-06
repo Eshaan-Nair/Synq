@@ -6,7 +6,7 @@ import { Session, getActiveSessionId, setActiveSessionId, FullChat } from "../se
 import { deleteChunksBySession } from "../services/chroma";
 import { isSessionProcessing, cancelSessionJobs } from "../services/jobs";
 import { logger } from "../utils/logger";
-import mongoose from "mongoose";
+import { isValidObjectId } from "../utils/validators";
 
 const router = Router();
 
@@ -14,9 +14,6 @@ const router = Router();
 // that were inside the DELETE route handler. Dynamic imports inside request
 // handlers cause repeated module resolution overhead on every request.
 
-function isValidObjectId(id: string): boolean {
-  return mongoose.Types.ObjectId.isValid(id);
-}
 
 // POST /api/context/ingest
 router.post("/ingest", async (req: Request, res: Response) => {

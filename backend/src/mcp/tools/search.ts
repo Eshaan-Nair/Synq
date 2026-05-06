@@ -49,24 +49,28 @@ export async function search(
     const distances: number[]          = results.data.distances?.[0]  ?? [];
     const metadatas: any[]             = results.data.metadatas?.[0]  ?? [];
 
-    if (docs.length === 0) {
-      return `No results found for: "${query}"`;
-    }
+    const SIMILARITY_THRESHOLD = 0.4;
+    const chunks = docs
+      .map((doc, i) => ({
+        content:    doc ?? "",
+        score:      Math.max(0, 1 - (distances[i] ?? 1)),
+        chunkIndex: i,
+        sessionId:  (metadatas[i] as any)?.sessionId ?? "unknown",
+        project:    (metadatas[i] as any)?.projectName ?? "unknown",
+      }))
+      .filter(c => c.score >= SIMILARITY_THRESHOLD)
+      .sort((a, b) => b.score - a.score);
 
-    const chunks = docs.map((doc, i) => ({
-      content:    doc ?? "",
-      score:      Math.max(0, 1 - (distances[i] ?? 1)),
-      chunkIndex: i,
-      sessionId:  (metadatas[i] as any)?.sessionId ?? "unknown",
-      project:    (metadatas[i] as any)?.projectName ?? "unknown",
-    }));
+    if (chunks.length === 0) {
+      return `No results found for: "${query}" with sufficient similarity (threshold=${SIMILARITY_THRESHOLD}).`;
+    }
 
     const safe  = sanitizeChunks(chunks);
     const lines = safe.map((c, i) =>
-      `[${i + 1}] relevance=${(c.score * 100).toFixed(0)}% | session="${c.sessionId}"\n${c.content}`
+      `[${i + 1}] relevance=${(c.score * 100).toFixed(0)}% | session="${c.sessionId}" | project="${c.project}"\n${c.content}`
     );
 
-    return `Search results for "${query}":\n\n${lines.join("\n\n---\n\n")}`;
+    return `Search results for "${query}" (top ${chunks.length}):\n\n${lines.join("\n\n---\n\n")}`;
   } catch (err: any) {
     return `search_memory failed: ${err.message ?? String(err)}`;
   }

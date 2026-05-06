@@ -151,7 +151,9 @@ export default function App() {
 
   useEffect(() => {
     loadSessions();
-    const interval = setInterval(loadSessions, 5000); // v1.4.1+: Poll every 5s for job status
+    const interval = setInterval(() => {
+      if (!document.hidden) loadSessions();
+    }, 5000); // v1.4.1+: Poll every 5s for job status
     return () => clearInterval(interval);
   }, [loadSessions]);
 

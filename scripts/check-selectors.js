@@ -19,14 +19,14 @@
  */
 
 const { chromium } = require("playwright");
+const path = require("path");
+const fs = require("fs");
 
-// Mirrors INPUT_SELECTOR_STRATEGIES in extension/src/platform/resolver.ts
-// and the user/response selectors in each platform file.
-// Keep these in sync when you update resolver.ts or a platform file.
 const PLATFORMS = [
   {
     name: "Claude",
     url: "https://claude.ai/new",
+    fixture: "claude.html",
     inputSelectors: [
       'div.ProseMirror',
       '[data-placeholder][contenteditable]',
@@ -44,6 +44,7 @@ const PLATFORMS = [
   {
     name: "ChatGPT",
     url: "https://chatgpt.com",
+    fixture: "chatgpt.html",
     inputSelectors: [
       '#prompt-textarea',
       '[data-testid="prompt-textarea"]',
@@ -59,6 +60,7 @@ const PLATFORMS = [
   {
     name: "Gemini",
     url: "https://gemini.google.com",
+    fixture: "gemini.html",
     inputSelectors: [
       '.ql-editor',
       'rich-textarea [contenteditable="true"]',
@@ -75,6 +77,7 @@ const PLATFORMS = [
   {
     name: "DeepSeek",
     url: "https://chat.deepseek.com",
+    fixture: "deepseek.html",
     inputSelectors: [
       '#chat-input',
       'textarea[placeholder*="Send a message"]',
@@ -89,7 +92,7 @@ const PLATFORMS = [
   },
 ];
 
-async function checkPlatform(browser, platform) {
+async function checkPlatform(browser, platform, useFixtures = false) {
   const context = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
@@ -98,40 +101,60 @@ async function checkPlatform(browser, platform) {
   const results = { name: platform.name, passed: [], failed: [] };
 
   try {
-    await page.goto(platform.url, { waitUntil: "domcontentloaded", timeout: 20000 });
-    await page.waitForTimeout(4000); // let React/Angular hydrate
+    if (useFixtures) {
+      const fixturePath = path.resolve(__dirname, "fixtures", platform.fixture);
+      if (!fs.existsSync(fixturePath)) {
+        throw new Error(`Fixture not found: ${fixturePath}`);
+      }
+      await page.goto(`file://${fixturePath}`);
+    } else {
+      await page.goto(platform.url, { waitUntil: "domcontentloaded", timeout: 20000 });
+      await page.waitForTimeout(4000); 
+    }
 
-    // Input: at least one strategy must match
+    // Input Check
     let inputFound = false;
     for (const sel of platform.inputSelectors) {
-      try {
-        const count = await page.locator(sel).count();
-        if (count > 0) { inputFound = true; break; }
-      } catch { /* invalid selector — skip */ }
+      const count = await page.locator(sel).count();
+      if (count > 0) { 
+        inputFound = true; 
+        results.passed.push(`  OK  input: resolved via "${sel}"`);
+        break; 
+      }
     }
-    if (inputFound) {
-      results.passed.push(`  OK  input: resolved`);
-    } else {
-      results.failed.push(`  FAIL input: no strategy matched — ${platform.inputSelectors.join(", ")}`);
+    if (!inputFound) {
+      results.failed.push(`  FAIL input: no strategy matched`);
     }
 
-    // Responses: checked but non-fatal on empty pages (no conversation loaded)
+    // Response Check (verify it actually has text in fixture mode)
     let responseFound = false;
     for (const sel of platform.responseSelectors) {
-      try {
-        const count = await page.locator(sel).count();
-        if (count > 0) { responseFound = true; break; }
-      } catch { /* skip */ }
+      const locator = page.locator(sel);
+      const count = await locator.count();
+      if (count > 0) {
+        if (useFixtures) {
+          const text = await locator.first().textContent();
+          if (text && text.trim().length > 5) {
+            responseFound = true;
+            results.passed.push(`  OK  response: resolved + contains content`);
+            break;
+          }
+        } else {
+          responseFound = true;
+          results.passed.push(`  OK  response: resolved`);
+          break;
+        }
+      }
     }
-    if (responseFound) {
-      results.passed.push(`  OK  response: resolved`);
-    } else {
-      // Non-fatal — new chat pages have no response elements yet
+
+    if (!responseFound && useFixtures) {
+      results.failed.push(`  FAIL response: not found or empty in fixture`);
+    } else if (!responseFound) {
       results.passed.push(`  --  response: not found (expected on empty page)`);
     }
 
   } catch (err) {
-    results.failed.push(`  FAIL page load: ${err.message}`);
+    results.failed.push(`  FAIL: ${err.message}`);
   } finally {
     await context.close();
   }
@@ -140,13 +163,22 @@ async function checkPlatform(browser, platform) {
 }
 
 (async () => {
-  console.log("\nSYNQ Platform Selector Smoke Test\n");
+  const useFixtures = process.argv.includes("--fixtures");
+  console.log(`\nSYNQ Platform Selector Smoke Test ${useFixtures ? "(FIXTURE MODE)" : "(LIVE MODE)"}\n`);
+  
   const browser = await chromium.launch({ headless: true });
   let totalFailed = 0;
 
   for (const platform of PLATFORMS) {
-    console.log(`Checking ${platform.name} (${platform.url})...`);
-    const result = await checkPlatform(browser, platform);
+    process.stdout.write(`Checking ${platform.name}... `);
+    const result = await checkPlatform(browser, platform, useFixtures);
+    
+    if (result.failed.length === 0) {
+      console.log("✅");
+    } else {
+      console.log("❌");
+    }
+    
     result.passed.forEach((m) => console.log(m));
     result.failed.forEach((m) => console.log(m));
     totalFailed += result.failed.length;
@@ -156,11 +188,10 @@ async function checkPlatform(browser, platform) {
   await browser.close();
 
   if (totalFailed === 0) {
-    console.log("All selectors OK\n");
+    console.log("All checks passed\n");
     process.exit(0);
   } else {
-    console.log(`${totalFailed} selector(s) broken. Update extension/src/platform/resolver.ts`);
-    console.log("Reference: PLATFORM_SELECTORS.md\n");
+    console.log(`${totalFailed} check(s) failed.\n`);
     process.exit(1);
   }
 })();

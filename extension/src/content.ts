@@ -379,34 +379,39 @@ async function injectAndSend(input: HTMLElement, text: string) {
 
   if (shouldInject) {
     if (input.isContentEditable) {
-      // Select all current content so our insertText replaces it entirely
-      const selection = window.getSelection();
+      const sel = window.getSelection();
       const range = document.createRange();
       range.selectNodeContents(input);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
 
-      // execCommand goes through the native editing pipeline — React/Angular/
-      // custom elements all intercept this correctly, unlike synthetic events.
-      const inserted = document.execCommand("insertText", false, text);
+      // Primary: InputEvent (standards-compliant, handled by React/Angular)
+      const evt = new InputEvent("beforeinput", {
+        inputType: "insertText",
+        data: text,
+        bubbles: true,
+        cancelable: true,
+      });
+      input.dispatchEvent(evt);
 
-      if (!inserted) {
-        // Fallback: clipboard paste simulation (works in most browsers when
-        // execCommand is disabled, e.g., in some sandboxed iframes)
+      // Fallback 1: execCommand (deprecated but still works in many places)
+      if (input.textContent !== text) {
+        document.execCommand("insertText", false, text);
+      }
+
+      // Fallback 2: Clipboard simulation
+      if (input.textContent !== text) {
         try {
           await navigator.clipboard.writeText(text);
           document.execCommand("paste");
         } catch {
-          // Last resort: direct assignment + native input event
-          // (may not work with React but better than nothing)
+          // Last resort
           input.innerText = text;
           input.dispatchEvent(new Event("input", { bubbles: true }));
-          input.dispatchEvent(new Event("change", { bubbles: true }));
         }
       }
     } else {
-      // <textarea> or <input>: native value setter trick still works here
-      // because these are not framework-managed in the same way
+      // <textarea>: native setter
       const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value");
       if (nativeSetter?.set) {
         nativeSetter.set.call(input, text);
@@ -447,13 +452,24 @@ async function injectContext() {
   input.focus();
 
   if (input.isContentEditable) {
-    const selection = window.getSelection();
+    const sel = window.getSelection();
     const range = document.createRange();
     range.selectNodeContents(input);
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    const inserted = document.execCommand("insertText", false, prompt);
-    if (!inserted) {
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+
+    const evt = new InputEvent("beforeinput", {
+      inputType: "insertText",
+      data: prompt,
+      bubbles: true,
+      cancelable: true,
+    });
+    input.dispatchEvent(evt);
+
+    if (input.textContent !== prompt) {
+      document.execCommand("insertText", false, prompt);
+    }
+    if (input.textContent !== prompt) {
       input.innerText = prompt;
       input.dispatchEvent(new Event("input", { bubbles: true }));
     }

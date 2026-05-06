@@ -19,13 +19,9 @@ import { saveTriple } from "../services/neo4j";
 import { enqueueJob } from "../services/jobs";
 import { Session, FullChat } from "../services/mongo";
 import { logger } from "../utils/logger";
-import mongoose from "mongoose";
+import { isValidObjectId } from "../utils/validators";
 
 const router = Router();
-
-function isValidObjectId(id: string): boolean {
-  return mongoose.Types.ObjectId.isValid(id);
-}
 
 // POST /api/chat/save
 router.post("/save", async (req: Request, res: Response) => {
