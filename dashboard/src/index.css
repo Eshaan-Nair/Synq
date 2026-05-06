@@ -186,13 +186,18 @@ body {
 .session-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; /* better alignment for the badge */
+  gap: 8px;
 }
 
 .session-name {
   font-weight: 600;
   font-size: 14px;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1; /* Allow it to shrink to make room for the badge */
 }
 
 .session-platform {
@@ -764,5 +769,42 @@ body {
 
 .settings-select:hover {
   border-color: var(--accent);
+}
+
+/* Processing Indicator */
+.processing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-left: 8px;
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  vertical-align: middle;
+}
+
+.processing-indicator.large {
+  font-size: 12px;
+  padding: 4px 12px;
+  margin-left: 12px;
+}
+
+.processing-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: processing-pulse 1.5s infinite;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+@keyframes processing-pulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
 }
 
