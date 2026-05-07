@@ -130,6 +130,53 @@ export async function retrieveRelevantChunks(
     .slice(0, topN);
 }
 
+/**
+ * Retrieve relevant chunks across ALL sessions.
+ */
+export async function retrieveGlobalChunks(
+  query: string,
+  topN = 3,
+): Promise<RetrievedChunk[]> {
+  if (!collectionId) return [];
+
+  const queryEmbedding = await generateEmbedding(query);
+  const fetchN = Math.max(topN * 4, 10);
+
+  const results = await axios.post(`${COLL_BASE}/${collectionId}/query`, {
+    query_embeddings: [queryEmbedding],
+    n_results:        Math.min(fetchN, 100),
+    // No 'where' filter — searches all sessions
+    include:          ["documents", "distances", "metadatas"],
+  }, { timeout: 10000 });
+
+  const docs:      string[] = results.data.documents?.[0]  || [];
+  const distances: number[] = results.data.distances?.[0]  || [];
+  const metadatas: any[]    = results.data.metadatas?.[0]  || [];
+
+  if (docs.length === 0) return [];
+
+  const scored = docs.map((doc, i) => ({
+    chunkIndex: (metadatas[i]?.chunkIndex as number) ?? i,
+    content:    doc,
+    score:      1 - (distances[i] ?? 1),
+  }));
+
+  // Use a slightly higher threshold for cross-session results to avoid irrelevant drift
+  const filtered = scored.filter(r => r.score >= (SIMILARITY_THRESHOLD + 0.05));
+  
+  // Deduplicate and sort
+  const seen = new Map<string, RetrievedChunk>();
+  for (const chunk of filtered) {
+    const key = chunk.content; // Use content as key for cross-session deduplication
+    const prev = seen.get(key);
+    if (!prev || chunk.score > prev.score) seen.set(key, chunk);
+  }
+
+  return Array.from(seen.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topN);
+}
+
 // ── Delete by session ──────────────────────────────────────────────
 export async function deleteChunksBySession(sessionId: string): Promise<void> {
   if (!collectionId) return;

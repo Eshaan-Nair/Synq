@@ -45,6 +45,13 @@ let urlWatcherInterval: ReturnType<typeof setInterval> | null = null;
 
 const seenMessageFingerprints = new Set<string>();
 
+const SYNQ_DEBUG = (window as any).__synq_debug === true;
+const log = {
+  info:  (...args: any[]) => SYNQ_DEBUG && console.log("[SYNQ]", ...args),
+  warn:  (...args: any[]) => console.warn("[SYNQ]", ...args),
+  error: (...args: any[]) => console.error("[SYNQ]", ...args),
+};
+
 // ── FNV-1a hash fingerprint ──────────────────────────────────────
 function fnv1a(text: string): string {
   let hash = 2166136261;
@@ -70,17 +77,17 @@ async function init() {
   // Clear fingerprint cache on every init (new page / URL navigation)
   // so fresh chats are never incorrectly marked as "already saved".
   seenMessageFingerprints.clear();
-  console.log(`[SYNQ] active on: ${platform}`);
+  log.info(`[SYNQ] active on: ${platform}`);
 
   const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
   if (activeData?.activeSession) {
     sessionId = activeData.activeSession._id as string;
-    console.log(`[SYNQ] session: ${activeData.activeSession.projectName}`);
+    log.info(`[SYNQ] session: ${activeData.activeSession.projectName}`);
   } else {
     const stored = await getStoredSession();
     if (stored) {
       sessionId = stored.sessionId as string;
-      console.log(`[SYNQ] session (stored): ${stored.projectName}`);
+      log.info(`[SYNQ] session (stored): ${stored.projectName}`);
     }
   }
 
@@ -89,7 +96,7 @@ async function init() {
 
   if (sessionId && config && !isPaused) {
     attachPromptInterceptor();
-    console.log(`[SYNQ] auto-connected for session ${sessionId}`);
+    log.info(`[SYNQ] auto-connected for session ${sessionId}`);
   }
 
   injectSidebarUI();
@@ -109,13 +116,13 @@ async function init() {
 function handlePlatformChange() {
   const newPlatform = detectPlatform();
   if (newPlatform === platform) return;
-  console.log(`[SYNQ] platform changed: ${platform} → ${newPlatform}`);
+  log.info(`[SYNQ] platform changed: ${platform} → ${newPlatform}`);
   detachPromptInterceptor();
   platform = newPlatform;
   config = getPlatformConfig(newPlatform);
   if (!isPaused && sessionId && config) {
     attachPromptInterceptor();
-    console.log(`[SYNQ] re-attached interceptor on ${newPlatform}`);
+    log.info(`[SYNQ] re-attached interceptor on ${newPlatform}`);
   }
 }
 
@@ -133,10 +140,10 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
 
   let userEls = queryAll(config.userSelectors);
   const assistantEls = queryAll(config.responseSelectors);
-  console.log(`[SYNQ] scrape: ${userEls.length} user els, ${assistantEls.length} assistant els (platform: ${platform})`);
+  log.info(`[SYNQ] scrape: ${userEls.length} user els, ${assistantEls.length} assistant els (platform: ${platform})`);
 
   if (userEls.length === 0 && assistantEls.length > 0) {
-    console.log("[SYNQ] user selectors returned 0 — trying structural fallback");
+    log.info("[SYNQ] user selectors returned 0 — trying structural fallback");
     const foundUserEls: Element[] = [];
     for (const assistantEl of assistantEls) {
       let parent = assistantEl.parentElement;
@@ -154,7 +161,7 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
     }
     if (foundUserEls.length > 0) {
       userEls = foundUserEls;
-      console.log(`[SYNQ] structural fallback found ${userEls.length} user element(s)`);
+      log.info(`[SYNQ] structural fallback found ${userEls.length} user element(s)`);
     }
   }
 
@@ -171,7 +178,7 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
         const els = document.querySelectorAll(sel);
         if (els.length > 0) {
           userEls = Array.from(els);
-          console.log(`[SYNQ] broad selector "${sel}" found ${userEls.length} user element(s)`);
+          log.info(`[SYNQ] broad selector "${sel}" found ${userEls.length} user element(s)`);
           break;
         }
       } catch { /* invalid selector */ }
@@ -219,7 +226,7 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
   }
 
   const rawText = lines.join("\n\n");
-  console.log(`[SYNQ] saving ${rawText.length} chars, ${lines.length} turns...`);
+  log.info(`[SYNQ] saving ${rawText.length} chars, ${lines.length} turns...`);
   showToast("Saving chat...");
 
   let saveSessionId = providedSessionId;
@@ -267,13 +274,13 @@ function attachPromptInterceptor() {
   if (!config) return;
   document.addEventListener("keydown", handlePromptKeydown, true);
   document.addEventListener("click", handleSendButtonClick, true);
-  console.log("[SYNQ] interceptor attached");
+  log.info("[SYNQ] interceptor attached");
 }
 
 function detachPromptInterceptor() {
   document.removeEventListener("keydown", handlePromptKeydown, true);
   document.removeEventListener("click", handleSendButtonClick, true);
-  console.log("[SYNQ] interceptor detached");
+  log.info("[SYNQ] interceptor detached");
 }
 
 async function handlePromptKeydown(e: KeyboardEvent) {
@@ -323,7 +330,7 @@ async function processPromptWithRAG(promptText: string, input: HTMLElement) {
     }
     // Keep local cache in sync
     if (currentSessionId !== sessionId) {
-      console.log(`[SYNQ] session refreshed: ${sessionId} → ${currentSessionId}`);
+      log.info(`[SYNQ] session refreshed: ${sessionId} → ${currentSessionId}`);
       sessionId = currentSessionId;
     }
 
@@ -337,8 +344,18 @@ async function processPromptWithRAG(promptText: string, input: HTMLElement) {
       const count = result?.chunksFound?.length ?? result?.chunks?.length ?? 0;
       showToast(`SYNQ recalled ${count} context chunk(s)`);
     } else {
-      await injectAndSend(input, promptText);
-      showToast("No matching context — sending normally");
+      // Fallback: search globally if session search failed
+      const globalResult = await sendMessage({
+        type: "RAG_RETRIEVE_GLOBAL",
+        payload: { prompt: promptText, topN: 2 },
+      });
+      if (globalResult?.found && globalResult?.contextBlock) {
+        await injectAndSend(input, globalResult.contextBlock + "\n\n" + promptText);
+        showToast("SYNQ recalled cross-project context");
+      } else {
+        await injectAndSend(input, promptText);
+        showToast("No matching context — sending normally");
+      }
     }
   } catch (err) {
     console.error("[SYNQ] RAG error:", err);
@@ -373,71 +390,56 @@ function buildRAGPrompt(contextBlock: string, userPrompt: string): string {
 //
 async function injectAndSend(input: HTMLElement, text: string) {
   input.focus();
-
   const currentText = input.textContent?.trim() || (input as HTMLTextAreaElement).value?.trim() || "";
-  const shouldInject = currentText !== text.trim();
+  if (currentText === text.trim()) {
+    // Already injected — just send
+  } else if (input.isContentEditable) {
+    // Strategy 1: InputEvent (React/Angular compliant — modern standard)
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(input);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
 
-  if (shouldInject) {
-    if (input.isContentEditable) {
-      const sel = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(input);
-      sel?.removeAllRanges();
-      sel?.addRange(range);
+    const evt = new InputEvent("beforeinput", {
+      inputType: "insertText",
+      data: text,
+      bubbles: true,
+      cancelable: true,
+    });
+    const cancelled = !input.dispatchEvent(evt);
 
-      // Primary: InputEvent (standards-compliant, handled by React/Angular)
-      const evt = new InputEvent("beforeinput", {
-        inputType: "insertText",
-        data: text,
-        bubbles: true,
-        cancelable: true,
-      });
-      input.dispatchEvent(evt);
-
-      // Fallback 1: execCommand (deprecated but still works in many places)
-      if (input.textContent !== text) {
-        document.execCommand("insertText", false, text);
-      }
-
-      // Fallback 2: Clipboard simulation
-      if (input.textContent !== text) {
-        try {
-          await navigator.clipboard.writeText(text);
-          document.execCommand("paste");
-        } catch {
-          // Last resort
-          input.innerText = text;
-          input.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-      }
-    } else {
-      // <textarea>: native setter
-      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value");
-      if (nativeSetter?.set) {
-        nativeSetter.set.call(input, text);
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-      }
+    // Strategy 2: If InputEvent didn't take hold, use direct DOM mutation as fallback
+    if (!cancelled && input.textContent !== text) {
+      input.textContent = text;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  } else {
+    // <textarea>: native setter (bypasses React's readonly descriptor)
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLTextAreaElement.prototype, "value"
+    );
+    if (nativeSetter?.set) {
+      nativeSetter.set.call(input, text);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
     }
   }
 
-  // Small delay to let the framework process the input event before we submit
   await new Promise(r => setTimeout(r, 300));
 
   const sendBtn = queryOne(config!.sendButtonSelectors) as HTMLElement | null;
   if (sendBtn) {
-    // For DeepSeek, sometimes click() isn't enough or triggers double submit.
-    // We try to focus the button first, then click.
     sendBtn.focus();
     sendBtn.click();
   } else {
-    // Fallback: Dispatch a real Enter key event
-    const enterEv = new KeyboardEvent("keydown", {
-      key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true, cancelable: true,
-    });
-    input.dispatchEvent(enterEv);
+    input.dispatchEvent(new KeyboardEvent("keydown", {
+      key: "Enter", code: "Enter", keyCode: 13, which: 13,
+      bubbles: true, cancelable: true,
+    }));
   }
 }
+
 
 // ── One-time inject ───────────────────────────────────────────────
 async function injectContext() {
@@ -645,13 +647,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const { sessionId: newId, projectName } = message.payload as { sessionId: string | null; projectName?: string };
     
     if (newId === null) {
-      console.log("[SYNQ] session unloaded via broadcast");
+      log.info("[SYNQ] session unloaded via broadcast");
       sessionId = null;
       detachPromptInterceptor();
       updateBadge(false);
       showToast("SYNQ: session unloaded");
     } else {
-      console.log(`[SYNQ] session updated via broadcast: ${sessionId} → ${newId} (${projectName})`);
+      log.info(`[SYNQ] session updated via broadcast: ${sessionId} → ${newId} (${projectName})`);
       sessionId = newId;
       if (config && !isPaused) {
         attachPromptInterceptor();

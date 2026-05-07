@@ -46,6 +46,12 @@ export default function App() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClosed, setIsClosed] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [graphTypeFilter, setGraphTypeFilter] = useState<string | null>(null);
+  const [sessionSearch, setSessionSearch] = useState("");
+  const [factsSearch, setFactsSearch] = useState("");
+  const [factsPage, setFactsPage] = useState(0);
+  const [jobStatus, setJobStatus] = useState({ pending: 0, processing: 0, deadLettered: 0 });
+  const PAGE_SIZE = 50;
 
   // Issue #17 Fix: Track whether the user is actively loading a session.
   const isLoadingSessionRef = useRef(false);
@@ -60,17 +66,19 @@ export default function App() {
     }
   }, []);
 
-  const loadSession = useCallback(async (session: Session) => {
+  const loadSession = useCallback(async (session: Session, typeFilter?: string | null) => {
     setActiveSession(session);
     setLoadingSession(true);
     setChatData(null);
     isLoadingSessionRef.current = true;
     try {
-      const [graphData, contextData, chatResult] = await Promise.all([
-        fetchGraphBySession(session._id),
+      const graphUrl = `/api/graph/session/${session._id}${typeFilter ? `?type=${typeFilter}` : ""}`;
+      const [graphRes, contextData, chatResult] = await Promise.all([
+        fetch(graphUrl),
         fetchContext(session._id),
         fetchFullChat(session._id),
       ]);
+      const graphData = await graphRes.json();
       setNodes(graphData.nodes);
       setLinks(graphData.links);
       setTriples(contextData.triples || []);
@@ -150,6 +158,56 @@ export default function App() {
   }, [sessions, loadSession, activeSession]); // activeSession added to deps
 
   useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+    if (activeSession?.isProcessingGraph) {
+      const poll = async () => {
+        try {
+          const res = await fetch("/api/jobs/status");
+          if (res.ok) {
+            const status = await res.json();
+            setJobStatus(status);
+            if (status.pending === 0 && status.processing === 0) {
+              loadSessions(); // refresh to see if done
+              if (activeSession) loadSession(activeSession);
+            }
+          }
+        } catch {}
+      };
+      poll();
+      timer = setInterval(poll, 3000);
+    }
+    return () => clearInterval(timer);
+  }, [activeSession?.isProcessingGraph, loadSessions, loadSession, activeSession, graphTypeFilter]);
+
+  useEffect(() => {
+    if (activeSession) {
+      loadSession(activeSession, graphTypeFilter);
+    }
+  }, [graphTypeFilter]);
+
+  const handleClearJobs = async () => {
+    try {
+      await fetch("/api/jobs/clear", { method: "POST" });
+      setJobStatus({ pending: 0, processing: 0, deadLettered: 0 });
+      loadSessions();
+    } catch {}
+  };
+
+  const filteredSessions = sessions.filter(s =>
+    s.projectName.toLowerCase().includes(sessionSearch.toLowerCase()) ||
+    s.platform.toLowerCase().includes(sessionSearch.toLowerCase())
+  );
+
+  const filteredTriples = triples
+    .filter(t => !selectedNodeId || t.subject === selectedNodeId || t.object === selectedNodeId)
+    .filter(t => !factsSearch || [t.subject, t.object, t.relation].some(v =>
+      v.toLowerCase().includes(factsSearch.toLowerCase())
+    ));
+
+  const pagedTriples = filteredTriples.slice(factsPage * PAGE_SIZE, (factsPage + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(filteredTriples.length / PAGE_SIZE);
+
+  useEffect(() => {
     loadSessions();
     const interval = setInterval(() => {
       if (!document.hidden) loadSessions();
@@ -202,6 +260,19 @@ export default function App() {
             selectedNodeId={selectedNodeId}
           />
         )}
+        {nodes.length > 0 && (
+          <div className="graph-filters">
+            {["PERSON", "TECH", "ORG", "PLACE", "EVENT"].map(t => (
+              <button
+                key={t}
+                className={`filter-pill ${graphTypeFilter === t ? "active" : ""}`}
+                onClick={() => setGraphTypeFilter(prev => prev === t ? null : t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Floating UI Layer */}
@@ -223,8 +294,17 @@ export default function App() {
                 <span>No sessions found.<br/>Capture context using the extension to get started.</span>
               </div>
             ) : (
-              sessions.map((s) => {
-                const isActive = activeSession?._id === s._id;
+              <>
+                <div className="session-list-header">
+                  <input
+                    className="search-input"
+                    placeholder="Search projects..."
+                    value={sessionSearch}
+                    onChange={(e) => setSessionSearch(e.target.value)}
+                  />
+                </div>
+                {filteredSessions.map((s) => {
+                  const isActive = activeSession?._id === s._id;
                 return (
                   <div
                     key={s._id}
@@ -265,7 +345,8 @@ export default function App() {
                     </div>
                   </div>
                 );
-              })
+              })}
+              </>
             )}
           </div>
         </div>
@@ -309,6 +390,24 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {/* ── Job Progress Bar ─────────────────────────── */}
+        {(activeSession?.isProcessingGraph || jobStatus.deadLettered > 0) && (
+          <div className="job-status-bar floating-panel">
+            {activeSession?.isProcessingGraph ? (
+              <>
+                <div className="processing-dot pulse" />
+                <span>Extracting Knowledge... <strong>{jobStatus.pending}</strong> chunks left</span>
+                <button className="job-cancel-btn" onClick={handleClearJobs}>Cancel</button>
+              </>
+            ) : (
+              <>
+                <span style={{ color: "var(--red)" }}>⚠ {jobStatus.deadLettered} jobs failed</span>
+                <button className="job-cancel-btn" onClick={handleClearJobs}>Dismiss</button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* ── Unified Action Bar (Floating Pill) ─────────────────────────── */}
         <div className="unified-action-bar floating-panel">
@@ -379,7 +478,19 @@ export default function App() {
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "inherit" }}>
               {/* History tab */}
               {activeTab === "history" && (
-                <div className="history-list">
+                <div className="history-tab-container">
+                  <div className="facts-header">
+                    <input
+                      className="search-input"
+                      placeholder="Search facts..."
+                      value={factsSearch}
+                      onChange={(e) => {
+                        setFactsSearch(e.target.value);
+                        setFactsPage(0);
+                      }}
+                    />
+                  </div>
+                  <div className="history-list">
                   {loadingSession ? (
                     <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
                       {["90%", "75%", "85%", "60%", "80%"].map((w, i) => (
@@ -399,7 +510,6 @@ export default function App() {
                     <>
                       {[...triples]
                         .reverse()
-                        .filter(t => !selectedNodeId || t.subject === selectedNodeId || t.object === selectedNodeId)
                         .map((t, i) => (
                           <div key={i} className="history-item">
                             <div className="history-item-subject">
@@ -413,6 +523,19 @@ export default function App() {
                           </div>
                         ))}
                     </>
+                  )}
+                  {totalPages > 1 && (
+                    <div className="pagination">
+                      <button 
+                        disabled={factsPage === 0} 
+                        onClick={() => setFactsPage(p => p - 1)}
+                      >Prev</button>
+                      <span>Page {factsPage + 1} of {totalPages}</span>
+                      <button 
+                        disabled={factsPage >= totalPages - 1} 
+                        onClick={() => setFactsPage(p => p + 1)}
+                      >Next</button>
+                    </div>
                   )}
                 </div>
               )}

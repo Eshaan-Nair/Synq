@@ -156,6 +156,29 @@ body {
   margin-bottom: 8px;
 }
 
+.session-list-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--accent-dim);
+}
+
 
 .session-item {
   padding: 14px 16px;
@@ -428,6 +451,47 @@ body {
   left: -38px;
 }
 
+.job-status-bar {
+  position: absolute;
+  top: 88px;
+  left: 332px;
+  right: 432px; /* make room for action bar */
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-main);
+  z-index: 55;
+  border: 1px solid var(--accent-glow);
+}
+
+.job-status-bar .processing-dot {
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.job-cancel-btn {
+  margin-left: auto;
+  background: var(--surface-lighter);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.job-cancel-btn:hover {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
 .error-banner {
   position: absolute;
   top: 0;
@@ -500,12 +564,82 @@ body {
 
 
 .history-list {
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px 0;
+}
+
+.history-tab-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.facts-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pagination {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pagination button {
+  background: var(--surface-lighter);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.graph-filters {
+  position: absolute;
+  top: 88px;
+  left: 332px;
+  display: flex;
+  gap: 8px;
+}
+
+.filter-pill {
+  background: var(--surface);
+  backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.filter-pill:hover {
+  border-color: var(--accent);
+  color: var(--text-main);
+}
+
+.filter-pill.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  box-shadow: 0 0 15px var(--accent-glow);
 }
 
 

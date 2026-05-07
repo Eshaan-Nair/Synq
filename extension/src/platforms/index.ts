@@ -2,8 +2,11 @@ import { claude } from "./claude";
 import { chatgpt } from "./chatgpt";
 import { gemini } from "./gemini";
 import { deepseek } from "./deepseek";
+import { grok } from "./grok";
+import { copilot } from "./copilot";
+import { mistral } from "./mistral";
 
-export type Platform = "claude" | "chatgpt" | "gemini" | "deepseek" | "unknown";
+export type Platform = "claude" | "chatgpt" | "gemini" | "deepseek" | "grok" | "copilot" | "mistral" | "unknown";
 
 export type PlatformConfig = {
   name: Platform;
@@ -14,13 +17,16 @@ export type PlatformConfig = {
   sendButtonSelectors: string[];
 };
 
-const platforms: PlatformConfig[] = [claude, chatgpt, gemini, deepseek];
+const platforms: PlatformConfig[] = [claude, chatgpt, gemini, deepseek, grok, copilot, mistral];
 
 export const PLATFORM_HOSTNAMES: Record<string, string> = {
   claude: "claude.ai",
   chatgpt: "chatgpt.com",
   gemini: "gemini.google.com",
   deepseek: "chat.deepseek.com",
+  grok: "x.com",
+  copilot: "copilot.microsoft.com",
+  mistral: "chat.mistral.ai",
 };
 
 export function detectPlatform(): Platform {

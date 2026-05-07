@@ -34,13 +34,15 @@ async function synqFetch(path: string, options: RequestInit = {}) {
   });
 }
 
+const SYNQ_DEBUG = (globalThis as any).__synq_debug === true;
 const log = {
+  info:  (...args: any[]) => SYNQ_DEBUG && console.log("[SYNQ bg]", ...args),
   warn:  (msg: string) => console.warn(`[SYNQ bg] ${msg}`),
   error: (msg: string) => console.error(`[SYNQ bg] ${msg}`),
 };
 
 chrome.runtime.onMessage.addListener((message: SynqMessage, _sender, sendResponse) => {
-  console.log(`[SYNQ bg] received: ${message.type}`);
+  log.info(`[SYNQ bg] received: ${message.type}`);
   
   switch (message.type) {
     case "INGEST_TEXT":
@@ -54,6 +56,9 @@ chrome.runtime.onMessage.addListener((message: SynqMessage, _sender, sendRespons
       return true;
     case "RAG_RETRIEVE":
       handleRAGRetrieve(message.payload).then(sendResponse);
+      return true;
+    case "RAG_RETRIEVE_GLOBAL":
+      handleRAGRetrieveGlobal(message.payload).then(sendResponse);
       return true;
     case "CREATE_SESSION":
       handleCreateSession(message.payload).then(sendResponse);
@@ -189,7 +194,7 @@ async function handleGetActiveSession() {
 
 async function handleCreateSession(payload: { projectName: string; platform: string; sessionId?: string }) {
   try {
-    console.log(`[SYNQ bg] creating/updating session: ${payload.projectName} on ${payload.platform} (ID: ${payload.sessionId || "new"})`);
+    log.info(`[SYNQ bg] creating/updating session: ${payload.projectName} on ${payload.platform} (ID: ${payload.sessionId || "new"})`);
     const res = await synqFetch("/api/context/session", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -201,7 +206,7 @@ async function handleCreateSession(payload: { projectName: string; platform: str
       return { error: errMsg };
     }
     const data = await res.json();
-    console.log(`[SYNQ bg] session created: ${data.sessionId}`);
+    log.info(`[SYNQ bg] session created: ${data.sessionId}`);
     await chrome.storage.local.set({ synq_session: data });
     // Auto-set as active so other tabs pick it up via GET_ACTIVE_SESSION
     await handleSetActiveSession(data.sessionId).catch(() => {});
@@ -257,6 +262,20 @@ async function handleUnloadSession() {
   } catch (err) {
     log.error(`Unload session failed: ${err}`);
     return { success: false, error: String(err) };
+  }
+}
+
+async function handleRAGRetrieveGlobal(payload: { prompt: string; topN?: number }) {
+  try {
+    const res = await synqFetch("/api/rag/global", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return { found: false };
+    return res.json();
+  } catch (err) {
+    log.error(`Global RAG fetch failed: ${err}`);
+    return { found: false };
   }
 }
 

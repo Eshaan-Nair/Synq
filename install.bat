@@ -88,16 +88,25 @@ if "!MODEL_CHOICE!"=="2" set "SELECTED_MODEL=mistral:7b"
 if "!MODEL_CHOICE!"=="3" set "SELECTED_MODEL=phi3.5:3.8b"
 if "!MODEL_CHOICE!"=="4" set "SELECTED_MODEL=qwen2.5:1.5b"
 
-echo.
-echo  Pulling Ollama models: !SELECTED_MODEL! + embeddings...
+set OLLAMA_CMD=ollama
 where ollama >nul 2>&1
 if errorlevel 1 (
-    echo  ERROR: Ollama not found in PATH. Install from ollama.com first.
+  if exist "%LOCALAPPDATA%\Programs\Ollama\ollama.exe" (
+    set "OLLAMA_CMD=%LOCALAPPDATA%\Programs\Ollama\ollama.exe"
+    echo  OK Ollama found at %LOCALAPPDATA%\Programs\Ollama\
+  ) else (
+    echo  ERROR: Ollama not found. Opening download page...
+    start https://ollama.com/download/windows
+    echo  Please install Ollama, then re-run install.bat
     pause
     exit /b 1
+  )
 )
-call ollama pull nomic-embed-text
-call ollama pull !SELECTED_MODEL!
+
+echo.
+echo  Pulling Ollama models: !SELECTED_MODEL! + embeddings...
+call !OLLAMA_CMD! pull nomic-embed-text
+call !OLLAMA_CMD! pull !SELECTED_MODEL!
 goto POST_BACKEND
 
 :POST_BACKEND

@@ -13,7 +13,10 @@
     "https://claude.ai/*",
     "https://chatgpt.com/*",
     "https://gemini.google.com/*",
-    "https://chat.deepseek.com/*"
+    "https://chat.deepseek.com/*",
+    "https://x.com/*",
+    "https://copilot.microsoft.com/*",
+    "https://chat.mistral.ai/*"
   ],
   "background": {
     "service_worker": "dist/background.js"
@@ -24,7 +27,10 @@
         "https://claude.ai/*",
         "https://chatgpt.com/*",
         "https://gemini.google.com/*",
-        "https://chat.deepseek.com/*"
+        "https://chat.deepseek.com/*",
+        "https://x.com/*",
+        "https://copilot.microsoft.com/*",
+        "https://chat.mistral.ai/*"
       ],
       "js": ["dist/content.js"],
       "run_at": "document_idle"

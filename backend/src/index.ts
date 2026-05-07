@@ -116,11 +116,26 @@ if (NO_AUTH) {
   });
   logger.info("Request auth enabled (X-SYNQ-Secret) for /api/*");
 } else {
+  // Runtime fallback — generate a temporary secret to avoid locking users out
+  const crypto = require("crypto");
+  const autoSecret = crypto.randomBytes(32).toString("base64");
+  process.env.SYNQ_SECRET = autoSecret;
+  
+  logger.warn(
+    `SYNQ_SECRET not found in .env — generated a temporary one for this session. ` +
+    `Add SYNQ_SECRET=${autoSecret} to backend/.env to make it permanent.`
+  );
+
   app.use((req, res, next) => {
     if (!req.path.startsWith("/api") || req.path === "/health") return next();
-    res.status(401).json({ error: "Unauthorized — SYNQ_SECRET not configured." });
+    
+    const provided = req.headers["x-synq-secret"];
+    if (provided !== autoSecret) {
+      res.status(401).json({ error: "Unauthorized — invalid or missing X-SYNQ-Secret" });
+      return;
+    }
+    next();
   });
-  logger.error("SYNQ_SECRET is not set. All API requests will fail with 401.");
 }
 
 // Apply global rate limit across ALL routes (200 req/min per IP)

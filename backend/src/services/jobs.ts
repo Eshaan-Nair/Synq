@@ -57,7 +57,6 @@ export async function clearAllJobs() {
  * Start the background worker loop.
  */
 export async function startWorker() {
-  // v1.4.1+: Recovery - Reset any jobs stuck in PROCESSING from a previous crash/restart
   const recovered = await Job.updateMany(
     { status: "PROCESSING" },
     { status: "PENDING" }
@@ -68,30 +67,39 @@ export async function startWorker() {
 
   logger.info("[Job Queue] Background worker started.");
   
-  // Poll every 5 seconds for new jobs
-  setInterval(async () => {
+  let pollInterval = 5000;
+  const MIN_POLL = 1000;
+  const MAX_POLL = 30000;
+
+  async function workerLoop() {
     try {
-      await processNextJob();
+      const processedJob = await processNextJob();
+      // If we found a job, speed up. If idle, slow down exponentially.
+      pollInterval = processedJob ? MIN_POLL : Math.min(pollInterval * 1.5, MAX_POLL);
     } catch (err) {
-      logger.error("[Job Queue] Worker error:", err);
+      logger.error("[Job Queue] Worker loop error:", err);
+      pollInterval = Math.min(pollInterval * 2, MAX_POLL);
     }
-  }, 5000);
+    setTimeout(workerLoop, pollInterval);
+  }
+
+  workerLoop();
 }
 
 /**
  * Pick up the next PENDING job and process it.
+ * Returns true if a job was found and processed (even if it failed).
  */
-async function processNextJob() {
-  // Atomic find and update to prevent multiple workers (if scaled) from picking the same job
+export async function processNextJob(): Promise<boolean> {
   const job = await Job.findOneAndUpdate(
-    { status: "PENDING" },
+    { status: "PENDING", deadLettered: false },
     { status: "PROCESSING", $inc: { attempts: 1 } },
     { sort: { createdAt: 1 }, returnDocument: "after" }
   );
 
-  if (!job) return;
+  if (!job) return false;
 
-  logger.info(`[Job Queue] Processing ${job.type} job: ${job._id}`);
+  logger.info(`[Job Queue] Processing ${job.type} job: ${job._id} (Attempt ${job.attempts}/5)`);
 
   try {
     if (job.type === "triple_extraction") {
@@ -104,15 +112,18 @@ async function processNextJob() {
   } catch (err: any) {
     logger.error(`[Job Queue] Failed ${job.type} job: ${job._id} — ${err.message}`);
     
-    // Retry logic: allow up to 5 attempts
     if (job.attempts < 5) {
       job.status = "PENDING";
     } else {
       job.status = "FAILED";
+      job.deadLettered = true;
+      job.failedAt = new Date();
       job.error = err.message;
+      logger.error(`[Job Queue] Job ${job._id} dead-lettered after ${job.attempts} attempts.`);
     }
     await job.save();
   }
+  return true;
 }
 
 /**
