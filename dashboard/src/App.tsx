@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import GraphView from "./components/GraphView";
 import ChatViewer from "./components/ChatViewer";
-import { fetchGraphBySession, fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession, extractErrorMessage } from "./api/synq";
+import { fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession, extractErrorMessage } from "./api/synq";
 import { fetchFullChat } from "./api/rag";
 
 
@@ -508,7 +508,7 @@ export default function App() {
                   ) : (
 
                     <>
-                      {[...triples]
+                      {[...pagedTriples]
                         .reverse()
                         .map((t, i) => (
                           <div key={i} className="history-item">
@@ -538,7 +538,8 @@ export default function App() {
                     </div>
                   )}
                 </div>
-              )}
+              </div>
+            )}
 
               {/* Chat tab */}
               {activeTab === "chat" && (
