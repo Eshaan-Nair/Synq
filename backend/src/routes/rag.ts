@@ -74,8 +74,45 @@ router.post("/retrieve", async (req: Request, res: Response) => {
       scores:      safeChunks.map(c => c.score),
     });
   } catch (err) {
-    logger.error("RAG retrieve error:", err);
     res.status(500).json({ error: "Failed to retrieve context" });
+  }
+});
+
+// POST /api/rag/global — search across ALL sessions
+router.post("/global", async (req: Request, res: Response) => {
+  let { prompt, topN = 3 } = req.body;
+
+  if (!prompt) {
+    res.status(400).json({ error: "prompt is required" });
+    return;
+  }
+
+  topN = Math.max(1, Math.min(Number(topN) || 2, 4)); // Cross-session over-injection is annoying, keep it tight
+
+  try {
+    logger.info(`Global RAG retrieve (topN=${topN}): "${String(prompt).slice(0, 60)}..."`);
+
+    const { retrieveGlobalChunks } = require("../services/chroma");
+    const rawChunks = await retrieveGlobalChunks(prompt, topN);
+
+    if (rawChunks.length === 0) {
+      res.json({ found: false, chunks: [] });
+      return;
+    }
+
+    const safeChunks = sanitizeChunks(rawChunks);
+    const contextBlock = wrapInContextBlock(safeChunks, true); // true = global mode header
+
+    logger.success(`Global RAG: ${safeChunks.length} chunk(s) found`);
+
+    res.json({
+      found: true,
+      chunks: safeChunks,
+      contextBlock,
+    });
+  } catch (err) {
+    logger.error("Global RAG error:", err);
+    res.status(500).json({ error: "Failed to retrieve global context" });
   }
 });
 

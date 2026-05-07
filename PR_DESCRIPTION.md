@@ -1,59 +1,52 @@
-# Pull Request: Architectural Hardening & Security Remediation (v1.4.2)
+# PR: Stability & Onboarding - The "Zero-Ops" Preparation Update (v1.4.1)
 
-## Title
-`feat: Architectural Hardening, Security Audit & Performance Optimization (v1.4.2)`
+This PR implements the prioritized roadmap for Synq stability, multi-platform expansion, and onboarding optimization. It addresses several long-standing "first-run" blockers and introduces the architectural foundation for the upcoming SQLite (Zero-Docker) mode.
 
----
+## 🚀 Key Features
 
-## Description
+### 1. New Platform Support
+*   **Grok (x.com), Microsoft Copilot, and Mistral Le Chat** are now officially supported.
+*   Implemented custom DOM selectors and manifest permissions for all three platforms.
+*   Updated the backend session schema to validate these new platform identifiers.
 
-This PR implements a comprehensive remediation plan following a 3-pass architectural and security audit. The goal was to transition SYNQ from a prototype-grade codebase to a robust, secure, and performant context sovereignty engine.
+### 2. Cross-Session (Global) RAG
+*   Introduced **Global Memory Retrieval**.
+*   When a search in the current session yields no results, Synq automatically falls back to a global vector search across all stored projects.
+*   Ensures users' entire knowledge base is available for context injection regardless of the active project.
 
-### 🏗️ Major Architectural Shifts
+### 3. Dashboard UI Overhaul
+*   **Search & Filtering:** Added project search and fact-list search to the dashboard.
+*   **Pagination:** Implemented pagination for the facts list to handle 10k+ triple datasets without performance degradation.
+*   **Graph Exploration:** Added entity-type filter pills (PERSON, TECH, ORG, etc.) to the knowledge graph view.
+*   **Job Progress:** Added a real-time progress bar showing the number of pending knowledge extraction chunks.
 
-- **Async Knowledge Graph Extraction**: Migrated from blocking, sequential extraction to an **async background job queue**. The backend now returns a `202 Accepted` immediately, preventing timeout issues on long conversations.
-- **Sliding Window Chunker**: Implemented a more sophisticated chunking strategy that preserves context continuity, improving RAG recall accuracy.
-- **Multi-Strategy Selector Resolver**: Introduced a resilient selector system that survives platform UI updates by cascading through multiple identification strategies (testid, role, aria, placeholder).
+## 🛠️ Stability & Hardening
 
-### 🔒 Security & Privacy Hardening
+### 1. Authentication Fallback
+*   Backend now generates a **temporary `SYNQ_SECRET`** if one is missing in `.env`. 
+*   Prevents "401 Unauthorized" startup failures for new users, making the first-run experience seamless.
 
-- **Auth Secret Enforcement**: Standardised `X-SYNQ-Secret` authentication across the Extension, Dashboard, and MCP server. 
-- **Auto-Generated Secrets**: Updated installation scripts to auto-generate unique 32-byte secrets for new installations.
-- **Prompt Injection Defense**: Added a sanitisation middleware that redacts known injection patterns from RAG chunks before they reach the AI context.
-- **Strict Content Security Policy (CSP)**: Implemented strict policies across the extension and dashboard to mitigate XSS risks.
+### 2. Injection Reliability (Extension)
+*   Overhauled `injectAndSend` logic in the content script.
+*   Switched to modern `InputEvent` standards and native property setters to ensure reliable injection on React (ChatGPT) and Angular (Gemini) platforms.
+*   Removed deprecated `execCommand` and sensitive clipboard APIs.
 
-### 🚀 Performance & Stability
+### 3. Job Queue Hardening
+*   Implemented **Adaptive Polling** in the background worker (dynamic frequency based on queue activity).
+*   Added a **Dead Letter Queue (DLQ)**: Jobs that fail 5+ times are now isolated and logged with error metadata instead of clogging the queue.
+*   Added "Emergency Cancel" button to the dashboard to clear stuck jobs.
 
-- **Visibility-Aware Polling**: Dashboard polling now pauses when the tab is hidden, significantly reducing background resource usage.
-- **D3 Simulation Optimization**: Decoupled graph settings from data-loading to allow smooth, imperative UI updates without full simulation restarts.
-- **High-Performance Logging**: Migrated from `console.log` to **Pino**, providing structured JSON logs and better debugging via `pino-pretty`.
-- **Global Graph Pagination**: Added limit/offset support and a `truncated` flag to the graph API to handle large datasets gracefully.
+### 4. Windows Compatibility
+*   Installer (`install.bat`) now checks `%LOCALAPPDATA%\Programs\Ollama` for the Ollama binary if it's not in the system PATH.
 
-### 🧪 Quality Assurance & CI
+## 🧹 Optimization & Clean-up
+*   **Console Spam:** Replaced `console.log` with a debug-gated logger in the extension.
+*   **Asset Bloat:** Updated dashboard to use a lightweight `favicon.ico`, saving 2MB+ of unnecessary image load.
+*   **Onboarding:** Updated `README.md` with a "30-Second Preview" section and documentation for the SQLite roadmap.
 
-- **Unit Test Baseline**: Added Jest tests for core logic: chunkers, validators, privacy filters, and sanitisation.
-- **Fixture-Based Selector CI**: Introduced local HTML fixtures for all supported platforms. The CI now verifies selector stability against static snapshots, eliminating flaky network dependencies.
-- **Dockerized CI Services**: Replaced insecure `curl | sh` scripts with official Docker services (Ollama, MongoDB) in the GitHub Actions pipeline.
-
----
-
-## Verification Plan
-
-### Automated Tests
-- `npm run test` in backend to verify core logic.
-- `node scripts/check-selectors.js --fixtures` to verify platform stability.
-- Verified GitHub Actions pipeline passes with new Docker services.
-
-### Manual Verification
-- Verified extension `Save Chat` flow triggers background jobs.
-- Confirmed Dashboard displays "Processing..." status while triples are extracted.
-- Verified `X-SYNQ-Secret` headers are correctly sent by both Dashboard and Extension.
-- Confirmed RAG context injection redacts "ignore previous instructions" patterns.
+## 🧪 Testing
+*   Added `backend/tests/jobs.test.ts` to verify DLQ and retry logic.
+*   Verified multi-platform resolver strategies across the new host permissions.
 
 ---
-
-## Checklist
-- [x] All 28 audit items resolved.
-- [x] Unit tests passing.
-- [x] Documentation (WALKTHROUGH.md) updated.
-- [x] CI/CD pipeline verified.
+*Generated by Antigravity AI*

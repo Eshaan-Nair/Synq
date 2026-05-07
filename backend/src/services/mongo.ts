@@ -14,7 +14,7 @@ export async function connectMongo() {
 // ── Session schema ───────────────────────────────────────────────
 const sessionSchema = new mongoose.Schema({
   projectName: { type: String, required: true },
-  platform: { type: String, enum: ["claude", "chatgpt", "gemini", "deepseek", "mcp"] },
+  platform: { type: String, enum: ["claude", "chatgpt", "gemini", "deepseek", "grok", "copilot", "mistral", "mcp"] },
   summary: { type: String },          // cached project summary (avoids re-calling Groq on every read)
   tripleCount: { type: Number, default: 0 },
   // NEW: whether a full chat has been saved for RAG
@@ -68,6 +68,8 @@ const jobSchema = new mongoose.Schema({
   type: { type: String, enum: ["triple_extraction"], required: true },
   payload: { type: Object, required: true },
   status: { type: String, enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED"], default: "PENDING" },
+  deadLettered: { type: Boolean, default: false },
+  failedAt: { type: Date },
   error: { type: String },
   attempts: { type: Number, default: 0 },
 }, { timestamps: true });

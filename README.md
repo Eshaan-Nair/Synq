@@ -27,6 +27,20 @@ https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
 ---
 
+## Try SYNQ in 30 Seconds
+
+> Don't have Docker yet? See the [video demo](https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca) to see what SYNQ does first.
+
+**Fastest path (macOS/Linux):**
+1. Install [Docker Desktop](https://docker.com) + [Ollama](https://ollama.com) + [Node 20](https://nodejs.org)
+2. `git clone https://github.com/Eshaan-Nair/Synq && cd Synq && ./install.sh`
+3. Load `extension/dist` as unpacked Chrome extension
+4. Open Claude/ChatGPT → click SYNQ badge → Save Chat
+
+⏱ **First install:** ~5 min (model download included)
+
+---
+
 ## The Problem
 
 You're deep into a complex project. You've had 12 conversations with Claude about your architecture, your auth flow, your database schema. Then you open a new chat — **it's all gone.**
@@ -71,10 +85,16 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 
 ## System Requirements
 
-| Mode | RAM | Disk | What runs |
-|:---|:---|:---|:---|
-| **Full** | 8 GB+ | 15 GB+ | All features — Neo4j, MongoDB, ChromaDB, Ollama |
-| **Lite** | 4 GB+ | 10 GB+ | RAG only — MongoDB, ChromaDB (no knowledge graph) |
+| Mode | RAM | Disk | Docker? | What runs |
+|:---|:---|:---|:---|:---|
+| **Full** | 8 GB+ | 15 GB+ | Required | All features — Neo4j, MongoDB, ChromaDB, Ollama |
+| **Lite** | 4 GB+ | 10 GB+ | Required | RAG only — MongoDB, ChromaDB (no knowledge graph) |
+| **SQLite** | 2 GB+ | 5 GB+ | ❌ Not needed | All features — single `.db` file + Ollama |
+
+### No Docker? Use SQLite Mode
+
+Set `SYNQ_STORAGE=sqlite` in `backend/.env` before starting.
+The installer detects Docker automatically and sets this for you if Docker is missing.
 
 All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect RAM and choose the right mode. Override with `SYNQ_PROFILE=full` or `SYNQ_PROFILE=lite`.
 

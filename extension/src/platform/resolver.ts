@@ -14,7 +14,7 @@
  * Updated: v1.4.1
  */
 
-export type Platform = "claude" | "chatgpt" | "gemini" | "deepseek";
+export type Platform = "claude" | "chatgpt" | "gemini" | "deepseek" | "grok" | "copilot" | "mistral";
 
 export const INPUT_SELECTOR_STRATEGIES: Record<Platform, string[]> = {
   claude: [
@@ -46,6 +46,21 @@ export const INPUT_SELECTOR_STRATEGIES: Record<Platform, string[]> = {
     '[contenteditable="true"][aria-label*="message"]',        // contenteditable variant
     'div[contenteditable][role="textbox"]',                   // role fallback
     'textarea',                                               // generic textarea fallback
+  ],
+  grok: [
+    "textarea[placeholder*='Ask']",
+    "textarea[data-testid='grok-input']",
+    '[contenteditable="true"][aria-label*="message"]',
+    "textarea",
+  ],
+  copilot: [
+    'textarea[placeholder*="Message"]',
+    '#userInput',
+    '[contenteditable="true"]',
+  ],
+  mistral: [
+    'textarea[placeholder*="Ask"]',
+    '[contenteditable="true"]',
   ],
 };
 

@@ -71,14 +71,30 @@ router.get("/session/:sessionId", async (req: Request, res: Response) => {
     return;
   }
 
+  const { type, relation } = req.query;
   const session = getDriver().session();
   try {
-    const result = await session.run(`
-      MATCH (s:Entity)-[r:RELATION {sessionId: $sessionId}]->(o:Entity)
+    let query = `MATCH (s:Entity)-[r:RELATION {sessionId: $sessionId}]->(o:Entity)`;
+    const params: Record<string, any> = { sessionId };
+
+    if (type && typeof type === "string") {
+      query += ` WHERE (s.type = $type OR o.type = $type)`;
+      params.type = type;
+    }
+
+    if (relation && typeof relation === "string") {
+      const relOp = type ? "AND" : "WHERE";
+      query += ` ${relOp} r.type = $relation`;
+      params.relation = relation;
+    }
+
+    query += `
       RETURN s.name AS source, s.type AS sourceType,
              r.type AS relation,
              o.name AS target, o.type AS targetType
-    `, { sessionId });
+    `;
+
+    const result = await session.run(query, params);
 
     const nodes = new Map<string, object>();
     const links: object[] = [];
