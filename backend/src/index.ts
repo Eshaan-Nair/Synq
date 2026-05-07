@@ -17,17 +17,20 @@ import ragRoutes from "./routes/rag";
 
 dotenv.config();
 
-// ── #9: .env validation — fail fast with a clear message ──────────
+const STORAGE_MODE = (process.env.SYNQ_STORAGE_MODE || "docker").toLowerCase();
+const IS_SQLITE = STORAGE_MODE === "sqlite";
+
+// ── .env validation — fail fast with a clear message ──────────
 function validateEnv() {
-  // NEO4J, MONGO are always required
-  const required: Record<string, string> = {
-    NEO4J_URI:      "e.g. bolt://localhost:7687",
-    NEO4J_USER:     "e.g. neo4j",
-    NEO4J_PASSWORD: "Set in backend/.env",
-    MONGO_URI:      "e.g. mongodb://user:pass@localhost:27017/synqdb",
-  };
-  // GROQ_API_KEY is only required when GRAPH_BACKEND is set to 'groq'
-  // (or when Ollama is unavailable and auto-fallback kicks in at runtime)
+  const required: Record<string, string> = {};
+  
+  if (!IS_SQLITE) {
+    required["NEO4J_URI"] = "e.g. bolt://localhost:7687";
+    required["NEO4J_USER"] = "e.g. neo4j";
+    required["NEO4J_PASSWORD"] = "Set in backend/.env";
+    required["MONGO_URI"] = "e.g. mongodb://user:pass@localhost:27017/synqdb";
+  }
+
   if (process.env.GRAPH_BACKEND === "groq") {
     required["GROQ_API_KEY"] = "Get a free key at https://console.groq.com";
   }
@@ -186,26 +189,28 @@ app.post("/api/jobs/clear", async (req, res) => {
   res.json({ success: true, message: "Job queue cleared" });
 });
 
-async function start() {
+async function main() {
   try {
-    await connectMongo();
-    await connectNeo4j();
-    await connectChroma(); // non-fatal if down
-    
-    // Start background job worker for extraction tasks
-    await startWorker();
+    if (IS_SQLITE) {
+      const { initSqlite } = require("./services/sqlite");
+      initSqlite();
+    } else {
+      await connectMongo();
+      await connectChroma();
+      await connectNeo4j();
+    }
   } catch (err) {
-    logger.error("Fatal: Database connection failed. SYNQ cannot start.");
-    logger.error(err instanceof Error ? err.message : String(err));
-    process.exit(1);
+    logger.error("Database connection failed:", err);
+    // Non-fatal — routes that need the DB will handle errors
   }
 
   app.listen(PORT, () => {
     logger.success(`SYNQ backend running on port ${PORT}`);
+    startWorker(); // Start the background extraction worker
   });
 }
 
-start().catch(err => {
+main().catch(err => {
   logger.error("Unhandled error during startup:");
   logger.error(err);
   process.exit(1);

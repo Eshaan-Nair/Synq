@@ -1,0 +1,203 @@
+import { v4 as uuidv4 } from "uuid";
+import { getSqlite } from "./sqlite";
+import { ISessionStore, Session, FullChat, Job } from "./storage.types";
+
+export class SqliteSessionStore implements ISessionStore {
+  private db = getSqlite();
+
+  async createSession(projectName: string, platform: string): Promise<Session> {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    const session: Session = {
+      _id: id,
+      projectName,
+      platform,
+      tripleCount: 0,
+      topicCount: 0,
+      hasFullChat: false,
+      createdAt: new Date(now),
+      updatedAt: new Date(now)
+    };
+
+    this.db.prepare(`
+      INSERT INTO sessions (id, projectName, platform, tripleCount, topicCount, hasFullChat, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, projectName, platform, 0, 0, 0, now, now);
+
+    return session;
+  }
+
+  async getSessions(): Promise<Session[]> {
+    const rows = this.db.prepare("SELECT * FROM sessions ORDER BY updatedAt DESC").all();
+    return rows.map(this.mapRowToSession);
+  }
+
+  async getSession(id: string): Promise<Session | null> {
+    const row = this.db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
+    return row ? this.mapRowToSession(row) : null;
+  }
+
+  async updateSession(id: string, update: Partial<Session>): Promise<void> {
+    const fields = Object.keys(update)
+      .filter(k => !["_id", "id", "createdAt"].includes(k))
+      .map(k => {
+        const dbKey = k === "hasFullChat" ? "hasFullChat" : k;
+        return `${dbKey} = ?`;
+      });
+    
+    if (fields.length === 0) return;
+
+    const values = Object.keys(update)
+      .filter(k => !["_id", "id", "createdAt"].includes(k))
+      .map(k => {
+        const val = (update as any)[k];
+        if (k === "hasFullChat") return val ? 1 : 0;
+        if (val instanceof Date) return val.toISOString();
+        return val;
+      });
+
+    fields.push("updatedAt = ?");
+    values.push(new Date().toISOString());
+    values.push(id);
+
+    this.db.prepare(`UPDATE sessions SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+  }
+
+  async deleteSession(id: string): Promise<void> {
+    this.db.prepare("DELETE FROM sessions WHERE id = ?").run(id);
+  }
+
+  async getActiveSessionId(): Promise<string | null> {
+    const row = this.db.prepare("SELECT sessionId FROM active_session WHERE id = 'singleton'").get() as any;
+    return row?.sessionId ?? null;
+  }
+
+  async setActiveSessionId(sessionId: string | null): Promise<void> {
+    this.db.prepare("UPDATE active_session SET sessionId = ? WHERE id = 'singleton'").run(sessionId);
+  }
+
+  async saveFullChat(sessionId: string, rawText: string, messageCount: number, platform: string): Promise<void> {
+    const now = new Date().toISOString();
+    this.db.prepare(`
+      INSERT OR REPLACE INTO full_chats (sessionId, rawText, messageCount, platform, createdAt)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(sessionId, rawText, messageCount, platform, now);
+    
+    await this.updateSession(sessionId, { hasFullChat: true });
+  }
+
+  async getFullChat(sessionId: string): Promise<FullChat | null> {
+    const row = this.db.prepare("SELECT * FROM full_chats WHERE sessionId = ?").get(sessionId) as any;
+    if (!row) return null;
+    return {
+      sessionId: row.sessionId,
+      rawText: row.rawText,
+      messageCount: row.messageCount,
+      platform: row.platform,
+      createdAt: new Date(row.createdAt)
+    };
+  }
+
+  async createJob(type: string, payload: any): Promise<Job> {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    const job: Job = {
+      _id: id,
+      type: type as any,
+      payload,
+      status: "PENDING",
+      deadLettered: false,
+      attempts: 0,
+      createdAt: new Date(now),
+      updatedAt: new Date(now)
+    };
+
+    this.db.prepare(`
+      INSERT INTO jobs (id, type, payload, status, deadLettered, attempts, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, type, JSON.stringify(payload), "PENDING", 0, 0, now, now);
+
+    return job;
+  }
+
+  async getNextJob(): Promise<Job | null> {
+    const row = this.db.prepare(`
+      SELECT * FROM jobs 
+      WHERE status = 'PENDING' AND deadLettered = 0 
+      ORDER BY createdAt ASC 
+      LIMIT 1
+    `).get() as any;
+    
+    if (!row) return null;
+    return this.mapRowToJob(row);
+  }
+
+  async updateJob(id: string, update: Partial<Job>): Promise<void> {
+    const fields = Object.keys(update)
+      .filter(k => !["_id", "id", "createdAt"].includes(k))
+      .map(k => `${k} = ?`);
+    
+    if (fields.length === 0) return;
+
+    const values = Object.keys(update)
+      .filter(k => !["_id", "id", "createdAt"].includes(k))
+      .map(k => {
+        const val = (update as any)[k];
+        if (k === "deadLettered") return val ? 1 : 0;
+        if (val instanceof Date) return val.toISOString();
+        if (k === "payload") return JSON.stringify(val);
+        return val;
+      });
+
+    fields.push("updatedAt = ?");
+    values.push(new Date().toISOString());
+    values.push(id);
+
+    this.db.prepare(`UPDATE jobs SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+  }
+
+  async getJobStatus(): Promise<{ pending: number; processing: number; deadLettered: number }> {
+    const pending = this.db.prepare("SELECT COUNT(*) as count FROM jobs WHERE status = 'PENDING' AND deadLettered = 0").get() as any;
+    const processing = this.db.prepare("SELECT COUNT(*) as count FROM jobs WHERE status = 'PROCESSING'").get() as any;
+    const deadLettered = this.db.prepare("SELECT COUNT(*) as count FROM jobs WHERE deadLettered = 1").get() as any;
+    
+    return {
+      pending: pending.count,
+      processing: processing.count,
+      deadLettered: deadLettered.count
+    };
+  }
+
+  async clearJobs(): Promise<void> {
+    this.db.prepare("DELETE FROM jobs").run();
+  }
+
+  private mapRowToSession(row: any): Session {
+    return {
+      _id: row.id,
+      projectName: row.projectName,
+      platform: row.platform,
+      summary: row.summary,
+      tripleCount: row.tripleCount,
+      topicCount: row.topicCount,
+      hasFullChat: row.hasFullChat === 1,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt)
+    };
+  }
+
+  private mapRowToJob(row: any): Job {
+    return {
+      _id: row.id,
+      type: row.type,
+      payload: JSON.parse(row.payload),
+      status: row.status,
+      deadLettered: row.deadLettered === 1,
+      failedAt: row.failedAt ? new Date(row.failedAt) : undefined,
+      error: row.error,
+      attempts: row.attempts,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt)
+    };
+  }
+}

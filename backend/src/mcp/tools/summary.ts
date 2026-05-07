@@ -1,63 +1,30 @@
-/**
- * mcp/tools/summary.ts — get_project_summary tool
- *
- * Returns a structured knowledge-graph summary for a project,
- * built from Neo4j triples extracted from past conversations.
- */
+import { sessionStore, graphStore } from "../../services/storage";
 
-import { getTriplesBySession } from "../../services/neo4j";
-import { Session } from "../../services/mongo";
-import { generateProjectSummary } from "../../services/extractor";
-
-export async function getSummary(project: string): Promise<string> {
+export async function getProjectSummary(
+  projectId: string
+): Promise<string> {
   try {
-    if (!project?.trim()) {
-      return "project name is required.";
-    }
-
-    const session = await Session.findOne({ projectName: project })
-      .sort({ updatedAt: -1 })
-      .select("_id projectName summary tripleCount");
-
+    const session = await sessionStore.getSession(projectId);
     if (!session) {
-      return `No project found with name "${project}". Use list_projects to see available projects.`;
+      return `Error: Project ${projectId} not found.`;
     }
 
-    const sessionId = session._id.toString();
-
-    // Use cached summary if triple count matches
-    if (session.summary && session.tripleCount && session.tripleCount > 0) {
-      return (
-        `Knowledge graph summary for "${project}":\n\n` +
-        session.summary +
-        `\n\n(${session.tripleCount} triples | session: ${sessionId})`
-      );
+    if (session.summary) {
+      return `Project Summary for "${session.projectName}":\n\n${session.summary}`;
     }
 
-    // Generate fresh summary from Neo4j triples
-    const triples = await getTriplesBySession(sessionId);
-
+    // Fallback: list recent facts if no summary exists
+    const triples = await graphStore.getTriplesBySession(projectId);
     if (triples.length === 0) {
-      return (
-        `Project "${project}" exists but has no knowledge graph triples yet.\n` +
-        `Save a conversation with context about this project first.`
-      );
+      return `Project "${session.projectName}" is empty. No summary or facts available.`;
     }
 
-    const summary = await generateProjectSummary(triples, project);
-
-    // Cache it
-    await Session.findByIdAndUpdate(sessionId, {
-      summary,
-      tripleCount: triples.length,
-    });
-
-    return (
-      `Knowledge graph summary for "${project}":\n\n` +
-      summary +
-      `\n\n(${triples.length} triples | session: ${sessionId})`
+    const facts = triples.slice(-10).map(t => 
+      `- ${t.subject} (${t.subjectType}) --[${t.relation}]--> ${t.object} (${t.objectType})`
     );
+
+    return `Project "${session.projectName}" (no summary available).\n\nRecent Facts:\n${facts.join("\n")}`;
   } catch (err: any) {
-    return `get_project_summary failed: ${err.message ?? String(err)}`;
+    return `get_project_summary failed: ${err.message}`;
   }
 }
