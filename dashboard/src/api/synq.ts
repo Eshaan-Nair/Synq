@@ -39,4 +39,4 @@ export async function deleteSession(sessionId: string) {
   return res.data;
 }
 
-export { extractErrorMessage };
+export { extractErrorMessage, apiClient };

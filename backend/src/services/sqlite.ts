@@ -111,8 +111,7 @@ function createTables() {
       chunk_id TEXT PRIMARY KEY,
       sessionId TEXT NOT NULL,
       chunkIndex INTEGER,
-      content TEXT NOT NULL,
-      FOREIGN KEY(chunk_id) REFERENCES vec_chunks(chunk_id) ON DELETE CASCADE
+      content TEXT NOT NULL
     )
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_chunks_session ON chunk_metadata(sessionId)");

@@ -38,6 +38,8 @@ interface Props {
   links: Link[];
   onNodeClick?: (nodeId: string | null) => void;
   selectedNodeId?: string | null;
+  filterType?: string | null;
+  onFilterChange?: (type: string | null) => void;
 }
 
 // ── Extended color palette (technical + personal entity types) ─────
@@ -72,7 +74,8 @@ const TYPE_COLORS: Record<string, string> = {
 
 // Short abbreviation to show INSIDE the node circle.
 // Keeps the circle clean and readable at any node size.
-function typeAbbrev(type: string): string {
+function typeAbbrev(type: string | null | undefined): string {
+  if (!type) return "";
   const abbrevs: Record<string, string> = {
     Person: "PER", Pet: "PET", Goal: "GOAL", Problem: "PROB",
     Preference: "PREF", Habit: "HABIT", Location: "LOC",
@@ -85,12 +88,11 @@ function typeAbbrev(type: string): string {
   return abbrevs[type] || type.slice(0, 4).toUpperCase();
 }
 
-export default function GraphView({ nodes, links, onNodeClick, selectedNodeId }: Props) {
+export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, filterType, onFilterChange }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const svgSelRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null);
   const [hoveredNode, setHoveredNode] = useState<{ id: string; type: string; degree: number } | null>(null);
-  const [filterType, setFilterType] = useState<string | null>(null);
 
   // Settings State
   const [showSettings, setShowSettings] = useState(false);
@@ -562,7 +564,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId }:
             <div 
               key={type} 
               className={`graph-legend-item ${filterType === type ? "active" : ""}`}
-              onClick={() => setFilterType(filterType === type ? null : type)}
+              onClick={() => onFilterChange?.(filterType === type ? null : type)}
               style={{ cursor: "pointer", opacity: (!filterType || filterType === type) ? 1 : 0.4 }}
             >
               <div style={{
@@ -575,7 +577,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId }:
             </div>
           ))}
           {filterType && (
-            <button className="clear-legend-btn" onClick={() => setFilterType(null)}>Clear Filter</button>
+            <button className="clear-legend-btn" onClick={() => onFilterChange?.(null)}>Clear Filter</button>
           )}
         </div>
       )}

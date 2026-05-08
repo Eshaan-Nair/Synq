@@ -47,7 +47,7 @@ if "!USE_SQLITE!"=="0" (
   )
   echo  OK Docker ready
 ) else (
-  echo  OK Mode: Zero-Docker (SQLite)
+  echo  OK Mode: Zero-Docker ^(SQLite^)
 )
 
 REM 3. Check Backend Status
@@ -58,7 +58,7 @@ if "!GRAPH_BACKEND!"=="groq" (
     if errorlevel 1 (
         echo  WARN Ollama not found - Graph extraction will fail.
     ) else (
-        echo  OK Knowledge Graph: Ollama (Local: !OLLAMA_MODEL!)
+        echo  OK Knowledge Graph: Ollama ^(Local: !OLLAMA_MODEL!^)
     )
 )
 
@@ -68,9 +68,9 @@ for /f "tokens=*" %%a in ('powershell -NoProfile -Command "[math]::Round((Get-Ci
 set "PROFILE=full"
 if !RAM_GB! LSS 8 (
     set "PROFILE=lite"
-    echo  OK Mode: LITE (!RAM_GB! GB RAM detected)
+    echo  OK Mode: LITE ^(!RAM_GB! GB RAM detected^)
 ) else (
-    echo  OK Mode: FULL (!RAM_GB! GB RAM detected)
+    echo  OK Mode: FULL ^(!RAM_GB! GB RAM detected^)
 )
 echo.
 
@@ -79,7 +79,7 @@ if "!USE_SQLITE!"=="0" (
     echo  Starting databases...
     docker compose --profile %PROFILE% up -d
 ) else (
-    echo  Skipping Docker Compose (SQLite mode active).
+    echo  Skipping Docker Compose ^(SQLite mode active^).
 )
 echo.
 

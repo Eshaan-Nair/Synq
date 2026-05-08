@@ -54,6 +54,7 @@ router.post("/save", async (req: Request, res: Response) => {
     const CHUNK_THRESHOLD = 10;
     const isLargeChat = windowChunks.length > CHUNK_THRESHOLD;
     let vectorsStored = false;
+    let vectorError = "";
 
     if (!isLargeChat) {
       try {
@@ -61,7 +62,8 @@ router.post("/save", async (req: Request, res: Response) => {
         await vectorStore.storeChunks(windowChunks);
         vectorsStored = true;
       } catch (vecErr: any) {
-        logger.warn(`Sync vector storage failed: ${vecErr?.message}`);
+        vectorError = vecErr?.message || "Unknown error";
+        logger.warn(`Sync vector storage failed: ${vectorError}`);
       }
     } else {
       logger.info(`Mega chat detected (${windowChunks.length} chunks) — offloading vector storage to background.`);
@@ -86,7 +88,7 @@ router.post("/save", async (req: Request, res: Response) => {
     });
 
     const warnings: string[] = [];
-    if (!vectorsStored) warnings.push("RAG vectors not stored (Ollama down)");
+    if (!vectorsStored) warnings.push(`RAG vectors not stored (${vectorError || "Ollama down"})`);
     if (!jobId) warnings.push("Background extraction task failed to start");
 
     logger.success(`Chat saved: ${windowChunks.length} chunks enqueued for graph extraction${warnings.length ? ` [${warnings.join(", ")}]` : ""}`);

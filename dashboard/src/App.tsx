@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import GraphView from "./components/GraphView";
 import ChatViewer from "./components/ChatViewer";
-import { fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession, extractErrorMessage } from "./api/synq";
+import { fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession, extractErrorMessage, apiClient } from "./api/synq";
 import { fetchFullChat } from "./api/rag";
 
 
@@ -74,11 +74,11 @@ export default function App() {
     try {
       const graphUrl = `/api/graph/session/${session._id}${typeFilter ? `?type=${typeFilter}` : ""}`;
       const [graphRes, contextData, chatResult] = await Promise.all([
-        fetch(graphUrl),
+        apiClient.get(graphUrl),
         fetchContext(session._id),
         fetchFullChat(session._id),
       ]);
-      const graphData = await graphRes.json();
+      const graphData = graphRes.data;
       setNodes(graphData.nodes);
       setLinks(graphData.links);
       setTriples(contextData.triples || []);
@@ -162,9 +162,9 @@ export default function App() {
     if (activeSession?.isProcessingGraph) {
       const poll = async () => {
         try {
-          const res = await fetch("/api/jobs/status");
-          if (res.ok) {
-            const status = await res.json();
+          const res = await apiClient.get("/api/jobs/status");
+          if (res.status === 200) {
+            const status = res.data;
             setJobStatus(status);
             if (status.pending === 0 && status.processing === 0) {
               loadSessions(); // refresh to see if done
@@ -187,7 +187,7 @@ export default function App() {
 
   const handleClearJobs = async () => {
     try {
-      await fetch("/api/jobs/clear", { method: "POST" });
+      await apiClient.post("/api/jobs/clear");
       setJobStatus({ pending: 0, processing: 0, deadLettered: 0 });
       loadSessions();
     } catch {}
@@ -258,20 +258,9 @@ export default function App() {
             links={links}
             onNodeClick={(id) => setSelectedNodeId(prev => prev === id ? null : id)}
             selectedNodeId={selectedNodeId}
+            filterType={graphTypeFilter}
+            onFilterChange={setGraphTypeFilter}
           />
-        )}
-        {nodes.length > 0 && (
-          <div className="graph-filters">
-            {["PERSON", "TECH", "ORG", "PLACE", "EVENT"].map(t => (
-              <button
-                key={t}
-                className={`filter-pill ${graphTypeFilter === t ? "active" : ""}`}
-                onClick={() => setGraphTypeFilter(prev => prev === t ? null : t)}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
         )}
       </div>
 
