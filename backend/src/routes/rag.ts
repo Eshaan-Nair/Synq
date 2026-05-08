@@ -1,22 +1,21 @@
 /**
- * rag.ts (backend route) — v1.4.1
+ * rag.ts (backend route) — v1.4.2
  *
- * v1.4.1 changes:
+ * v1.4.2 changes:
+ * - Migrated to unified vectorStore abstraction for SQLite support.
  * - All retrieved chunks are now piped through sanitizeChunks() to redact
  *   any prompt injection patterns before they reach the AI's context window.
  * - Context block is wrapped in <synq_retrieved_context> XML delimiters
  *   so LLMs treat the content as data, not instructions.
  *
- * Updated: v1.4.1
- * - Context header shows chunk position + relevance % (not topic name)
- * - topN default raised to 3 — window chunks are smaller so we need more
- * - topicsFound renamed to chunksFound for clarity
+ * Updated: v1.4.2
  */
 
 import { Router, Request, Response } from "express";
-import { retrieveRelevantChunks } from "../services/chroma";
+import { vectorStore, RetrievedChunk } from "../services/storage";
 import { logger } from "../utils/logger";
 import { wrapInContextBlock, sanitizeChunks } from "../middleware/sanitize";
+import { isValidObjectId } from "../utils/validators";
 
 const router = Router();
 
@@ -24,14 +23,14 @@ const router = Router();
 router.post("/retrieve", async (req: Request, res: Response) => {
   let { prompt, sessionId, topN = 3 } = req.body;
 
-  // v1.4.1: Strict validation of sessionId as string
-  if (typeof sessionId !== "string" || !sessionId.match(/^[0-9a-fA-F]{24}$/)) {
-    res.status(400).json({ error: "Invalid sessionId format (must be 24-char hex string)" });
+  if (!prompt || !sessionId) {
+    res.status(400).json({ error: "prompt and sessionId are required" });
     return;
   }
 
-  if (!prompt || !sessionId) {
-    res.status(400).json({ error: "prompt and sessionId are required" });
+  // v1.4.2: Use unified validator for Mongo/SQLite IDs
+  if (!isValidObjectId(sessionId)) {
+    res.status(400).json({ error: "Invalid sessionId format" });
     return;
   }
 
@@ -41,7 +40,7 @@ router.post("/retrieve", async (req: Request, res: Response) => {
   try {
     logger.info(`RAG retrieve (topN=${topN}): "${String(prompt).slice(0, 60)}..." for session ${sessionId}`);
 
-    const rawChunks = await retrieveRelevantChunks(prompt, sessionId, topN);
+    const rawChunks = await vectorStore.retrieveRelevantChunks(prompt, sessionId, topN);
 
     if (rawChunks.length === 0) {
       logger.info("RAG: no chunks above threshold — skipping injection");
@@ -49,11 +48,9 @@ router.post("/retrieve", async (req: Request, res: Response) => {
       return;
     }
 
-    // ── v1.4.1: Sanitise chunks before returning ───────────────────
-    // Cap each chunk at 1500 chars to avoid platform prompt length limits,
-    // then run injection filter + XML wrapping.
+    // ── v1.4.2: Sanitise chunks before returning ───────────────────
     const MAX_CONTEXT_CHARS = 1500;
-    const cappedChunks = rawChunks.map(c => ({
+    const cappedChunks: RetrievedChunk[] = rawChunks.map(c => ({
       ...c,
       content: c.content.length > MAX_CONTEXT_CHARS
         ? c.content.slice(0, MAX_CONTEXT_CHARS) + "\n… (truncated)"
@@ -74,6 +71,7 @@ router.post("/retrieve", async (req: Request, res: Response) => {
       scores:      safeChunks.map(c => c.score),
     });
   } catch (err) {
+    logger.error("RAG error:", err);
     res.status(500).json({ error: "Failed to retrieve context" });
   }
 });
@@ -87,13 +85,12 @@ router.post("/global", async (req: Request, res: Response) => {
     return;
   }
 
-  topN = Math.max(1, Math.min(Number(topN) || 2, 4)); // Cross-session over-injection is annoying, keep it tight
+  topN = Math.max(1, Math.min(Number(topN) || 2, 4));
 
   try {
     logger.info(`Global RAG retrieve (topN=${topN}): "${String(prompt).slice(0, 60)}..."`);
 
-    const { retrieveGlobalChunks } = require("../services/chroma");
-    const rawChunks = await retrieveGlobalChunks(prompt, topN);
+    const rawChunks = await vectorStore.retrieveGlobalChunks(prompt, topN);
 
     if (rawChunks.length === 0) {
       res.json({ found: false, chunks: [] });
@@ -101,7 +98,7 @@ router.post("/global", async (req: Request, res: Response) => {
     }
 
     const safeChunks = sanitizeChunks(rawChunks);
-    const contextBlock = wrapInContextBlock(safeChunks, true); // true = global mode header
+    const contextBlock = wrapInContextBlock(safeChunks, true);
 
     logger.success(`Global RAG: ${safeChunks.length} chunk(s) found`);
 
@@ -116,4 +113,4 @@ router.post("/global", async (req: Request, res: Response) => {
   }
 });
 
-export default router;
+export default router;

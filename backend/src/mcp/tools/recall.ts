@@ -1,54 +1,35 @@
 /**
  * mcp/tools/recall.ts — recall_context tool
- *
- * Retrieves the most relevant memory chunks from ChromaDB for a given prompt,
- * optionally scoped to a project. Returns sanitised, XML-wrapped context block.
+ * 
+ * Targeted semantic search within a specific session.
  */
 
-import { retrieveRelevantChunks } from "../../services/chroma";
-import { Session } from "../../services/mongo";
-import { wrapInContextBlock, sanitizeChunks } from "../../middleware/sanitize";
+import { vectorStore, sessionStore } from "../../services/storage";
+import { sanitizeChunks } from "../../middleware/sanitize";
 
 export async function recall(
-  prompt: string,
-  project?: string,
+  query: string,
+  project: string,
   topN: number = 3
 ): Promise<string> {
   try {
-    // v1.4.1: Force project to be a string to avoid NoSQL injection
-    const projectStr = typeof project === "string" ? project : undefined;
-    const clampedN = Math.max(1, Math.min(topN, 6));
-
-    // Find the session for the given project (most recent)
-    let sessionId: string | undefined;
-    if (projectStr) {
-      const session = await Session.findOne({ projectName: projectStr })
-        .sort({ updatedAt: -1 })
-        .select("_id");
-      sessionId = session?._id?.toString();
+    const projectStr = String(project);
+    const session = await sessionStore.getSession(projectStr);
+    
+    if (!session) {
+      return `Synq project ID "${projectStr}" not found. Use list_projects to see valid IDs.`;
     }
 
-    if (!sessionId) {
-      return project
-        ? `No session found for project "${project}". Save a conversation first.`
-        : "No project specified and no active session. Pass a project name.";
+    const chunks = await vectorStore.retrieveRelevantChunks(query, projectStr, topN);
+
+    if (chunks.length === 0) {
+      return `No relevant memory found for "${query}" in project "${session.projectName}".`;
     }
 
-    const rawChunks = await retrieveRelevantChunks(prompt, sessionId, clampedN);
+    const safe = sanitizeChunks(chunks);
+    const context = safe.map((c, i) => `[${i + 1}] (Relevance: ${(c.score * 100).toFixed(0)}%)\n${c.content}`).join("\n\n---\n\n");
 
-    if (rawChunks.length === 0) {
-      return `No relevant memory found for prompt: "${prompt.slice(0, 80)}..."`;
-    }
-
-    const MAX_CHARS = 2000;
-    const cappedChunks = rawChunks.map(c => ({
-      ...c,
-      content: c.content.length > MAX_CHARS
-        ? c.content.slice(0, MAX_CHARS) + "\n… (truncated)"
-        : c.content,
-    }));
-
-    return wrapInContextBlock(sanitizeChunks(cappedChunks));
+    return `Recalled memory for "${query}" in project "${session.projectName}":\n\n${context}`;
   } catch (err: any) {
     return `recall_context failed: ${err.message ?? String(err)}`;
   }

@@ -11,7 +11,7 @@
  *   4. placeholder text fallback
  *   5. Generic contenteditable fallback
  *
- * Updated: v1.4.1
+ * Updated: v1.4.2
  */
 
 export type Platform = "claude" | "chatgpt" | "gemini" | "deepseek" | "grok" | "copilot" | "mistral";

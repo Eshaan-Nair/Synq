@@ -15,7 +15,7 @@ Every time you open a new chat, your AI starts from zero. SYNQ gives your AI per
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/issues)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Synq/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.1-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.2-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
@@ -29,7 +29,7 @@ https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
 ## Try SYNQ in 30 Seconds
 
-> Don't have Docker yet? See the [video demo](https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca) to see what SYNQ does first.
+> Don't have Docker? No problem. Use the new **Zero-Docker (SQLite)** mode for a one-click setup.
 
 **Fastest path (macOS/Linux):**
 1. Install [Docker Desktop](https://docker.com) + [Ollama](https://ollama.com) + [Node 20](https://nodejs.org)
@@ -60,7 +60,7 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v1.4.1](#whats-new-in-v141)
+- [Whats New in v1.4.2](#whats-new-in-v142)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -93,7 +93,7 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 
 ### No Docker? Use SQLite Mode
 
-Set `SYNQ_STORAGE=sqlite` in `backend/.env` before starting.
+Set `SYNQ_STORAGE_MODE=sqlite` in `backend/.env` before starting.
 The installer detects Docker automatically and sets this for you if Docker is missing.
 
 All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect RAM and choose the right mode. Override with `SYNQ_PROFILE=full` or `SYNQ_PROFILE=lite`.
@@ -154,7 +154,7 @@ The dashboard is a production build served by the backend — no separate window
 
 ## MCP Server
 
-> **v1.4.1** — SYNQ now works in any MCP-compatible AI tool.
+> **v1.4.2** — SYNQ now works in any MCP-compatible AI tool.
 
 Build the backend first:
 ```bash
@@ -320,7 +320,7 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## Whats New in v1.4.1
+## Whats New in v1.4.2
 
 - **Prompt injection defence** — pattern detection + XML context delimiters
 - **MCP Server** — 5 tools for Claude Code, Cursor, Windsurf, Claude Desktop

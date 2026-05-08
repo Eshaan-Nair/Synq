@@ -1,39 +1,25 @@
 /**
  * mcp/tools/projects.ts — list_projects tool
- *
- * Returns all unique project names stored in MongoDB.
- * Useful for discovering what memory exists before calling recall_context.
+ * 
+ * Lists all Synq projects (sessions) stored in the database.
  */
 
-import { Session } from "../../services/mongo";
+import { sessionStore } from "../../services/storage";
 
 export async function listProjects(): Promise<string> {
   try {
-    const sessions = await Session.find()
-      .sort({ updatedAt: -1 })
-      .select("projectName platform tripleCount topicCount updatedAt");
+    const sessions = await sessionStore.getSessions();
 
     if (sessions.length === 0) {
-      return "No projects found in SYNQ memory. Save a conversation first.";
+      return "No Synq projects found. Use the Synq extension to save chats first.";
     }
 
-    const lines = sessions.map(s => {
-      const date = s.updatedAt
-        ? new Date(s.updatedAt).toLocaleDateString("en-GB", {
-            day: "2-digit", month: "short", year: "numeric",
-          })
-        : "unknown date";
-      return (
-        `• ${s.projectName}` +
-        `  [platform: ${s.platform ?? "mcp"}]` +
-        `  [triples: ${s.tripleCount ?? 0}]` +
-        `  [chunks: ${s.topicCount ?? 0}]` +
-        `  [updated: ${date}]`
-      );
-    });
+    const lines = sessions.map(s => 
+      `- ${s.projectName} [ID: ${s._id}] (${s.platform}) — ${s.tripleCount} facts, updated ${new Date(s.updatedAt).toLocaleDateString()}`
+    );
 
-    return `SYNQ Projects (${sessions.length}):\n\n${lines.join("\n")}`;
+    return `Available Synq Projects:\n\n${lines.join("\n")}\n\nUse list_projects with any of these IDs to recall or search context.`;
   } catch (err: any) {
-    return `list_projects failed: ${err.message ?? String(err)}`;
+    return `Failed to list projects: ${err.message ?? String(err)}`;
   }
 }

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# SYNQ v1.4.1 - Startup Script (Linux/macOS)
+# SYNQ v1.4.2 - Startup Script (Linux/macOS)
 # ------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.1 - Starting up"
+echo "  SYNQ v1.4.2 - Starting up"
 echo " ==================================="
 echo ""
 
@@ -19,14 +19,22 @@ fi
 
 GRAPH_BACKEND=$(grep "GRAPH_BACKEND=" backend/.env | cut -d'=' -f2)
 OLLAMA_MODEL=$(grep "OLLAMA_MODEL=" backend/.env | cut -d'=' -f2)
+SYNQ_STORAGE_MODE=$(grep "SYNQ_STORAGE_MODE=" backend/.env | cut -d'=' -f2 | tr -d '\r')
 GRAPH_BACKEND=${GRAPH_BACKEND:-ollama}
 
-# 2. Check Dependencies
-if ! command -v docker &> /dev/null; then
-    echo " ERROR: Docker not found."
-    exit 1
+USE_SQLITE=0
+if [ "$SYNQ_STORAGE_MODE" == "sqlite" ]; then USE_SQLITE=1; fi
+
+# 2. Check Dependencies (skip Docker if SQLite)
+if [ "$USE_SQLITE" == "0" ]; then
+    if ! command -v docker &> /dev/null; then
+        echo " ERROR: Docker not found. Use Zero-Docker mode by setting SYNQ_STORAGE_MODE=sqlite in .env"
+        exit 1
+    fi
+    echo " OK Docker ready"
+else
+    echo " OK Mode: Zero-Docker (SQLite)"
 fi
-echo " OK Docker ready"
 
 # 3. Check Backend Status
 if [ "$GRAPH_BACKEND" == "groq" ]; then
@@ -58,9 +66,14 @@ else
 fi
 
 # 5. Start DBs
-echo ""
-echo " Starting databases..."
-docker compose --profile $PROFILE up -d
+if [ "$USE_SQLITE" == "0" ]; then
+    echo ""
+    echo " Starting databases..."
+    docker compose --profile $PROFILE up -d
+else
+    echo ""
+    echo " Skipping Docker Compose (SQLite mode active)."
+fi
 
 # 6. Security & Build Check
 if ! grep -q "SYNQ_SECRET=" backend/.env; then

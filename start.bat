@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=synq"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.1 - Starting up
+echo   SYNQ v1.4.2 - Starting up
 echo  ===================================
 echo.
 
@@ -19,27 +19,36 @@ if not exist "backend\.env" (
   exit /b 1
 )
 
+set "SYNQ_STORAGE_MODE=docker"
 for /f "tokens=1,2 delims==" %%a in (backend\.env) do (
     if "%%a"=="GRAPH_BACKEND" set "GRAPH_BACKEND=%%b"
     if "%%a"=="OLLAMA_MODEL" set "OLLAMA_MODEL=%%b"
+    if "%%a"=="SYNQ_STORAGE_MODE" set "SYNQ_STORAGE_MODE=%%b"
 )
 if "!GRAPH_BACKEND!"=="" set "GRAPH_BACKEND=ollama"
 
-REM 2. Check Docker
+set "USE_SQLITE=0"
+if "!SYNQ_STORAGE_MODE!"=="sqlite" set "USE_SQLITE=1"
 
-where docker >nul 2>&1
-if errorlevel 1 (
-  echo  ERROR: Docker not found.
-  pause
-  exit /b 1
+REM 2. Check Docker (skip if SQLite)
+
+if "!USE_SQLITE!"=="0" (
+  where docker >nul 2>&1
+  if errorlevel 1 (
+    echo  ERROR: Docker not found. Defaulting to SQLite? Or set SYNQ_STORAGE_MODE=sqlite in .env
+    pause
+    exit /b 1
+  )
+  docker info >nul 2>&1
+  if errorlevel 1 (
+    echo  ERROR: Docker Desktop is not running.
+    pause
+    exit /b 1
+  )
+  echo  OK Docker ready
+) else (
+  echo  OK Mode: Zero-Docker (SQLite)
 )
-docker info >nul 2>&1
-if errorlevel 1 (
-  echo  ERROR: Docker Desktop is not running.
-  pause
-  exit /b 1
-)
-echo  OK Docker ready
 
 REM 3. Check Backend Status
 if "!GRAPH_BACKEND!"=="groq" (
@@ -66,8 +75,12 @@ if !RAM_GB! LSS 8 (
 echo.
 
 REM 5. Start DBs
-echo  Starting databases...
-docker compose --profile %PROFILE% up -d
+if "!USE_SQLITE!"=="0" (
+    echo  Starting databases...
+    docker compose --profile %PROFILE% up -d
+) else (
+    echo  Skipping Docker Compose (SQLite mode active).
+)
 echo.
 
 REM 6. Security Check

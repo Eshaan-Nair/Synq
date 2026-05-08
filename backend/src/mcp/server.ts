@@ -4,9 +4,6 @@
  * Transforms SYNQ into a universal memory layer accessible from any
  * MCP-compatible AI tool: Claude Code, Cursor, Windsurf, Claude Desktop.
  *
- * Run: node backend/dist/mcp/server.js
- * Configure in your AI tool — see MCP_SETUP.md
- *
  * Five tools exposed:
  *   - recall_context      → retrieve relevant memory for a prompt
  *   - store_memory        → save text to SYNQ long-term memory
@@ -14,7 +11,7 @@
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
- * Updated: v1.4.1
+ * Updated: v1.4.2
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -36,9 +33,7 @@ import { store }        from "./tools/store";
 import { search }       from "./tools/search";
 import { listProjects } from "./tools/projects";
 import { getSummary }   from "./tools/summary";
-import { connectMongo } from "../services/mongo";
-import { connectChroma }from "../services/chroma";
-import { connectNeo4j } from "../services/neo4j";
+import { logger }       from "../utils/logger";
 
 // ── Tool definitions ────────────────────────────────────────────────
 const TOOLS = [
@@ -46,13 +41,12 @@ const TOOLS = [
     name: "recall_context",
     description:
       "Retrieve the most relevant memory chunks for a given prompt. " +
-      "Call this at the start of any coding session to restore project context. " +
       "Returns sanitised chunks wrapped in <synq_retrieved_context> delimiters.",
     inputSchema: {
       type: "object" as const,
       properties: {
         prompt:  { type: "string",  description: "The current task or question" },
-        project: { type: "string",  description: "Project name to scope the search (optional)" },
+        project: { type: "string",  description: "Project ID to scope the search (optional)" },
         topN:    { type: "number",  description: "Max chunks to return (default 3, max 6)" },
       },
       required: ["prompt"],
@@ -61,23 +55,21 @@ const TOOLS = [
   {
     name: "store_memory",
     description:
-      "Save text to SYNQ long-term memory. " +
-      "Stores in ChromaDB (vector search) and Neo4j (knowledge graph). " +
+      "Save text to SYNQ long-term memory. Stores in vector search and knowledge graph. " +
       "Use after completing a task, making a decision, or discovering something important.",
     inputSchema: {
       type: "object" as const,
       properties: {
         text:    { type: "string", description: "Content to save" },
-        project: { type: "string", description: "Project to associate with" },
+        project: { type: "string", description: "Project ID to associate with" },
       },
-      required: ["text"],
+      required: ["text", "project"],
     },
   },
   {
     name: "search_memory",
     description:
-      "Semantic search across all sessions and projects. " +
-      "Unlike recall_context, this is not scoped to one session — it searches everything.",
+      "Semantic search across all sessions and projects.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -89,7 +81,7 @@ const TOOLS = [
   },
   {
     name: "list_projects",
-    description: "List all project names stored in SYNQ memory.",
+    description: "List all project names and IDs stored in SYNQ memory.",
     inputSchema: {
       type: "object" as const,
       properties: {},
@@ -99,12 +91,11 @@ const TOOLS = [
   {
     name: "get_project_summary",
     description:
-      "Get a structured knowledge-graph summary for a project. " +
-      "Returns key decisions, technologies, and relationships extracted from past conversations.",
+      "Get a structured knowledge-graph summary for a project.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        project: { type: "string", description: "Project name" },
+        project: { type: "string", description: "Project ID" },
       },
       required: ["project"],
     },
@@ -113,7 +104,7 @@ const TOOLS = [
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "synq-memory", version: "1.4.1" },
+  { name: "synq-memory", version: "1.4.2" },
   { capabilities: { tools: {} } }
 );
 
@@ -127,7 +118,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolRes
       case "recall_context": {
         const result = await recall(
           args.prompt as string,
-          args.project as string | undefined,
+          args.project as string,
           args.topN as number | undefined
         );
         return { content: [{ type: "text", text: result }] };
@@ -135,7 +126,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolRes
       case "store_memory": {
         const result = await store(
           args.text as string,
-          args.project as string | undefined
+          args.project as string
         );
         return { content: [{ type: "text", text: result }] };
       }
@@ -168,20 +159,29 @@ server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolRes
   }
 });
 
-// ── Bootstrap: connect to DBs then start server ─────────────────────
+// ── Bootstrap: start server ─────────────────────
 async function main() {
-  try {
-    await connectMongo();
-    await connectChroma();
-    await connectNeo4j();
-  } catch (err) {
-    process.stderr.write(`[SYNQ MCP] DB connection warning: ${err}\n`);
-    // Non-fatal — tools that need the DB will return errors individually
+  const STORAGE_MODE = (process.env.SYNQ_STORAGE_MODE || "docker").toLowerCase();
+  
+  if (STORAGE_MODE === "docker") {
+    const { connectMongo } = require("../services/mongo");
+    const { connectChroma } = require("../services/chroma");
+    const { connectNeo4j } = require("../services/neo4j");
+    try {
+      await connectMongo();
+      await connectChroma();
+      await connectNeo4j();
+    } catch (err) {
+      process.stderr.write(`[SYNQ MCP] Docker DB connection warning: ${err}\n`);
+    }
+  } else {
+    const { initSqlite } = require("../services/sqlite");
+    initSqlite();
   }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  process.stderr.write("[SYNQ MCP] Server ready — listening for tool calls via stdio\n");
+  process.stderr.write(`[SYNQ MCP] Server ready (Mode: ${STORAGE_MODE.toUpperCase()}) — listening via stdio\n`);
 }
 
 main().catch(err => {

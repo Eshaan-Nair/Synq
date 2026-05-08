@@ -1,7 +1,7 @@
 import pino from "pino";
 
 /**
- * v1.4.1+: Structured logging with pino
+ * v1.4.2+: Structured logging with pino
  * Supports JSON output in production and pretty-printing in development.
  */
 const pinoLogger = pino({

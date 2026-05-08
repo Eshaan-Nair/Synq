@@ -38,7 +38,7 @@ export function chunkText(text: string): string[] {
   return chunks;
 }
 
-// ── v1.4.1: Smart Backend Selection ───────────────────────────────
+// ── v1.4.2: Smart Backend Selection ───────────────────────────────
 //
 // Priority:
 //   1. GRAPH_BACKEND env var (explicit override — "ollama" | "groq")
@@ -236,7 +236,6 @@ ${summary}
 Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
 
   const raw   = await llm(prompt, 1200);
-  const backend = await getBackend();
   
   // More robust JSON extraction: find the first '[' and last ']'
   const start = raw.indexOf("[");

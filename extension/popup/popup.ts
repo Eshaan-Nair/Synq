@@ -1,4 +1,4 @@
-// popup.ts — v1.4.1
+// popup.ts — v1.4.2
 // Replaced Connect/Disconnect with a Pause toggle
 // Auto-connect happens in content.ts on init — popup only shows state + pause control
 

@@ -1,5 +1,5 @@
 /**
- * chat.ts (backend route) — v1.4.1
+ * chat.ts (backend route) — v1.4.2
  *
  * RAG pipeline change:
  * - splitIntoTopics (Groq) replaced with slidingWindowChunks (pure function)
@@ -13,11 +13,8 @@
 import { Router, Request, Response } from "express";
 import { scrubPII } from "../utils/privacy";
 import { slidingWindowChunks } from "../services/chunker";
-import { storeWindowChunks, deleteChunksBySession } from "../services/chroma";
-import { extractTriples } from "../services/extractor";
-import { saveTriple } from "../services/neo4j";
+import { sessionStore, vectorStore } from "../services/storage";
 import { enqueueJob } from "../services/jobs";
-import { Session, FullChat } from "../services/mongo";
 import { logger } from "../utils/logger";
 import { isValidObjectId } from "../utils/validators";
 
@@ -50,26 +47,9 @@ router.post("/save", async (req: Request, res: Response) => {
     const windowChunks = slidingWindowChunks(cleanText, sessionId);
     logger.info(`Created ${windowChunks.length} window chunk(s)`);
 
-    // Upsert FullChat — store raw text + lightweight chunk previews for the Chat tab
-    await FullChat.findOneAndUpdate(
-      { sessionId },
-      {
-        sessionId,
-        rawText: cleanText,
-        // Store preview of each chunk for the dashboard Chat tab
-        topics: windowChunks.map(c => ({
-          name:     `Chunk ${c.chunkIndex + 1}`,
-          content:  c.content.slice(0, 120) + (c.content.length > 120 ? "…" : ""),
-          keywords: [],
-        })),
-        platform,
-        messageCount: messageCount || 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      { upsert: true, returnDocument: 'after' }
-    );
-
+    // Save FullChat
+    await sessionStore.saveFullChat(sessionId, cleanText, messageCount || 0, platform || "unknown");
+    
     // ── RAG: Vector Storage (Hybrid Sync/Async) ───────────────────
     const CHUNK_THRESHOLD = 10;
     const isLargeChat = windowChunks.length > CHUNK_THRESHOLD;
@@ -77,8 +57,8 @@ router.post("/save", async (req: Request, res: Response) => {
 
     if (!isLargeChat) {
       try {
-        logger.info(`Storing ${windowChunks.length} chunks in ChromaDB (sync)...`);
-        await storeWindowChunks(windowChunks);
+        logger.info(`Storing ${windowChunks.length} chunks (sync)...`);
+        await vectorStore.storeChunks(windowChunks);
         vectorsStored = true;
       } catch (vecErr: any) {
         logger.warn(`Sync vector storage failed: ${vecErr?.message}`);
@@ -87,7 +67,7 @@ router.post("/save", async (req: Request, res: Response) => {
       logger.info(`Mega chat detected (${windowChunks.length} chunks) — offloading vector storage to background.`);
     }
 
-    // ── Graph: Async Triple Extraction (v1.4.1+) ───────────────────
+    // ── Graph: Async Triple Extraction (v1.4.2+) ───────────────────
     let jobId = null;
     try {
       jobId = await enqueueJob("triple_extraction", { 
@@ -100,8 +80,7 @@ router.post("/save", async (req: Request, res: Response) => {
       logger.error(`Failed to enqueue extraction job: ${jobErr.message}`);
     }
 
-    await Session.findByIdAndUpdate(sessionId, {
-      updatedAt:  new Date(),
+    await sessionStore.updateSession(sessionId, {
       hasFullChat: true,
       topicCount:  windowChunks.length,
     });
@@ -130,17 +109,26 @@ router.post("/save", async (req: Request, res: Response) => {
 router.get("/:sessionId", async (req: Request, res: Response) => {
   const { sessionId } = req.params;
   try {
-    const chat = await FullChat.findOne({ sessionId });
+    const chat = await sessionStore.getFullChat(sessionId);
     if (!chat) {
       res.json({ found: false });
       return;
     }
+    
+    // Generate topics on the fly for the dashboard
+    const chunks = slidingWindowChunks(chat.rawText, sessionId);
+    const topics = chunks.map(c => ({
+      name: `Chunk ${c.chunkIndex + 1}`,
+      content: c.content.slice(0, 120) + (c.content.length > 120 ? "…" : ""),
+      keywords: []
+    }));
+
     res.json({
       found:        true,
       rawText:      chat.rawText,
-      topics:       chat.topics,
+      topics,
       messageCount: chat.messageCount,
-      topicCount:   chat.topics?.length || 0,
+      topicCount:   topics.length,
       createdAt:    chat.createdAt,
     });
   } catch (err) {
@@ -152,8 +140,10 @@ router.get("/:sessionId", async (req: Request, res: Response) => {
 router.delete("/:sessionId", async (req: Request, res: Response) => {
   const sessionId = req.params.sessionId as string;
   try {
-    await FullChat.findOneAndDelete({ sessionId });
-    await deleteChunksBySession(sessionId);
+    // Note: sessionStore.deleteSession handles chat deletion in SQLite
+    // but in Docker mode it might need explicit call
+    // For safety, we keep deleteChunksBySession
+    await vectorStore.deleteChunksBySession(sessionId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete chat" });

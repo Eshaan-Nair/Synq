@@ -1,27 +1,35 @@
 #!/bin/bash
 
-# SYNQ v1.4.1 - Smart Installer (Linux/macOS)
+# SYNQ v1.4.2 - Smart Installer (Linux/macOS)
 # -------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.1 - Smart Installer"
+echo "  SYNQ v1.4.2 - Smart Installer"
 echo " ==================================="
 echo ""
 
 # 1. Check Dependencies
+USE_SQLITE=0
 if ! command -v docker &> /dev/null; then
-    echo " ERROR: Docker not found. Install Docker first."
-    exit 1
+    echo " WARNING: Docker not found. Defaulting to Zero-Docker (SQLite) mode."
+    USE_SQLITE=1
+else
+    if ! docker info &> /dev/null; then
+        echo " WARNING: Docker is not running. Defaulting to Zero-Docker (SQLite) mode."
+        USE_SQLITE=1
+    else
+        echo " OK Docker ready"
+    fi
 fi
 
 if ! command -v node &> /dev/null; then
     echo " ERROR: Node.js not found. Install v20 LTS."
     exit 1
 fi
-echo " OK Docker & Node.js ready"
+echo " OK Node.js ready"
 
 # 2. Detect System Resources
 echo ""
@@ -120,11 +128,28 @@ else
     sed -i "s/OLLAMA_MODEL=.*/OLLAMA_MODEL=$SELECTED_MODEL/" backend/.env
 fi
 
+# SQLite mode update
+if [ "$USE_SQLITE" == "1" ]; then
+    if [[ "$OS_TYPE" == "Darwin" ]]; then
+        if grep -q "SYNQ_STORAGE_MODE=" backend/.env; then
+            sed -i '' "s/SYNQ_STORAGE_MODE=.*/SYNQ_STORAGE_MODE=sqlite/" backend/.env
+        else
+            echo "SYNQ_STORAGE_MODE=sqlite" >> backend/.env
+        fi
+    else
+        if grep -q "SYNQ_STORAGE_MODE=" backend/.env; then
+            sed -i "s/SYNQ_STORAGE_MODE=.*/SYNQ_STORAGE_MODE=sqlite/" backend/.env
+        else
+            echo "SYNQ_STORAGE_MODE=sqlite" >> backend/.env
+        fi
+    fi
+fi
+
 # Ensure lines exist if not in example
 grep -q "GRAPH_BACKEND=" backend/.env || echo "GRAPH_BACKEND=$GRAPH_BACKEND" >> backend/.env
 grep -q "OLLAMA_MODEL=" backend/.env || echo "OLLAMA_MODEL=$SELECTED_MODEL" >> backend/.env
 
-# v1.4.1+: Auto-generate secret if missing
+# v1.4.2+: Auto-generate secret if missing
 if ! grep -q "^SYNQ_SECRET=." backend/.env; then
   if command -v openssl &> /dev/null; then
     NEW_SECRET=$(openssl rand -base64 32)
@@ -174,11 +199,16 @@ echo " Building components..."
 (cd extension && npx esbuild popup/popup.ts --bundle --outfile=popup/popup.js --format=iife --target=es2020 --log-level=error)
 
 # 7. Start DBs
-PROFILE="full"
-if [ "$RAM_GB" -lt 8 ]; then PROFILE="lite"; fi
-echo ""
-echo " Starting databases (Profile: $PROFILE)..."
-docker compose --profile $PROFILE up -d
+if [ "$USE_SQLITE" == "0" ]; then
+    PROFILE="full"
+    if [ "$RAM_GB" -lt 8 ]; then PROFILE="lite"; fi
+    echo ""
+    echo " Starting databases (Profile: $PROFILE)..."
+    docker compose --profile $PROFILE up -d
+else
+    echo ""
+    echo " Skipping Docker Compose (SQLite mode active)."
+fi
 
 echo ""
 echo " ==================================="

@@ -1,62 +1,28 @@
 /**
  * mcp/tools/summary.ts — get_project_summary tool
- *
- * Returns a structured knowledge-graph summary for a project,
- * built from Neo4j triples extracted from past conversations.
+ * 
+ * Returns the auto-generated project summary and a count of stored facts.
  */
 
-import { getTriplesBySession } from "../../services/neo4j";
-import { Session } from "../../services/mongo";
-import { generateProjectSummary } from "../../services/extractor";
+import { sessionStore, graphStore } from "../../services/storage";
 
 export async function getSummary(project: string): Promise<string> {
   try {
-    if (!project?.trim()) {
-      return "project name is required.";
-    }
-
-    const session = await Session.findOne({ projectName: project })
-      .sort({ updatedAt: -1 })
-      .select("_id projectName summary tripleCount");
+    const projectStr = String(project);
+    const session = await sessionStore.getSession(projectStr);
 
     if (!session) {
-      return `No project found with name "${project}". Use list_projects to see available projects.`;
+      return `Synq project ID "${projectStr}" not found. Use list_projects to see valid IDs.`;
     }
 
-    const sessionId = session._id.toString();
+    const triples = await graphStore.getTriplesBySession(projectStr);
 
-    // Use cached summary if triple count matches
-    if (session.summary && session.tripleCount && session.tripleCount > 0) {
-      return (
-        `Knowledge graph summary for "${project}":\n\n` +
-        session.summary +
-        `\n\n(${session.tripleCount} triples | session: ${sessionId})`
-      );
-    }
-
-    // Generate fresh summary from Neo4j triples
-    const triples = await getTriplesBySession(sessionId);
-
-    if (triples.length === 0) {
-      return (
-        `Project "${project}" exists but has no knowledge graph triples yet.\n` +
-        `Save a conversation with context about this project first.`
-      );
-    }
-
-    const summary = await generateProjectSummary(triples, project);
-
-    // Cache it
-    await Session.findByIdAndUpdate(sessionId, {
-      summary,
-      tripleCount: triples.length,
-    });
-
-    return (
-      `Knowledge graph summary for "${project}":\n\n` +
-      summary +
-      `\n\n(${triples.length} triples | session: ${sessionId})`
-    );
+    let summary = session.summary || "No summary generated yet. Save a chat with the Synq extension to build knowledge.";
+    
+    return `Project: ${session.projectName} (${session.platform})\n` +
+           `Facts Stored: ${triples.length}\n` +
+           `Last Updated: ${new Date(session.updatedAt).toLocaleDateString()}\n\n` +
+           `Knowledge Summary:\n${summary}`;
   } catch (err: any) {
     return `get_project_summary failed: ${err.message ?? String(err)}`;
   }

@@ -4,7 +4,7 @@
 
 import { SynqMessage } from "./types/messages";
 
-// v1.4.1+: Configurable backend URL and secret via storage
+// v1.4.2+: Configurable backend URL and secret via storage
 async function getBackendConfig() {
   const r = await chrome.storage.local.get(["synq_backend_url", "synq_secret"]);
   return {

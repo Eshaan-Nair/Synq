@@ -4,7 +4,26 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
-## [1.4.1] — 2026-05-05 — Expanding Platform Support
+## [1.4.2] — 2026-05-08 — SQLite Native (Zero-Docker) Migration
+
+### Storage Architecture
+- **Unified Storage Interface** — Introduced `ISessionStore`, `IGraphStore`, and `IVectorStore` interfaces.
+- **SQLite Support** — Implemented `better-sqlite3` and `sqlite-vec` backends, allowing Synq to run without Docker (MongoDB, Neo4j, ChromaDB).
+- **Dynamic Storage Factory** — Added `SYNQ_STORAGE_MODE` (docker/sqlite) to `.env` to toggle between legacy Docker and new local storage.
+
+### Onboarding & Deployment
+- **Zero-Docker Fallback** — `install.bat` and `install.sh` now automatically detect if Docker is missing/not running and default to SQLite mode.
+- **Resource Efficiency** — SQLite mode reduces RAM requirement to 2GB and disk requirement to 5GB.
+- **Version Alignment** — Synchronized version `1.4.2` across all modules: backend, dashboard, extension manifest, and MCP server.
+
+### Maintenance & Fixes
+- **Unified ID Validation** — Updated `isValidObjectId` to support both MongoDB ObjectIds and standard UUIDs for SQLite compatibility.
+- **Jobs Worker** — Migrated background extraction worker to the unified storage layer.
+- **MCP Server** — Full support for SQLite mode added to the Model Context Protocol server.
+
+---
+
+## [1.4.2] — 2026-05-05 — Expanding Platform Support
 
 ### Supported Platforms
 
@@ -18,7 +37,7 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ### Version Alignment
 
-- Unified project versioning across extension manifest, extension package, backend, and dashboard to `1.4.1`.
+- Unified project versioning across extension manifest, extension package, backend, and dashboard to `1.4.2`.
 
 
 ## [1.4.0] — 2026-05-03 — Security, MCP & Production Hardening

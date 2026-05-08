@@ -8,24 +8,25 @@ set "COMPOSE_PROJECT_NAME=synq"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.1 - Smart Installer
+echo   SYNQ v1.4.2 - Smart Installer
 echo  ===================================
 echo.
 
 REM 1. Check Docker
+set "USE_SQLITE=0"
 where docker >nul 2>&1
 if errorlevel 1 (
-  echo  ERROR: Docker not found. Install Docker Desktop first.
-  pause
-  exit /b 1
+  echo  WARNING: Docker not found. Defaulting to Zero-Docker (SQLite) mode.
+  set "USE_SQLITE=1"
+) else (
+  docker info >nul 2>&1
+  if errorlevel 1 (
+    echo  WARNING: Docker Desktop is not running. Defaulting to Zero-Docker (SQLite) mode.
+    set "USE_SQLITE=1"
+  ) else (
+    echo  OK Docker ready
+  )
 )
-docker info >nul 2>&1
-if errorlevel 1 (
-  echo  ERROR: Docker Desktop is not running.
-  pause
-  exit /b 1
-)
-echo  OK Docker ready
 
 REM 2. Check Node.js
 where node >nul 2>&1
@@ -119,7 +120,7 @@ if not exist "dashboard\.env" (
 )
 
 REM Update .env with choices (PowerShell safe method)
-powershell -NoProfile -Command "$c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; if ($c -notmatch '^SYNQ_SECRET=.') { $s = [System.Convert]::ToBase64String((1..32|%%{Get-Random -Max 256})); if ($c -match '^SYNQ_SECRET=') { $c = $c -replace '^SYNQ_SECRET=.*', \"SYNQ_SECRET=$s\" } else { $c += \"SYNQ_SECRET=$s\" }; Write-Host ' OK Generated random SYNQ_SECRET' }; $c | Set-Content backend\.env -Encoding UTF8; $s = ($c | Select-String '^SYNQ_SECRET=(.*)' | ForEach-Object { $_.Matches.Groups[1].Value }).Trim(); if ($s) { $dc = Get-Content dashboard\.env; if ($dc -match 'VITE_SYNQ_SECRET=') { $dc = $dc -replace 'VITE_SYNQ_SECRET=.*', \"VITE_SYNQ_SECRET=$s\" } else { $dc += \"VITE_SYNQ_SECRET=$s\" }; $dc | Set-Content dashboard\.env -Encoding UTF8; Write-Host ' OK Synced secret to dashboard' }"
+powershell -NoProfile -Command "$c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; if ('!USE_SQLITE!' -eq '1') { if ($c -match 'SYNQ_STORAGE_MODE=') { $c = $c -replace 'SYNQ_STORAGE_MODE=.*', 'SYNQ_STORAGE_MODE=sqlite' } else { $c += 'SYNQ_STORAGE_MODE=sqlite' } }; if ($c -notmatch '^SYNQ_SECRET=.') { $s = [System.Convert]::ToBase64String((1..32|%%{Get-Random -Max 256})); if ($c -match '^SYNQ_SECRET=') { $c = $c -replace '^SYNQ_SECRET=.*', \"SYNQ_SECRET=$s\" } else { $c += \"SYNQ_SECRET=$s\" }; Write-Host ' OK Generated random SYNQ_SECRET' }; $c | Set-Content backend\.env -Encoding UTF8; $s = ($c | Select-String '^SYNQ_SECRET=(.*)' | ForEach-Object { $_.Matches.Groups[1].Value }).Trim(); if ($s) { $dc = Get-Content dashboard\.env; if ($dc -match 'VITE_SYNQ_SECRET=') { $dc = $dc -replace 'VITE_SYNQ_SECRET=.*', \"VITE_SYNQ_SECRET=$s\" } else { $dc += \"VITE_SYNQ_SECRET=$s\" }; $dc | Set-Content dashboard\.env -Encoding UTF8; Write-Host ' OK Synced secret to dashboard' }"
 
 REM 6. Dependencies
 echo.
@@ -138,12 +139,17 @@ call npx esbuild src/background.ts --bundle --outfile=dist/background.js --forma
 call npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020 --log-level=error
 cd ..
 
-REM 8. Start DBs
-set "PROFILE=full"
-if !RAM_GB! LSS 8 set "PROFILE=lite"
-echo.
-echo  Starting databases: Profile !PROFILE!...
-docker compose --profile %PROFILE% up -d
+REM 8. Start DBs (only if using Docker)
+if "!USE_SQLITE!"=="0" (
+  set "PROFILE=full"
+  if !RAM_GB! LSS 8 set "PROFILE=lite"
+  echo.
+  echo  Starting databases: Profile !PROFILE!...
+  docker compose --profile %PROFILE% up -d
+) else (
+  echo.
+  echo  Skipping Docker Compose (SQLite mode active).
+)
 
 echo.
 echo  ===================================
