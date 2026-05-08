@@ -109,14 +109,14 @@ router.post("/save", async (req: Request, res: Response) => {
 router.get("/:sessionId", async (req: Request, res: Response) => {
   const { sessionId } = req.params;
   try {
-    const chat = await sessionStore.getFullChat(sessionId);
+    const chat = await sessionStore.getFullChat(sessionId as string);
     if (!chat) {
       res.json({ found: false });
       return;
     }
     
     // Generate topics on the fly for the dashboard
-    const chunks = slidingWindowChunks(chat.rawText, sessionId);
+    const chunks = slidingWindowChunks(chat.rawText, sessionId as string);
     const topics = chunks.map(c => ({
       name: `Chunk ${c.chunkIndex + 1}`,
       content: c.content.slice(0, 120) + (c.content.length > 120 ? "…" : ""),
