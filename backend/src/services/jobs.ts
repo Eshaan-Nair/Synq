@@ -3,6 +3,8 @@
  *
  * Handles enqueuing and processing of slow tasks (like triple extraction).
  * Fully abstracted — works with both Docker (Mongo) and SQLite storage modes.
+ *
+ * Updated: v1.4.2
  */
 
 import { sessionStore, graphStore, vectorStore } from "./storage";
@@ -34,6 +36,8 @@ export async function isSessionProcessing(sessionId: string): Promise<boolean> {
  */
 export async function cancelSessionJobs(sessionId: string) {
   logger.warn(`[Job Queue] Cancel session jobs requested for ${sessionId}`);
+  // In Docker mode, sessionStore.deleteSession handles some cleanup, 
+  // but we could add explicit cancel if needed.
 }
 
 /**
@@ -57,6 +61,7 @@ export async function startWorker() {
   async function workerLoop() {
     try {
       const processedJob = await processNextJob();
+      // If we found a job, speed up. If idle, slow down exponentially.
       pollInterval = processedJob ? MIN_POLL : Math.min(pollInterval * 1.5, MAX_POLL);
     } catch (err) {
       logger.error("[Job Queue] Worker loop error:", err);

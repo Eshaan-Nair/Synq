@@ -38,7 +38,7 @@ export async function store(
     await sessionStore.updateSession(projectStr, {
       tripleCount: (session.tripleCount || 0) + triples.length,
       topicCount: (session.topicCount || 0) + chunks.length,
-      updatedAt: new Date()
+      updatedAt: new Date().toISOString()
     });
 
     return `Successfully stored memory in project "${session.projectName}".\n- Triples extracted: ${triples.length}\n- Vector chunks saved: ${chunks.length}`;

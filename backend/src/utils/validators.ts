@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
 /**
  * Validates session and job IDs.
  * Supports both MongoDB ObjectIds (24-char hex) and SQLite UUIDs.

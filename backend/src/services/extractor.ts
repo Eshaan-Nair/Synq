@@ -236,7 +236,6 @@ ${summary}
 Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
 
   const raw   = await llm(prompt, 1200);
-  const backend = await getBackend();
   
   // More robust JSON extraction: find the first '[' and last ']'
   const start = raw.indexOf("[");

@@ -50,10 +50,6 @@ router.post("/save", async (req: Request, res: Response) => {
     // Save FullChat
     await sessionStore.saveFullChat(sessionId, cleanText, messageCount || 0, platform || "unknown");
     
-    // We add lightweight chunk previews to the FullChat display data indirectly? 
-    // Actually, in SQLite implementation I didn't add 'topics' to full_chats table.
-    // I'll update the SqliteSessionStore implementation if needed, or just slice text in route.
-
     // ── RAG: Vector Storage (Hybrid Sync/Async) ───────────────────
     const CHUNK_THRESHOLD = 10;
     const isLargeChat = windowChunks.length > CHUNK_THRESHOLD;
