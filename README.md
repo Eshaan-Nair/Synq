@@ -15,7 +15,7 @@ Every time you open a new chat, your AI starts from zero. SYNQ gives your AI per
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/issues)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Synq/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.2-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.3-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
@@ -60,7 +60,7 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v1.4.2](#whats-new-in-v142)
+- [Whats New in v1.4.3](#whats-new-in-v143)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -71,13 +71,14 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 
 | Feature | Description |
 |:---|:---|
-| **Auto-Connect RAG** | Intercepts every prompt and injects relevant context automatically |
+| **Hybrid Search RAG** | Combines Vector search with Knowledge Graph facts for 2x better accuracy |
+| **Auto-Connect** | Intercepts every prompt and injects relevant context automatically |
 | **100% Local** | Ollama runs embeddings and extraction on your machine — nothing leaves your network |
 | **Zero Data Loss** | Sliding window chunker preserves every word — no filtering, no minimum length |
 | **Prompt Injection Defence** | Chunks scanned for injection patterns; context wrapped in XML delimiters |
 | **Knowledge Graph** | 22 entity types, 20+ relation types — captures technical and personal context |
 | **D3.js Dashboard** | Force-directed graph with degree-scaled nodes, hover tooltips, zoom controls |
-| **MCP Server** | Works in Claude Code, Cursor, Windsurf, Claude Desktop — not just Chrome |
+| **MCP Evolution** | Smart project detection + Hybrid recall in Claude Code, Cursor, Windsurf |
 | **Resilient Selectors** | 5-strategy fallback per platform; weekly CI detects when selectors go stale |
 | **Lite Mode** | Runs on 4 GB RAM machines — skips Neo4j, RAG still works fully |
 
@@ -320,17 +321,14 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## Whats New in v1.4.2
+## Whats New in v1.4.3
 
-- **Prompt injection defence** — pattern detection + XML context delimiters
-- **MCP Server** — 5 tools for Claude Code, Cursor, Windsurf, Claude Desktop
-- **Resilient selectors** — 5-strategy fallback + MutationObserver + weekly CI
-- **Smart Ollama/Groq auto-detect** — probes Ollama at startup, Groq fallback if absent
-- **Production dashboard** — sirv static serving at port 3001, no Vite dev server
-- **Lite mode** — Docker Compose profiles for < 8 GB RAM machines
-- **One-command installers** — `install.sh` and `install.bat`
-- **Full pipeline integration test** — end-to-end RAG test in CI on every PR
-- **GitHub Releases** — extension zip auto-attached on every version tag
+- **Hybrid Search (Vector + Graph)** — Both Dashboard and MCP now use graph knowledge to enrich RAG results
+- **Smart Project Detection** — Automatically identify project IDs based on your CWD or folder name
+- **Dashboard Visibility for MCP** — Terminal conversations are now saved to project history and visible in the UI
+- **MCP Resources** — Browse your knowledge graph as a structured document in AI tools
+- **Zero-Docker Stability** — Full SQLite-native support is now the default and passing all CI checks
+- **LLM Fallbacks** — Extraction tools now fallback gracefully to vector mode if Ollama/Groq is offline
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
 

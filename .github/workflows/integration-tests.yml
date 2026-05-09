@@ -71,3 +71,12 @@ jobs:
           NEO4J_PASSWORD: ""
           GRAPH_BACKEND: ollama
           SYNQ_NO_AUTH: "true"
+          
+      - name: Run MCP Integration Tests
+        run: npx ts-node src/mcp/integration-test.ts
+        working-directory: backend
+        env:
+          SYNQ_STORAGE_MODE: sqlite
+          SQLITE_DB_PATH: ./synq.db
+          GRAPH_BACKEND: ollama
+          OLLAMA_URL: http://localhost:11434

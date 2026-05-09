@@ -4,6 +4,25 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.4.3] — 2026-05-09 — Hybrid Search & MCP Evolution
+
+### Retrieval & Intelligence
+- **Hybrid Search (Vector + Graph)** — Both the Dashboard and MCP server now perform Hybrid Retrieval. The system extracts entities from user prompts and queries the Knowledge Graph for structured facts, combining them with semantic vector chunks.
+- **Global Hybrid Search** — `search_memory` now performs cross-project graph scans, improving discovery across multiple repositories.
+- **Smart Project Detection** — Added `identify_active_project` MCP tool to automatically match a terminal's CWD to a Synq project ID.
+
+### MCP (Model Context Protocol) Improvements
+- **Dashboard Visibility** — Manual saves from MCP-compatible tools (Claude Code, Cursor) are now saved to the `full_chats` table and appear in the Dashboard history.
+- **MCP Resources** — Exposed the entire Knowledge Graph as a browsable MCP Resource (`synq://projects/{id}/graph`).
+- **LLM Robustness** — Implemented try/catch fallbacks for AI extraction. If Ollama/Groq is unavailable, tools fallback gracefully to vector-only mode.
+- **Config Generator** — Added `npm run mcp:config` to automatically generate absolute path configurations for AI tools.
+
+### CI/CD & Maintenance
+- **MCP Integration Tests** — Added automated tool verification to GitHub Actions, running on every PR in the SQLite-native environment.
+- **Stability Fixes** — Resolved critical compilation errors and test regressions in the `isValidObjectId` validator.
+
+---
+
 ## [1.4.2] — 2026-05-08 — SQLite Native (Zero-Docker) Migration
 
 ### Storage Architecture

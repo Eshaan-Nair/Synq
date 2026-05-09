@@ -1,5 +1,5 @@
 /**
- * SYNQ content.ts — v1.4.2
+ * SYNQ content.ts — v1.4.3
  *
  * Fix: Context injection now works reliably on all platforms.
  *

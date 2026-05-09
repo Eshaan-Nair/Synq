@@ -29,8 +29,8 @@ Extension DOM scrape (user + AI turns)
         └── Graph Track (Knowledge Graph)
               Auto-detect: Ollama llama3.1:8b (primary) or Groq (fallback)
               summarizeChunk() → extractTriplesFromSummary()
-              → Neo4j: MERGE (s:Entity) ... MERGE (s)-[r:RELATION]->(o)
-              → MongoDB: Session.findByIdAndUpdate() — tripleCount, hasFullChat
+              → Graph Store: MERGE (s:Entity) ...
+              → Session Store: Update tripleCount, hasFullChat
 ```
 
 ### Auto-Connect (every prompt)
@@ -61,11 +61,12 @@ User: popup "Inject Context" → GET /api/context/retrieve/:sessionId
 
 ```
 AI tool (Cursor/Claude Code/etc.) → MCP stdio call
-  → recall_context:      ChromaDB vector search → sanitize → XML wrap
-  → store_memory:        slidingWindowChunks → ChromaDB + Neo4j + MongoDB
-  → search_memory:       ChromaDB cross-project semantic search
-  → list_projects:       MongoDB session listing
-  → get_project_summary: Neo4j triples → LLM summary (cached)
+  → recall_context:      Hybrid search (Vector + Graph) → sanitize → XML wrap
+  → store_memory:        Full chat save + Graph extraction + Vector storage
+  → search_memory:       Global Hybrid Search across all projects
+  → list_projects:       Session listing with metadata
+  → get_project_summary: Knowledge graph browsable as a Resource
+  → identify_project:    CWD-to-ID auto-matching
 ```
 
 ---
@@ -90,17 +91,19 @@ AI tool (Cursor/Claude Code/etc.) → MCP stdio call
 | Service | Port | Technology | Notes |
 |---|---|---|---|
 | Backend + Dashboard | 3001 | Node.js, Express 5, sirv | API + static dashboard serving |
-| Neo4j | 7474 / 7687 | Neo4j 5.18 | Full mode only |
-| MongoDB | 27017 | MongoDB 7.0 / Mongoose | Always |
-| ChromaDB | 8000 | ChromaDB 0.6.3 | Always |
+| **SQLite (Default)** | — | better-sqlite3 | Sessions, Graph, Metadata (Zero-Docker) |
+| **SQLite-vec** | — | sqlite-vec | Vector storage (Zero-Docker) |
+| Neo4j | 7474 / 7687 | Neo4j 5.18 | Docker Mode Only |
+| MongoDB | 27017 | MongoDB 7.0 | Docker Mode Only |
+| ChromaDB | 8000 | ChromaDB 0.6.3 | Docker Mode Only |
 | Ollama | 11434 | Ollama | Local embeddings + extraction |
 | MCP Server | stdio | @modelcontextprotocol/sdk | External AI tool integration |
 
 ---
 
-## Data Models
+## Data Models (Unified)
 
-### MongoDB — Session
+These schemas apply to both **SQLite tables** and **MongoDB collections**.
 
 ```
 {

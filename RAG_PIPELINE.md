@@ -52,7 +52,7 @@ User types → keydown/click intercepted (debounced 300ms)
 → Slice to topN (default: 3)
 ```
 
-### 4. Sanitisation (on every retrieval — v1.4.2)
+### 4. Sanitisation (on every retrieval — v1.4.3)
 
 Before the chunks are injected into the prompt:
 
@@ -75,6 +75,21 @@ Output format:
 ### 5. Injection
 
 The context block is prepended to the user's prompt using the Selection API and an `InputEvent` with `inputType: "insertText"`. This triggers the platform's React/Angular state update so the text appears in the input and is included when the user sends.
+
+---
+
+## Hybrid Search (v1.4.3)
+
+SYNQ now uses a **Hybrid Retrieval** strategy that combines the best of both worlds:
+
+1.  **Vector Retrieval (Semantic)**: Uses embeddings to find text that *feels* like the query. Great for "how to do X" or broad topics.
+2.  **Graph Retrieval (Structured)**: Extracts entities from the query and finds specific facts (Triples) linked to them. Great for "what is the API key?" or "who decided to use Vite?".
+
+### How it works:
+- **Step 1**: The query is sent to the LLM (Ollama) to extract key entities.
+- **Step 2**: The Knowledge Graph is queried for all triples involving those entities.
+- **Step 3**: The vector database is queried for semantic chunks.
+- **Step 4**: Results are merged. The AI receives both `STRUCTURED FACTS` and `CONTEXT CHUNKS`.
 
 ---
 

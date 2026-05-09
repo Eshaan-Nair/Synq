@@ -1,14 +1,10 @@
 /**
- * rag.ts (backend route) — v1.4.2
+ * rag.ts (backend route) — v1.4.3
  *
- * v1.4.2 changes:
- * - Migrated to unified vectorStore abstraction for SQLite support.
- * - All retrieved chunks are now piped through sanitizeChunks() to redact
- *   any prompt injection patterns before they reach the AI's context window.
- * - Context block is wrapped in <synq_retrieved_context> XML delimiters
- *   so LLMs treat the content as data, not instructions.
+ * v1.4.3 changes:
+ * - Implemented Hybrid Retrieval (Vector + Knowledge Graph).
  *
- * Updated: v1.4.2
+ * Updated: v1.4.3
  */
 
 import { Router, Request, Response } from "express";

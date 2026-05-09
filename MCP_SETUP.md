@@ -31,11 +31,25 @@ The SYNQ MCP server exposes your conversation memory to any MCP-compatible AI to
 
 | Tool | What it does |
 |---|---|
-| `recall_context` | Retrieves top-N memory chunks relevant to your current task. Call this at the start of a session. |
-| `store_memory` | Saves text to SYNQ memory (ChromaDB + Neo4j + MongoDB). Use after completing a task or decision. |
-| `search_memory` | Semantic search across all projects and sessions. |
+| `recall_context` | Retrieves top-N memory chunks (Hybrid Search). Call this at the start of a session. |
+| `store_memory` | Saves text/chat to SYNQ memory. **Updates Dashboard History**. |
+| `search_memory` | Global Hybrid Search across all projects and sessions. |
 | `list_projects` | Lists all saved project names with metadata. |
-| `get_project_summary` | Returns the knowledge graph summary for a project as readable markdown. |
+| `get_project_summary` | Returns the knowledge graph summary for a project. |
+| `identify_active_project`| Automatically matches your CWD to a Synq Project ID. |
+
+---
+
+## ⚡ Fast Setup (Recommended)
+
+Instead of manually editing JSON files, use the configuration generator:
+
+```bash
+cd backend
+npm run mcp:config
+```
+
+This will output a pre-formatted JSON block with all absolute paths detected for your machine. Copy and paste it into your AI tool's configuration.
 
 ---
 
