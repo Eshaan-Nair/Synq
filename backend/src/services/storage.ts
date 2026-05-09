@@ -101,14 +101,29 @@ class DockerSessionStore implements ISessionStore {
   async updateJob(id: string, update: any) {
     await mongoService.Job.findByIdAndUpdate(id, update);
   }
-  async getJobStatus() {
-    const pending = await mongoService.Job.countDocuments({ status: "PENDING", deadLettered: false });
-    const processing = await mongoService.Job.countDocuments({ status: "PROCESSING" });
-    const deadLettered = await mongoService.Job.countDocuments({ deadLettered: true });
+  async getJobStatus(sessionId?: string) {
+    const filter: any = { deadLettered: false };
+    if (sessionId) filter["payload.sessionId"] = sessionId;
+
+    const pending = await mongoService.Job.countDocuments({ ...filter, status: "PENDING" });
+    const processing = await mongoService.Job.countDocuments({ 
+      status: "PROCESSING", 
+      ...(sessionId ? { "payload.sessionId": sessionId } : {}) 
+    });
+    const deadLettered = await mongoService.Job.countDocuments({ 
+      deadLettered: true,
+      ...(sessionId ? { "payload.sessionId": sessionId } : {})
+    });
     return { pending, processing, deadLettered };
   }
   async clearJobs() {
     await mongoService.Job.deleteMany({});
+  }
+  async recoverStuckJobs() {
+    const res = await mongoService.Job.updateMany({ status: "PROCESSING" }, { status: "PENDING" });
+    if (res.modifiedCount > 0) {
+      logger.info(`[Job Queue] Recovered ${res.modifiedCount} stuck job(s) from previous run.`);
+    }
   }
 }
 

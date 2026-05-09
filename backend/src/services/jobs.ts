@@ -22,10 +22,9 @@ export async function enqueueJob(type: "triple_extraction", payload: any) {
 
 /**
  * Check if a session currently has any PENDING or PROCESSING extraction jobs.
- * Uses the aggregate job status (simplified — safe for both storage modes).
  */
 export async function isSessionProcessing(sessionId: string): Promise<boolean> {
-  const status = await sessionStore.getJobStatus();
+  const status = await sessionStore.getJobStatus(sessionId);
   return status.processing > 0 || status.pending > 0;
 }
 
@@ -52,6 +51,9 @@ export async function clearAllJobs() {
  * Start the background worker loop.
  */
 export async function startWorker() {
+  // ── v1.4.2: Recovery logic — reset stuck "PROCESSING" jobs to "PENDING"
+  await sessionStore.recoverStuckJobs();
+
   logger.info("[Job Queue] Background worker started.");
 
   let pollInterval = 5000;

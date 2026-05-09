@@ -163,10 +163,23 @@ export class SqliteSessionStore implements ISessionStore {
     this.db.prepare(`UPDATE jobs SET ${fields.join(", ")} WHERE id = ?`).run(...values);
   }
 
-  async getJobStatus(): Promise<{ pending: number; processing: number; deadLettered: number }> {
-    const pending = this.db.prepare("SELECT COUNT(*) as count FROM jobs WHERE status = 'PENDING' AND deadLettered = 0").get() as any;
-    const processing = this.db.prepare("SELECT COUNT(*) as count FROM jobs WHERE status = 'PROCESSING'").get() as any;
-    const deadLettered = this.db.prepare("SELECT COUNT(*) as count FROM jobs WHERE deadLettered = 1").get() as any;
+  async getJobStatus(sessionId?: string): Promise<{ pending: number; processing: number; deadLettered: number }> {
+    let pnd = "SELECT COUNT(*) as count FROM jobs WHERE status = 'PENDING' AND deadLettered = 0";
+    let prc = "SELECT COUNT(*) as count FROM jobs WHERE status = 'PROCESSING'";
+    let ddl = "SELECT COUNT(*) as count FROM jobs WHERE deadLettered = 1";
+    const params: any[] = [];
+
+    if (sessionId) {
+      // In SQLite mode, we store sessionId in the JSON payload
+      pnd += " AND json_extract(payload, '$.sessionId') = ?";
+      prc += " AND json_extract(payload, '$.sessionId') = ?";
+      ddl += " AND json_extract(payload, '$.sessionId') = ?";
+      params.push(sessionId);
+    }
+
+    const pending = this.db.prepare(pnd).get(...params) as any;
+    const processing = this.db.prepare(prc).get(...params) as any;
+    const deadLettered = this.db.prepare(ddl).get(...params) as any;
     
     return {
       pending: pending.count,
@@ -177,6 +190,13 @@ export class SqliteSessionStore implements ISessionStore {
 
   async clearJobs(): Promise<void> {
     this.db.prepare("DELETE FROM jobs").run();
+  }
+
+  async recoverStuckJobs(): Promise<void> {
+    const res = this.db.prepare("UPDATE jobs SET status = 'PENDING' WHERE status = 'PROCESSING'").run();
+    if (res.changes > 0) {
+      logger.info(`[Job Queue] Recovered ${res.changes} stuck job(s) from previous run.`);
+    }
   }
 
   private mapRowToSession(row: any): Session {
