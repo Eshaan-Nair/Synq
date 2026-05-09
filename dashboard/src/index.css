@@ -160,10 +160,13 @@ body {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .search-input {
-  width: 100%;
+  flex: 1;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -177,6 +180,26 @@ body {
 .search-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 10px var(--accent-dim);
+}
+
+.import-btn-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.import-btn-label:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 
@@ -516,7 +539,18 @@ body {
 }
 
 /* Controls */
-.delete-btn {
+.session-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.session-item:hover .session-actions {
+  opacity: 1;
+}
+
+.action-btn {
   background: transparent;
   border: none;
   color: var(--text-dim);
@@ -529,9 +563,19 @@ body {
   justify-content: center;
 }
 
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+
 .delete-btn:hover {
-  color: var(--danger);
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger) !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.export-btn:hover {
+  color: var(--accent) !important;
+  background: var(--accent-dim) !important;
 }
 
 .empty-state {

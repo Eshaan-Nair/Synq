@@ -39,4 +39,15 @@ export async function deleteSession(sessionId: string) {
   return res.data;
 }
 
+export async function exportSession(sessionId: string) {
+  // Use direct URL for download - assumes API_URL is correct in apiClient
+  const baseUrl = apiClient.defaults.baseURL || "http://localhost:3001";
+  window.open(`${baseUrl}/api/session/export/${sessionId}`, "_blank");
+}
+
+export async function importSession(data: any) {
+  const res = await apiClient.post(`/api/session/import`, { data });
+  return res.data;
+}
+
 export { extractErrorMessage, apiClient };

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import GraphView from "./components/GraphView";
 import ChatViewer from "./components/ChatViewer";
-import { fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession, extractErrorMessage, apiClient } from "./api/synq";
+import { fetchContext, fetchSessions, setActiveSession as setActiveSessionOnBackend, deleteSession, exportSession, importSession, extractErrorMessage, apiClient } from "./api/synq";
 import { fetchFullChat } from "./api/rag";
 
 interface Node { id: string; type: string; }
@@ -187,6 +187,26 @@ export default function App() {
     } catch {}
   };
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const json = JSON.parse(evt.target?.result as string);
+        const res = await importSession(json);
+        if (res.success) {
+          setError(null);
+          loadSessions();
+        }
+      } catch (err) {
+        setError(`Import failed: ${extractErrorMessage(err)}`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const filteredSessions = sessions.filter(s =>
     s.projectName.toLowerCase().includes(sessionSearch.toLowerCase()) ||
     s.platform.toLowerCase().includes(sessionSearch.toLowerCase())
@@ -282,6 +302,10 @@ export default function App() {
                     value={sessionSearch}
                     onChange={(e) => setSessionSearch(e.target.value)}
                   />
+                  <label className="import-btn-label" title="Import Session">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <input type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
+                  </label>
                 </div>
                 {filteredSessions.map((s) => {
                   const isActive = activeSession?._id === s._id;
@@ -290,14 +314,6 @@ export default function App() {
                     key={s._id}
                     className={`session-item ${isActive ? "active" : ""}`}
                     onClick={() => loadSession(s)}
-                    onMouseEnter={(e) => {
-                      const btn = e.currentTarget.querySelector(".delete-btn") as HTMLElement;
-                      if (btn) btn.style.opacity = "1";
-                    }}
-                    onMouseLeave={(e) => {
-                      const btn = e.currentTarget.querySelector(".delete-btn") as HTMLElement;
-                      if (btn) btn.style.opacity = "0";
-                    }}
                   >
                     <div className="session-header">
                       <div className="session-name">{s.projectName}</div>
@@ -307,14 +323,22 @@ export default function App() {
                           Updating...
                         </span>
                       )}
-                      <button
-                        className="delete-btn"
-                        onClick={(e) => handleDelete(e, s._id)}
-                        style={{ opacity: 0 }}
-                        title="Delete session"
-                      >
-                        {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
-                      </button>
+                      <div className="session-actions">
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={(e) => handleDelete(e, s._id)}
+                          title="Delete session"
+                        >
+                          {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
+                        </button>
+                        <button
+                          className="action-btn export-btn"
+                          onClick={(e) => { e.stopPropagation(); exportSession(s._id); }}
+                          title="Export session"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
+                      </div>
                     </div>
                     <div className="session-meta">
                       <div className="session-stats">
