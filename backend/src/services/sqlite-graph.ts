@@ -136,4 +136,26 @@ export class SqliteGraphStore implements IGraphStore {
       timestamp: row.timestamp
     }));
   }
+  async findRelatedTriplesGlobal(entities: string[]): Promise<Triple[]> {
+    if (entities.length === 0) return [];
+    
+    const placeholders = entities.map(() => "?").join(",");
+    const query = `
+      SELECT * FROM facts 
+      WHERE subject IN (${placeholders}) OR object IN (${placeholders})
+      LIMIT 20
+    `;
+    
+    const rows = this.db.prepare(query).all(...entities, ...entities) as any[];
+    
+    return rows.map(row => ({
+      subject: row.subject,
+      subjectType: row.subjectType,
+      relation: row.relation,
+      object: row.object,
+      objectType: row.objectType,
+      sessionId: row.sessionId,
+      timestamp: row.timestamp
+    }));
+  }
 }

@@ -33,7 +33,8 @@ import { store }        from "./tools/store";
 import { search }       from "./tools/search";
 import { listProjects } from "./tools/projects";
 import { getSummary }   from "./tools/summary";
-import { initStorage }  from "../services/storage";
+import { identifyProject } from "./tools/detector";
+import { initStorage, sessionStore }  from "../services/storage";
 import { logger }       from "../utils/logger";
 
 // ── Tool definitions ────────────────────────────────────────────────
@@ -56,8 +57,9 @@ const TOOLS = [
   {
     name: "store_memory",
     description:
-      "Save text to SYNQ long-term memory. Stores in vector search and knowledge graph. " +
-      "Use after completing a task, making a decision, or discovering something important.",
+      "Save text or a full conversation transcript to SYNQ long-term memory. " +
+      "This updates the Knowledge Graph and makes the chat visible in the Dashboard history. " +
+      "Use this to 'save' a coding session or a key decision.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -101,15 +103,61 @@ const TOOLS = [
       required: ["project"],
     },
   },
+  {
+    name: "identify_active_project",
+    description: "Automatically identify the Synq project ID based on a folder path or CWD.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        path: { type: "string", description: "The current working directory or folder path" },
+      },
+      required: ["path"],
+    },
+  },
 ];
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
   { name: "synq-memory", version: "1.4.2" },
-  { capabilities: { tools: {} } }
+  { capabilities: { tools: {}, resources: {} } }
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+
+// ── Resource handlers ──────────────────────────────────────────────
+import { ListResourcesRequestSchema, ReadResourceRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  const sessions = await sessionStore.getSessions();
+  return {
+    resources: sessions.map(s => ({
+      uri: `synq://projects/${s._id}/graph`,
+      name: `${s.projectName} Knowledge Graph`,
+      mimeType: "text/markdown",
+      description: `Structured knowledge graph facts for ${s.projectName}`
+    }))
+  };
+});
+
+server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
+  const uri = new URL(req.params.uri);
+  const match = uri.pathname.match(/\/projects\/([^/]+)\/graph/);
+  
+  if (!match) {
+    throw new Error(`Invalid resource URI: ${req.params.uri}`);
+  }
+
+  const projectId = match[1];
+  const summary = await getSummary(projectId);
+
+  return {
+    contents: [{
+      uri: req.params.uri,
+      mimeType: "text/markdown",
+      text: summary
+    }]
+  };
+});
 
 server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolResult> => {
   const { name, arguments: args = {} } = req.params;
@@ -144,6 +192,10 @@ server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolRes
       }
       case "get_project_summary": {
         const result = await getSummary(args.project as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+      case "identify_active_project": {
+        const result = await identifyProject(args.path as string);
         return { content: [{ type: "text", text: result }] };
       }
       default:

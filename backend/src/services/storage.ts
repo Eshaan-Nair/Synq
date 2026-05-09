@@ -225,6 +225,33 @@ class DockerGraphStore implements IGraphStore {
       await session.close();
     }
   }
+
+  async findRelatedTriplesGlobal(entities: string[]): Promise<any[]> {
+    const session = neo4jService.getDriver().session();
+    try {
+      const query = `
+        MATCH (s:Entity)-[r:RELATION]->(o:Entity)
+        WHERE s.name IN $entities OR o.name IN $entities
+        RETURN s.name AS subject, s.type AS subjectType,
+               r.type AS relation,
+               o.name AS object, o.type AS objectType,
+               r.timestamp AS timestamp
+        LIMIT 20
+      `;
+      const result = await session.run(query, { entities });
+      return result.records.map(rec => ({
+        subject: rec.get("subject"),
+        subjectType: rec.get("subjectType"),
+        relation: rec.get("relation"),
+        object: rec.get("object"),
+        objectType: rec.get("objectType"),
+        sessionId: "global",
+        timestamp: rec.get("timestamp")
+      }));
+    } finally {
+      await session.close();
+    }
+  }
 }
 
 class DockerVectorStore implements IVectorStore {

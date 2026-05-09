@@ -79,6 +79,7 @@ export interface IGraphStore {
   getTriplesBySession(sessionId: string): Promise<Triple[]>;
   getGraphData(filters: { sessionId?: string; type?: string; relation?: string; limit?: number }): Promise<{ nodes: any[]; links: any[] }>;
   findRelatedTriples(entities: string[], sessionId: string): Promise<Triple[]>;
+  findRelatedTriplesGlobal(entities: string[]): Promise<Triple[]>;
 }
 
 export interface IVectorStore {

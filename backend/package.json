@@ -10,7 +10,8 @@
     "test": "jest --config jest.config.json",
     "test:unit": "jest --config jest.config.json src/__tests__",
     "test:integration": "jest --config jest.config.json tests/pipeline.integration.test.ts",
-    "test:coverage": "jest --config jest.config.json --coverage"
+    "test:coverage": "jest --config jest.config.json --coverage",
+    "mcp:config": "ts-node src/mcp/config-gen.ts"
   },
   "keywords": [],
   "author": "",
