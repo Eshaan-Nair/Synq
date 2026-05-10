@@ -5,19 +5,42 @@ import axios from "axios";
 import { logger } from "../utils/logger";
 
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
-const EMBED_MODEL = "nomic-embed-text";
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  try {
-    const response = await axios.post(`${OLLAMA_URL}/api/embeddings`, {
-      model: EMBED_MODEL,
-      prompt: text,
-    }, { timeout: 60000 });
-    return response.data.embedding as number[];
-  } catch (err: any) {
-    logger.error("Embedding generation failed:", err?.message);
-    throw new Error("Ollama embedding failed. Is Ollama running? Run: ollama serve");
+  const EMBED_MODEL = process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text";
+  const MAX_RETRIES = 3;
+  
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, 5000 * attempt));
+        logger.info(`[SYNQ] Retrying embedding generation (attempt ${attempt}/${MAX_RETRIES})...`);
+      }
+
+      const response = await axios.post(`${OLLAMA_URL}/api/embeddings`, {
+        model: EMBED_MODEL,
+        prompt: text,
+      }, { timeout: 60000 });
+      
+      return response.data.embedding as number[];
+    } catch (err: any) {
+      const isTimeout = err.code === "ECONNABORTED" || err.message?.includes("timeout");
+      const isOllamaDown = err.code === "ECONNREFUSED";
+
+      if (isOllamaDown) {
+        throw new Error("Ollama is not running. Start it with: ollama serve");
+      }
+
+      if (isTimeout && attempt < MAX_RETRIES) {
+        logger.warn(`[SYNQ] Embedding timeout. Ollama might be busy or model is loading.`);
+        continue;
+      }
+
+      logger.error("Embedding generation failed:", err?.message);
+      throw new Error(`Ollama embedding failed (${EMBED_MODEL}). Is it pulled? Run: ollama pull ${EMBED_MODEL}`);
+    }
   }
+  throw new Error("Embedding generation failed after retries.");
 }
 
 /**
@@ -26,20 +49,25 @@ export async function generateEmbedding(text: string): Promise<number[]> {
  * Now we process in chunks of 5 with a tiny rest between batches.
  */
 export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
-  const BATCH_SIZE = 5;
+  const BATCH_SIZE = 3; // Reduced batch size for low-end PCs
   const results: number[][] = [];
   
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
     logger.info(`[SYNQ] Embedding batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(texts.length/BATCH_SIZE)}...`);
     
-    // Process this batch in parallel
-    const batchResults = await Promise.all(batch.map(text => generateEmbedding(text)));
-    results.push(...batchResults);
+    try {
+      // Process this batch in parallel
+      const batchResults = await Promise.all(batch.map(text => generateEmbedding(text)));
+      results.push(...batchResults);
+    } catch (err: any) {
+      logger.error(`[SYNQ] Batch embedding failed at index ${i}: ${err.message}`);
+      throw err;
+    }
     
-    // Tiny rest to let CPU breathe if there's a lot more to go
+    // Tiny rest to let CPU breathe
     if (i + BATCH_SIZE < texts.length) {
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 500));
     }
   }
   
@@ -48,9 +76,10 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
 
 export async function checkOllamaHealth(): Promise<boolean> {
   try {
-    await axios.get(`${OLLAMA_URL}/api/tags`);
+    await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 2000 });
     return true;
   } catch {
     return false;
   }
 }
+

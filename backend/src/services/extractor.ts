@@ -40,9 +40,10 @@ export function chunkText(text: string): string[] {
 // ── v1.4.2: Smart Backend Selection ───────────────────────────────
 //
 // Priority:
-//   1. GRAPH_BACKEND env var (explicit override — "ollama" | "groq")
+//   1. GRAPH_BACKEND env var (explicit override — "ollama" | "groq" | "local-openai")
 //   2. Auto-detect: probe Ollama at startup → use if available
-//   3. Fallback: Groq (requires GROQ_API_KEY — warns that data leaves machine)
+//   3. Auto-detect: probe LM Studio / LocalAI at startup
+//   4. Fallback: Groq (requires GROQ_API_KEY — warns that data leaves machine)
 //
 // This serves all hardware tiers without manual configuration:
 //   - Full local setup:  Ollama runs  → fully private, zero external calls
@@ -50,13 +51,14 @@ export function chunkText(text: string): string[] {
 //   - Explicit override: GRAPH_BACKEND=groq forces Groq regardless of Ollama
 // ────────────────────────────────────────────────────────────────────
 
-let resolvedBackend: "ollama" | "groq" | null = null;
+let resolvedBackend: "ollama" | "groq" | "local-openai" | null = null;
 
-async function detectBackend(): Promise<"ollama" | "groq"> {
+async function detectBackend(): Promise<"ollama" | "groq" | "local-openai"> {
   // Explicit override takes highest priority
   const envBackend = process.env.GRAPH_BACKEND?.toLowerCase();
-  if (envBackend === "groq")   return "groq";
-  if (envBackend === "ollama") return "ollama";
+  if (envBackend === "groq")         return "groq";
+  if (envBackend === "ollama")       return "ollama";
+  if (envBackend === "local-openai") return "local-openai";
 
   // Auto-detect: try to reach Ollama
   try {
@@ -65,23 +67,31 @@ async function detectBackend(): Promise<"ollama" | "groq"> {
     logger.success("[SYNQ] Ollama detected — graph extraction will run locally (fully private)");
     return "ollama";
   } catch {
-    if (process.env.GROQ_API_KEY) {
-      logger.warn(
-        "[SYNQ] Ollama not available — falling back to Groq API for graph extraction. " +
-        "Note: PII-scrubbed conversation text will leave your machine via Groq."
-      );
-      return "groq";
-    } else {
-      logger.warn(
-        "[SYNQ] Neither Ollama nor GROQ_API_KEY available. " +
-        "Graph extraction disabled — install Ollama or set GROQ_API_KEY in backend/.env"
-      );
-      return "groq"; // Will fail gracefully in extractViaGroq when key is missing
+    // Try Local OpenAI (LM Studio / LocalAI)
+    try {
+      const localUrl = process.env.LOCAL_OPENAI_URL ?? "http://localhost:1234/v1";
+      await axios.get(`${localUrl}/models`, { timeout: 2000 });
+      logger.success("[SYNQ] LM Studio / LocalAI detected — using local OpenAI-compatible backend");
+      return "local-openai";
+    } catch {
+      if (process.env.GROQ_API_KEY) {
+        logger.warn(
+          "[SYNQ] Local LLM (Ollama/LM Studio) not available — falling back to Groq API. " +
+          "Note: PII-scrubbed conversation text will leave your machine via Groq."
+        );
+        return "groq";
+      } else {
+        logger.warn(
+          "[SYNQ] No local LLM found and GROQ_API_KEY missing. " +
+          "Graph extraction disabled — install Ollama or set GROQ_API_KEY in backend/.env"
+        );
+        return "groq"; 
+      }
     }
   }
 }
 
-async function getBackend(): Promise<"ollama" | "groq"> {
+async function getBackend(): Promise<"ollama" | "groq" | "local-openai"> {
   if (!resolvedBackend) {
     resolvedBackend = await detectBackend();
   }
@@ -95,10 +105,11 @@ export function _resetBackendForTest() {
 
 // ── Groq LLM call ─────────────────────────────────────────────────
 async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
+  const model = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
   const response = await axios.post(
     "https://api.groq.com/openai/v1/chat/completions",
     {
-      model: "llama-3.3-70b-versatile",
+      model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
       temperature: 0.1,
@@ -108,7 +119,7 @@ async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
-      timeout: 15000,
+      timeout: 20000,
     }
   );
   return response.data.choices[0].message.content;
@@ -127,50 +138,104 @@ async function callOllama(prompt: string, maxTokens = 1000): Promise<string> {
       stream: false,
       options: { num_predict: maxTokens, temperature: 0.1 },
     },
-    { timeout: 75000 } // Bumped to 75s for slower hardware
+    { timeout: 90000 } // Increased to 90s for low-end hardware
   );
   return response.data.response;
 }
 
+// ── Local OpenAI (LM Studio / LocalAI) LLM call ───────────────────
+async function callLocalOpenAI(prompt: string, maxTokens = 1000): Promise<string> {
+  const url = process.env.LOCAL_OPENAI_URL ?? "http://localhost:1234/v1";
+  const model = process.env.LOCAL_OPENAI_MODEL ?? "loaded_model"; // LM Studio usually uses whatever is loaded
+  
+  const response = await axios.post(
+    `${url}/chat/completions`,
+    {
+      model,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: maxTokens,
+      temperature: 0.1,
+    },
+    { timeout: 90000 }
+  );
+  return response.data.choices[0].message.content;
+}
+
 // ── Unified LLM call with Retry Logic (Backoff) ───────────────────
-async function llm(prompt: string, maxTokens = 1000): Promise<string> {
+async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
   const backend = await getBackend();
-  const MAX_RETRIES = 5;
+  const MAX_RETRIES = 3; // Reduced total retries but made each smarter
   let lastErr: any = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       if (attempt > 0) {
-        const waitTime = attempt * 10000; // 10s, 20s, 30s...
-        logger.info(`[SYNQ] Rate limit hit. Retrying in ${waitTime/1000}s (Attempt ${attempt}/${MAX_RETRIES})...`);
+        const waitTime = attempt * 15000; // 15s, 30s, 45s...
+        logger.info(`[SYNQ] LLM call retry ${attempt}/${MAX_RETRIES} in ${waitTime/1000}s...`);
         await sleep(waitTime);
       }
 
+      let res: string;
       if (backend === "ollama") {
         try {
-          return await callOllama(prompt, maxTokens);
+          res = await callOllama(prompt, maxTokens);
         } catch (err: any) {
-          if (process.env.GROQ_API_KEY) {
-            logger.warn(`[SYNQ] Ollama call failed (${err?.message}) — falling back to Groq.`);
-            return await callGroq(prompt, maxTokens);
+          const isDown = err.code === "ECONNREFUSED" || err.code === "ENOTFOUND";
+          if (isDown && process.env.GROQ_API_KEY) {
+            logger.warn(`[SYNQ] Ollama unreachable — falling back to Groq.`);
+            res = await callGroq(prompt, maxTokens);
+          } else {
+            throw err;
           }
-          throw err;
         }
+      } else if (backend === "local-openai") {
+        try {
+          res = await callLocalOpenAI(prompt, maxTokens);
+        } catch (err: any) {
+          if (err.code === "ECONNREFUSED" && process.env.GROQ_API_KEY) {
+            logger.warn(`[SYNQ] Local OpenAI unreachable — falling back to Groq.`);
+            res = await callGroq(prompt, maxTokens);
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        res = await callGroq(prompt, maxTokens);
       }
-      return await callGroq(prompt, maxTokens);
+
+      if (res === undefined || res === null || res.trim() === "") {
+        throw new Error("Model returned empty response");
+      }
+      return res;
     } catch (err: any) {
       lastErr = err;
       const isRateLimit = err?.response?.status === 429 || err?.message?.includes("429");
+      const isTimeout   = err.code === "ECONNABORTED" || err.message?.includes("timeout");
       const isBadFormat = err?.message?.includes("JSON") || err?.message?.includes("formatting");
       
-      if ((isRateLimit || isBadFormat) && attempt < MAX_RETRIES) {
+      if ((isRateLimit || isTimeout || isBadFormat) && attempt < MAX_RETRIES) {
+        if (isTimeout)   logger.warn(`[SYNQ] LLM timeout (attempt ${attempt+1}). Model might be loading or hardware is slow.`);
         if (isBadFormat) logger.warn("[SYNQ] Model returned malformed data. Retrying...");
-        continue; // Loop again (retry)
+        continue; 
       }
-      throw err; // Permanent failure or no retries left
+      
+      // Permanent failure
+      logger.error(`[SYNQ] LLM call failed permanently: ${err.message}`);
+      throw err; 
     }
   }
   throw lastErr;
+}
+
+/**
+ * Unified LLM call with explicit debug logging
+ */
+export async function llm(prompt: string, maxTokens = 1000): Promise<string> {
+  const result = await _llm(prompt, maxTokens);
+  if (process.env.DEBUG === "true") {
+    logger.info(`[DEBUG] LLM Response (${result.length} chars): ${result.slice(0, 100)}...`);
+  }
+  return result;
 }
 
 // ── Step 1: compress raw chat into ALL meaningful facts ────────────
@@ -208,8 +273,8 @@ Facts:`;
  * Step 1.5: Extract entities from a search query for Hybrid RAG.
  */
 export async function extractEntitiesFromQuery(query: string): Promise<string[]> {
-  const prompt = `Extract exactly the most important named entities (technologies, projects, people, places) from this search query.
-Return ONLY a JSON array of strings, or "none" if no clear entities are found.
+  const prompt = `Extract entities from this search query. Be broad and include any potential projects, technologies, or people mentioned.
+Return ONLY a JSON array of strings, or "none" if no entities are found.
 
 Example: ["React", "Synq", "Eshaan"]
 
@@ -403,25 +468,21 @@ export async function extractRelevantSnippets(prompt: string, chunks: string[]):
   
   const context = chunks.map((c, i) => `[CHUNK ${i+1}]\n${c}`).join("\n\n");
   
-  const fullPrompt = `You are a precision filter for a retrieval-augmented generation system.
-Your job is to read the provided TEXT CHUNKS and extract ONLY the exact sentences or paragraphs that are directly relevant to answering the USER PROMPT.
-CRITICAL RULES:
-1. Do NOT summarize, rewrite, or answer the prompt yourself. Just copy the exact relevant quotes.
-2. If none of the chunks contain relevant information, reply exactly with: NO_RELEVANCE.
-3. Keep the extraction as dense and short as possible.
-
-USER PROMPT: ${prompt}
+  const fullPrompt = `USER PROMPT: ${prompt}
 
 TEXT CHUNKS:
 ${context}
 
-Extract exact relevant quotes:`;
+Copy any sentences from the TEXT CHUNKS above that help answer the USER PROMPT.
+If nothing matches, say "None".
+
+Relevant parts:`;
 
   try {
     // We use the unified llm() which handles retries, fallbacks, and temperature=0.1
     const responseText = await llm(fullPrompt, 1500);
 
-    if (responseText.includes("NO_RELEVANCE") || responseText.trim().length < 10) {
+    if (responseText.includes("None") || responseText.includes("NO_RELEVANCE") || responseText.trim().length < 5) {
       return "";
     }
     
@@ -433,4 +494,3 @@ Extract exact relevant quotes:`;
     return chunks.join("\n...\n").slice(0, 2500);
   }
 }
-
