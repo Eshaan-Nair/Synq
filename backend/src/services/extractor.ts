@@ -391,3 +391,46 @@ export async function extractTriples(text: string, startIndex = 0): Promise<{ tr
   logger.success(`Extracted ${unique.length} unique triples from ${chunks.length} chunks`);
   return { triples: unique, nextIndex: chunks.length };
 }
+
+/**
+ * v1.4.4: Token Optimization via Snippet Extraction
+ * Reads raw retrieved chunks and uses the LLM to extract ONLY the exact lines
+ * relevant to the user's prompt. This prevents dumping 1500+ words of raw context
+ * into the final RAG prompt, significantly reducing token cost and hallucination risk.
+ */
+export async function extractRelevantSnippets(prompt: string, chunks: string[]): Promise<string> {
+  if (!chunks.length) return "";
+  
+  const context = chunks.map((c, i) => `[CHUNK ${i+1}]\n${c}`).join("\n\n");
+  
+  const fullPrompt = `You are a precision filter for a retrieval-augmented generation system.
+Your job is to read the provided TEXT CHUNKS and extract ONLY the exact sentences or paragraphs that are directly relevant to answering the USER PROMPT.
+CRITICAL RULES:
+1. Do NOT summarize, rewrite, or answer the prompt yourself. Just copy the exact relevant quotes.
+2. If none of the chunks contain relevant information, reply exactly with: NO_RELEVANCE.
+3. Keep the extraction as dense and short as possible.
+
+USER PROMPT: ${prompt}
+
+TEXT CHUNKS:
+${context}
+
+Extract exact relevant quotes:`;
+
+  try {
+    // We use the unified llm() which handles retries, fallbacks, and temperature=0.1
+    const responseText = await llm(fullPrompt, 1500);
+
+    if (responseText.includes("NO_RELEVANCE") || responseText.trim().length < 10) {
+      return "";
+    }
+    
+    return responseText.trim();
+  } catch (err: any) {
+    logger.warn(`[Extractor] Snippet extraction failed: ${err?.message || "Unknown error"}`);
+    if (err?.stack) console.error(err.stack);
+    // Fallback: return raw chunks up to ~2500 chars to prevent complete RAG failure
+    return chunks.join("\n...\n").slice(0, 2500);
+  }
+}
+

@@ -113,25 +113,26 @@ body {
 
 .sidebar {
   position: absolute;
-  left: 16px;
-  top: 16px;
-  bottom: 16px;
-  width: 300px;
-  border-radius: 12px;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 250px;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .sidebar-header {
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
   text-align: center;
 }
 
 .sidebar-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 900;
   letter-spacing: 0.15em;
   color: var(--text-main);
@@ -139,7 +140,7 @@ body {
 }
 
 .sidebar-subtitle {
-  font-size: 11px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
@@ -204,7 +205,7 @@ body {
 
 
 .session-item {
-  padding: 14px 16px;
+  padding: 10px 14px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -238,7 +239,7 @@ body {
 
 .session-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
@@ -259,7 +260,7 @@ body {
 }
 
 .session-meta {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   display: flex;
   justify-content: space-between;
@@ -273,11 +274,12 @@ body {
 
 .top-header {
   position: absolute;
-  top: 16px;
-  left: 332px;
-  right: 16px;
-  height: 56px;
-  border-radius: 12px;
+  top: 0;
+  left: 250px;
+  right: 0;
+  height: 44px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -291,13 +293,13 @@ body {
 
 .header-project-name {
   color: var(--text-main);
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .header-meta {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 12px;
   margin-left: 14px;
 }
 
@@ -306,8 +308,8 @@ body {
   color: var(--text-main);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: 6px 12px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -328,7 +330,7 @@ body {
 .header-stats {
   display: flex;
   gap: 20px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
   align-items: center;
 }
@@ -339,7 +341,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   cursor: pointer;
   text-transform: uppercase;
@@ -355,7 +357,7 @@ body {
 
 .unified-action-bar {
   position: absolute;
-  top: 88px;
+  top: 60px;
   right: 16px;
   border-radius: 12px;
   display: flex;
@@ -376,11 +378,11 @@ body {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   transition: all 0.2s;
@@ -400,11 +402,12 @@ body {
 
 .floating-side-content {
   position: absolute;
-  top: 144px;
-  right: 16px;
-  bottom: 16px;
+  top: 44px;
+  right: 0;
+  bottom: 0;
   width: 400px;
-  border-radius: 12px;
+  border-radius: 0;
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -476,16 +479,16 @@ body {
 
 .job-status-bar {
   position: absolute;
-  top: 88px;
-  left: 332px;
-  right: 432px; /* make room for action bar */
-  height: 48px;
+  top: 60px;
+  left: 266px;
+  right: 416px; /* make room for action bar */
+  height: 40px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   padding: 0 20px;
   gap: 12px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-main);
   z-index: 55;
   border: 1px solid var(--accent-glow);
@@ -504,7 +507,7 @@ body {
   color: var(--text-muted);
   border-radius: 6px;
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: 9px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -634,7 +637,7 @@ body {
   justify-content: center;
   gap: 16px;
   border-top: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -654,8 +657,8 @@ body {
 
 .graph-filters {
   position: absolute;
-  top: 88px;
-  left: 332px;
+  top: 60px;
+  left: 266px;
   display: flex;
   gap: 8px;
 }
@@ -667,7 +670,7 @@ body {
   color: var(--text-muted);
   padding: 6px 14px;
   border-radius: 99px;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
@@ -717,7 +720,7 @@ body {
 .history-item-type {
   color: var(--accent);
   font-weight: 800;
-  font-size: 11px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   background: var(--accent-dim);
@@ -734,7 +737,7 @@ body {
 
 .history-item-date {
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 9px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -753,8 +756,8 @@ body {
 /* Graph Overlays */
 .graph-legend {
   position: absolute;
-  top: 88px;
-  left: 332px;
+  top: 60px;
+  left: 266px;
   background: rgba(15, 17, 26, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid var(--border);
@@ -791,7 +794,7 @@ body {
 }
 
 .graph-legend-text {
-  font-size: 11px;
+  font-size: 9px;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -847,21 +850,21 @@ body {
 .graph-controls {
   position: absolute;
   bottom: 16px;
-  left: 332px;
+  left: 266px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .graph-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background: var(--surface);
   backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 18px;
+  font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
