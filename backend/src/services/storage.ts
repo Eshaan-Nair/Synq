@@ -57,6 +57,10 @@ class DockerSessionStore implements ISessionStore {
     const s = await mongoService.Session.findById(id);
     return this.mapMongoSession(s);
   }
+  async getSessionByName(projectName: string, platform: string) {
+    const s = await mongoService.Session.findOne({ projectName, platform });
+    return this.mapMongoSession(s);
+  }
   async updateSession(id: string, update: any) {
     await mongoService.Session.findByIdAndUpdate(id, update);
   }
@@ -124,6 +128,19 @@ class DockerSessionStore implements ISessionStore {
 class DockerGraphStore implements IGraphStore {
   async saveTriple(t: any) {
     await neo4jService.saveTriple(t.subject, t.subjectType, t.relation, t.object, t.objectType, t.sessionId);
+  }
+  async getTripleCountBySession(sessionId: string) {
+    const d = neo4jService.getDriver();
+    const session = d.session();
+    try {
+      const res = await session.run(
+        "MATCH (:Entity)-[r:RELATION {sessionId: $sessionId}]->(:Entity) RETURN count(r) as count",
+        { sessionId }
+      );
+      return res.records[0].get("count").toInt();
+    } finally {
+      await session.close();
+    }
   }
   async getTriplesBySession(sessionId: string) {
     const triples = await neo4jService.getTriplesBySession(sessionId);

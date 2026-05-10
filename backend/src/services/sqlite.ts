@@ -104,6 +104,7 @@ function createTables() {
     )
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_facts_session ON facts(sessionId)");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_facts_unique ON facts(sessionId, subject, relation, object)");
 
   // Vectors (RAG)
   // sqlite-vec uses virtual tables for vector search

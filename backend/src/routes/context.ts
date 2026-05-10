@@ -90,6 +90,14 @@ router.post("/session", async (req: Request, res: Response) => {
       }
       res.json({ sessionId: updated._id, projectName: updated.projectName });
     } else {
+      // SMART REUSE: Check if a session with this name already exists for this platform
+      const existing = await sessionStore.getSessionByName(projectName.trim(), platform || "unknown");
+      if (existing) {
+        logger.info(`Reusing existing session found by name: ${projectName} (${existing._id})`);
+        res.json({ sessionId: existing._id, projectName: existing.projectName });
+        return;
+      }
+
       const session = await sessionStore.createSession(projectName.trim(), platform || "unknown");
       res.json({ sessionId: session._id, projectName });
     }

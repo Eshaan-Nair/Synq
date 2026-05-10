@@ -55,6 +55,7 @@ export interface ISessionStore {
   createSession(projectName: string, platform: string): Promise<Session>;
   getSessions(): Promise<Session[]>;
   getSession(id: string): Promise<Session | null>;
+  getSessionByName(projectName: string, platform: string): Promise<Session | null>;
   updateSession(id: string, update: Partial<Session>): Promise<void>;
   deleteSession(id: string): Promise<void>;
   
@@ -78,6 +79,7 @@ export interface ISessionStore {
 
 export interface IGraphStore {
   saveTriple(triple: Triple): Promise<void>;
+  getTripleCountBySession(sessionId: string): Promise<number>;
   getTriplesBySession(sessionId: string): Promise<Triple[]>;
   getGraphData(filters: { sessionId?: string; type?: string; relation?: string; limit?: number }): Promise<{ nodes: any[]; links: any[] }>;
   findRelatedTriples(entities: string[], sessionId: string): Promise<Triple[]>;

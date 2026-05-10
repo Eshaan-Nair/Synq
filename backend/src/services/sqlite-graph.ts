@@ -6,7 +6,7 @@ export class SqliteGraphStore implements IGraphStore {
 
   async saveTriple(triple: Triple): Promise<void> {
     this.db.prepare(`
-      INSERT INTO facts (sessionId, subject, subjectType, relation, object, objectType, timestamp)
+      INSERT OR IGNORE INTO facts (sessionId, subject, subjectType, relation, object, objectType, timestamp)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(
       triple.sessionId,
@@ -17,6 +17,11 @@ export class SqliteGraphStore implements IGraphStore {
       triple.objectType,
       triple.timestamp || new Date().toISOString()
     );
+  }
+
+  async getTripleCountBySession(sessionId: string): Promise<number> {
+    const row = this.db.prepare("SELECT COUNT(*) as count FROM facts WHERE sessionId = ?").get(sessionId) as any;
+    return row?.count || 0;
   }
 
   async getTriplesBySession(sessionId: string): Promise<Triple[]> {

@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import path from "path";
@@ -15,7 +17,6 @@ import ragRoutes from "./routes/rag";
 import sessionRoutes from "./routes/session";
 import jobsRoutes from "./routes/jobs";
 
-dotenv.config();
 
 // ── #9: .env validation — fail fast with a clear message ──────────
 function validateEnv() {
@@ -107,14 +108,12 @@ app.use(helmet({ contentSecurityPolicy: false })); // CSP off — API-only serve
 const SYNQ_SECRET = process.env.SYNQ_SECRET;
 const NO_AUTH = process.env.SYNQ_NO_AUTH === "true";
 
-if (NO_AUTH) {
-  logger.warn("SYNQ_NO_AUTH=true — request auth is disabled (dev mode)");
-} else if (SYNQ_SECRET) {
+if (SYNQ_SECRET && !NO_AUTH) {
   app.use((req, res, next) => {
     // Only enforce auth on API routes. Static dashboard assets and health check are public.
     if (!req.path.startsWith("/api") || req.path === "/health") return next();
     
-    const provided = req.headers["x-synq-secret"];
+    const provided = req.headers["x-synq-secret"] || req.query.secret;
     if (provided !== SYNQ_SECRET) {
       logger.warn(`Auth failed: provided=${String(provided).slice(0, 4)}... expected=${String(SYNQ_SECRET).slice(0, 4)}...`);
       res.status(401).json({ error: "Unauthorized — invalid or missing X-SYNQ-Secret" });
@@ -124,26 +123,10 @@ if (NO_AUTH) {
   });
   logger.info("Request auth enabled (X-SYNQ-Secret) for /api/*");
 } else {
-  // Runtime fallback — generate a temporary secret to avoid locking users out
-  const crypto = require("crypto");
-  const autoSecret = crypto.randomBytes(32).toString("base64");
-  process.env.SYNQ_SECRET = autoSecret;
-  
-  logger.warn(
-    `SYNQ_SECRET not found in .env — generated a temporary one for this session. ` +
-    `Add SYNQ_SECRET=${autoSecret} to backend/.env to make it permanent.`
-  );
-
-  app.use((req, res, next) => {
-    if (!req.path.startsWith("/api") || req.path === "/health") return next();
-    
-    const provided = req.headers["x-synq-secret"];
-    if (provided !== autoSecret) {
-      res.status(401).json({ error: "Unauthorized — invalid or missing X-SYNQ-Secret" });
-      return;
-    }
-    next();
-  });
+  logger.warn("Request auth is DISABLED — anyone with access to this URL can read/write data.");
+  if (!NO_AUTH) {
+    logger.info("Tip: Set SYNQ_SECRET in backend/.env to enable authentication.");
+  }
 }
 
 // Apply global rate limit across ALL routes (200 req/min per IP)

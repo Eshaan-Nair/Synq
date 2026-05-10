@@ -23,8 +23,7 @@ const injectBtn          = document.getElementById("inject-btn")       as HTMLBu
 const detectedPlatformEl = document.getElementById("detected-platform") as HTMLElement;
 const platformDot        = document.getElementById("platform-dot")     as HTMLElement;
 const synqStatusBadge    = document.getElementById("synq-status-badge") as HTMLElement;
-const backendUrlInput    = document.getElementById("backend-url")    as HTMLInputElement;
-const synqSecretInput     = document.getElementById("synq-secret")     as HTMLInputElement;
+const projectNameInput   = document.getElementById("project-name")     as HTMLInputElement;
 
 const PLATFORM_LABELS: Record<Platform, string> = {
   claude:  "Claude (claude.ai)",
@@ -58,6 +57,39 @@ async function detectPlatformFromTab(): Promise<Platform> {
 async function getTabId(): Promise<number | null> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab?.id ?? null;
+}
+
+/**
+ * Extracts a stable "Chat ID" from platform URLs to handle URL changes
+ * (e.g. chatgpt.com/ -> chatgpt.com/c/uuid)
+ */
+function getSmartUrlKey(url: string): string {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace("www.", "");
+    
+    // ChatGPT: chatgpt.com/c/UUID
+    if (host === "chatgpt.com" && u.pathname.startsWith("/c/")) {
+      return host + u.pathname.split("/").slice(0, 3).join("/");
+    }
+    // Claude: claude.ai/chat/UUID
+    if (host === "claude.ai" && u.pathname.startsWith("/chat/")) {
+      return host + u.pathname.split("/").slice(0, 3).join("/");
+    }
+    // Gemini: gemini.google.com/app/ID
+    if (host === "gemini.google.com" && u.pathname.startsWith("/app/")) {
+      return host + u.pathname.split("/").slice(0, 3).join("/");
+    }
+    // DeepSeek: chat.deepseek.com/a/chat/s/ID
+    if (host === "chat.deepseek.com" && u.pathname.startsWith("/a/chat/s/")) {
+      return host + u.pathname.split("/").slice(0, 5).join("/");
+    }
+    
+    // Fallback: strip query params and hashes for a cleaner key
+    return host + u.pathname.replace(/\/$/, "");
+  } catch (e) {
+    return url;
+  }
 }
 
 async function isContentScriptReady(tabId: number): Promise<boolean> {
@@ -94,7 +126,7 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
 
   // Load both session and pause state, then update UI once both resolve
   const sessionPromise = new Promise<void>((resolve) => {
-    chrome.runtime.sendMessage({ type: "GET_ACTIVE_SESSION" }, (response) => {
+    chrome.runtime.sendMessage({ type: "GET_ACTIVE_SESSION" }, async (response) => {
       if (response?.activeSession) {
         showSession({
           sessionId:   response.activeSession._id as string,
@@ -102,14 +134,32 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
           tripleCount: response.activeSession.tripleCount as number,
           topicCount:  response.activeSession.topicCount  as number,
         });
+        resolve();
       } else {
-        chrome.storage.local.get("synq_session", (result) => {
-          if (result.synq_session) showSession(result.synq_session as SessionData);
+        // SMART BOOT: Check if this specific URL is already mapped to a session
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tabUrl = tab?.url || "";
+        const smartKey = getSmartUrlKey(tabUrl);
+        
+        chrome.storage.local.get(["synq_session", "synq_url_map"], (result) => {
+          const urlMap = (result.synq_url_map || {}) as Record<string, string>;
+          const mappedId = urlMap[smartKey];
+          
+          if (mappedId) {
+             // If this tab is mapped to a session, we should probably fetch it
+             // For now, let's just see if our "last known" session matches the ID
+             const lastSession = result.synq_session as SessionData;
+             if (lastSession && lastSession.sessionId === mappedId) {
+               showSession(lastSession);
+             } else {
+               // Future improvement: fetch the specific session by ID from backend
+             }
+          } else if (result.synq_session) {
+            showSession(result.synq_session as SessionData);
+          }
           resolve();
         });
-        return; // resolve is called in the nested callback
       }
-      resolve();
     });
   });
 
@@ -120,36 +170,14 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
     });
   });
 
-  const settingsPromise = new Promise<void>((resolve) => {
-    chrome.storage.local.get(["synq_backend_url", "synq_secret"], (r) => {
-      if (backendUrlInput) backendUrlInput.value = String(r.synq_backend_url || "");
-      if (synqSecretInput)  synqSecretInput.value  = String(r.synq_secret || "");
-      resolve();
-    });
-  });
-
   // Wait for all, then update the UI
-  await Promise.all([sessionPromise, pausePromise, settingsPromise]);
+  await Promise.all([sessionPromise, pausePromise]);
   pauseToggleBtn.disabled = false; // Always allow pausing/resuming
   updatePauseUI();
 })();
 
-// ── Settings ──────────────────────────────────────────────────────
-if (backendUrlInput && synqSecretInput) {
-  backendUrlInput.addEventListener("input", () => {
-    const val = backendUrlInput.value.trim();
-    chrome.storage.local.set({ synq_backend_url: val });
-  });
-
-  synqSecretInput.addEventListener("input", () => {
-    const val = synqSecretInput.value.trim();
-    chrome.storage.local.set({ synq_secret: val });
-  });
-}
-
 // ── Save Chat ─────────────────────────────────────────────────────
 saveBtn.addEventListener("click", async () => {
-  const projectNameInput = document.getElementById("project-name") as HTMLInputElement;
   const projectName = projectNameInput.value.trim();
   if (!projectName) { setStatus("⚠ Enter a session name first", "error"); return; }
 
@@ -174,23 +202,28 @@ saveBtn.addEventListener("click", async () => {
   // Step 1: Create or update session from popup → background
   setStatus("Creating session...");
   
-  // Check if we already have a session for this specific URL
+  // Check if we already have a session for this specific URL or currently loaded
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const tabUrl = activeTab?.url || "";
+  const smartKey = getSmartUrlKey(tabUrl);
   let existingSessionId: string | undefined;
   
   if (tabUrl) {
     const result = await chrome.storage.local.get("synq_url_map");
     const urlMap = (result.synq_url_map || {}) as Record<string, string>;
-    existingSessionId = urlMap[tabUrl];
-    if (existingSessionId) {
-      console.log(`[SYNQ popup] found existing sessionId for this URL: ${existingSessionId}`);
-    }
+    existingSessionId = urlMap[smartKey] || urlMap[tabUrl];
+  }
+
+  // FIX: Prioritise currentSessionId if it exists to prevent duplicates
+  const sessionIdToUse = currentSessionId || existingSessionId;
+  
+  if (sessionIdToUse) {
+    console.log(`[SYNQ popup] using session: ${sessionIdToUse} (current: ${!!currentSessionId}, url-mapped: ${!!existingSessionId})`);
   }
 
   const sessionResult = await new Promise<any>((resolve) => {
     chrome.runtime.sendMessage(
-      { type: "CREATE_SESSION", payload: { projectName, platform, sessionId: existingSessionId } },
+      { type: "CREATE_SESSION", payload: { projectName, platform, sessionId: sessionIdToUse } },
       (response) => {
         if (chrome.runtime.lastError) {
           resolve({ error: chrome.runtime.lastError.message });
@@ -203,19 +236,20 @@ saveBtn.addEventListener("click", async () => {
 
   if (!sessionResult?.sessionId) {
     // If we tried to update an existing session but it was deleted on the backend
-    if (sessionResult?.error === "Session not found" && existingSessionId) {
-      console.warn(`[SYNQ popup] session ${existingSessionId} not found on backend. Clearing mapping and retrying...`);
+    if (sessionResult?.error === "Session not found" && sessionIdToUse) {
+      console.warn(`[SYNQ popup] session ${sessionIdToUse} not found on backend. Clearing mapping and retrying...`);
       
-      // Clear mapping and retry creation
+      // Clear mapping and state
       if (tabUrl) {
         const urlMapResult = await chrome.storage.local.get("synq_url_map");
         const urlMap = (urlMapResult.synq_url_map || {}) as Record<string, string>;
+        delete urlMap[smartKey];
         delete urlMap[tabUrl];
         await chrome.storage.local.set({ synq_url_map: urlMap });
       }
+      currentSessionId = null;
 
-      // Recursive call to try again without existingSessionId
-      // Alternatively, we could just copy the creation logic here, but let's just trigger a second attempt
+      // Retry creation
       setStatus("Session stale, creating new one...");
       const retryResult = await new Promise<any>((resolve) => {
         chrome.runtime.sendMessage(
@@ -231,7 +265,6 @@ saveBtn.addEventListener("click", async () => {
         return;
       }
       
-      // Update sessionResult so we proceed with the new one
       sessionResult.sessionId = retryResult.sessionId;
     } else {
       saveBtn.disabled = false;
@@ -270,6 +303,8 @@ saveBtn.addEventListener("click", async () => {
         if (tabUrl) {
           chrome.storage.local.get("synq_url_map", (result) => {
             const urlMap = (result.synq_url_map || {}) as Record<string, string>;
+            urlMap[smartKey] = sessionResult.sessionId;
+            // Also map the original URL just in case
             urlMap[tabUrl] = sessionResult.sessionId;
             chrome.storage.local.set({ synq_url_map: urlMap });
           });
@@ -356,6 +391,11 @@ function showSession(data: SessionData) {
   sessionNameEl.textContent  = data.projectName   || "—";
   tripleCountEl.textContent  = String(data.tripleCount ?? "—");
   topicCountEl.textContent   = String(data.topicCount  ?? "—");
+  
+  if (projectNameInput && data.projectName) {
+    projectNameInput.value = data.projectName;
+  }
+
   if (data.sessionId) {
     currentSessionId = data.sessionId;
     unloadBtn.disabled = false;
