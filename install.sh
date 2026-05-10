@@ -7,7 +7,7 @@ set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.2 - Smart Installer"
+echo "  SYNQ v1.4.4 - Smart Installer"
 echo " ==================================="
 echo ""
 
@@ -107,11 +107,15 @@ if [ "$BACKEND_CHOICE" == "2" ]; then
         echo " ERROR: Ollama not found. Install from ollama.com first."
         exit 1
     fi
+    echo ""
     ollama pull nomic-embed-text
     ollama pull $SELECTED_MODEL
+    echo ""
+    read -p " Enter your Groq API Key for fallback (optional, press Enter to skip): " GROQ_API_KEY
 else
     echo ""
     echo " Groq selected. Backend will use Cloud API."
+    read -p " Enter your Groq API Key (get it at console.groq.com): " GROQ_API_KEY
 fi
 
 # 4. Setup .env
@@ -123,9 +127,23 @@ fi
 if [[ "$OS_TYPE" == "Darwin" ]]; then
     sed -i '' "s/GRAPH_BACKEND=.*/GRAPH_BACKEND=$GRAPH_BACKEND/" backend/.env
     sed -i '' "s/OLLAMA_MODEL=.*/OLLAMA_MODEL=$SELECTED_MODEL/" backend/.env
+    if [ -n "$GROQ_API_KEY" ]; then
+        if grep -q "GROQ_API_KEY=" backend/.env; then
+            sed -i '' "s/GROQ_API_KEY=.*/GROQ_API_KEY=$GROQ_API_KEY/" backend/.env
+        else
+            echo "GROQ_API_KEY=$GROQ_API_KEY" >> backend/.env
+        fi
+    fi
 else
     sed -i "s/GRAPH_BACKEND=.*/GRAPH_BACKEND=$GRAPH_BACKEND/" backend/.env
     sed -i "s/OLLAMA_MODEL=.*/OLLAMA_MODEL=$SELECTED_MODEL/" backend/.env
+    if [ -n "$GROQ_API_KEY" ]; then
+        if grep -q "GROQ_API_KEY=" backend/.env; then
+            sed -i "s/GROQ_API_KEY=.*/GROQ_API_KEY=$GROQ_API_KEY/" backend/.env
+        else
+            echo "GROQ_API_KEY=$GROQ_API_KEY" >> backend/.env
+        fi
+    fi
 fi
 
 # SQLite mode update

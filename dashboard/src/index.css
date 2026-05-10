@@ -888,17 +888,17 @@ body {
 .graph-settings-panel {
   position: absolute;
   bottom: 16px;
-  left: 384px;
+  left: 310px;
   background: var(--surface);
   backdrop-filter: var(--surface-blur);
   border: 1px solid var(--accent-glow);
-  border-radius: 16px;
-  padding: 20px;
-  width: 280px;
+  border-radius: 12px;
+  padding: 12px;
+  width: 220px;
   color: var(--text-main);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   box-shadow: var(--shadow-premium);
   animation: fade-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -916,11 +916,11 @@ body {
 
 .settings-title {
   font-weight: 800;
-  font-size: 12px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--accent);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .settings-row {
@@ -931,7 +931,7 @@ body {
 
 .settings-label {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -939,9 +939,9 @@ body {
   background: #0B0E14;
   color: var(--text-main);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 12px;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
   outline: none;
   cursor: pointer;
   transition: all 0.2s;

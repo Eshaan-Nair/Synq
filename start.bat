@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=synq"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.2 - Starting up
+echo   SYNQ v1.4.4 - Starting up
 echo  ===================================
 echo.
 
@@ -52,7 +52,7 @@ if "!USE_SQLITE!"=="0" (
 
 REM 3. Check Backend Status
 if "!GRAPH_BACKEND!"=="groq" (
-    echo  OK Knowledge Graph: Groq (Cloud API)
+    echo  OK Knowledge Graph: Groq ^(Cloud API^)
 ) else (
     where ollama >nul 2>&1
     if errorlevel 1 (

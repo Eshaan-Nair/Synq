@@ -364,8 +364,8 @@ export default function App() {
                   {activeSession.projectName}
                 </span>
                 <span className="header-meta">
-                  {activeSession.tripleCount} facts
-                  {activeSession.topicCount ? ` · ${activeSession.topicCount} topics` : ""}
+                  {nodes.length} nodes
+                  {" · "}{links.length} edges
                   {" · "}{activeSession.platform}
                 </span>
               </>
@@ -375,6 +375,11 @@ export default function App() {
           </div>
 
           <div className="header-right">
+            {selectedNodeId && (
+              <button className="clear-filter-btn" onClick={() => setSelectedNodeId(null)}>
+                Viewing <strong>{selectedNodeId}</strong> ✕
+              </button>
+            )}
             <div className="unified-action-bar">
               <button
                 className={`load-ext-btn ${loadedToExtension ? "success" : ""}`}
@@ -404,16 +409,6 @@ export default function App() {
               ))}
             </div>
 
-            <div className="header-stats">
-              {selectedNodeId && (
-                <button className="clear-filter-btn" onClick={() => setSelectedNodeId(null)}>
-                  Viewing <strong>{selectedNodeId}</strong> ✕
-                </button>
-              )}
-              <span>Nodes: <strong>{nodes.length}</strong></span>
-              <span>Edges: <strong>{links.length}</strong></span>
-              <span>Facts: <strong>{triples.length}</strong></span>
-            </div>
           </div>
         </div>
 

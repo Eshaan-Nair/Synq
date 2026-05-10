@@ -1,5 +1,5 @@
 /**
- * GraphView.tsx — v1.3.3
+ * GraphView.tsx — v1.4.4
  *
  * Fix: Node labels were broken in two ways:
  *
@@ -15,7 +15,7 @@
  *    semi-transparent background behind the label for readability.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
 interface Node {
@@ -97,10 +97,7 @@ const TYPE_COLORS = new Proxy(STATIC_TYPE_COLORS, {
   }
 });
 
-const COMMUNITY_COLORS = [
-  "#60A5FA", "#F87171", "#34D399", "#FBBF24", "#A78BFA",
-  "#F472B6", "#2DD4BF", "#FB923C", "#818CF8", "#A3E635"
-];
+
 
 // Short abbreviation to show INSIDE the node circle.
 // Keeps the circle clean and readable at any node size.
@@ -129,33 +126,19 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
   const [settingNodeSize, setSettingNodeSize] = useState<"normal" | "large">("normal");
   const [settingNodeLabels, setSettingNodeLabels] = useState<"always" | "hover">("hover");
   const [settingEdgeLabels, setSettingEdgeLabels] = useState<"always" | "hover">("hover");
-  const [settingTension, setSettingTension] = useState<"loose" | "tight">("tight");
-  const [settingShowCommunities, setSettingShowCommunities] = useState(false);
-  const [temporalIndex, setTemporalIndex] = useState<number | null>(null); // null means max
+  const [settingTension, setSettingTension] = useState<"loose" | "tight">("loose");
   // ── Zoom buttons ───────────────────────────────────────────────
   function zoomIn() { if (svgSelRef.current && zoomRef.current) svgSelRef.current.transition().duration(300).call(zoomRef.current.scaleBy, 1.4); }
   function zoomOut() { if (svgSelRef.current && zoomRef.current) svgSelRef.current.transition().duration(300).call(zoomRef.current.scaleBy, 0.7); }
   function zoomReset() { if (svgSelRef.current && zoomRef.current) svgSelRef.current.transition().duration(400).call(zoomRef.current.transform, d3.zoomIdentity); }
 
-  const allTimestamps = useMemo(() => {
-    return [...new Set(nodes.map(n => n.firstSeen ? new Date(n.firstSeen).getTime() : 0).filter(t => t > 0))].sort((a, b) => a - b);
-  }, [nodes]);
+
 
   useEffect(() => {
     if (!svgRef.current || nodes.length === 0) return;
 
-    // Temporal Filtering
-    const maxIndex = Math.max(0, allTimestamps.length - 1);
-    const currentIndex = temporalIndex !== null ? Math.min(temporalIndex, maxIndex) : maxIndex;
-    const currentCutoff = allTimestamps.length > 0 ? allTimestamps[currentIndex] : 0;
-
     // Deep-clone filtered data so D3's force simulation cannot mutate the React state.
-    // D3 replaces string source/target with object references in-place. If we let it
-    // mutate the original arrays, subsequent renders (e.g. slider moves) get stale
-    // node references that break link resolution in the new simulation.
-    const filteredNodes: Node[] = nodes
-      .filter(n => !n.firstSeen || new Date(n.firstSeen).getTime() <= currentCutoff)
-      .map(n => ({ ...n }));
+    const filteredNodes: Node[] = nodes.map(n => ({ ...n }));
 
     const filteredNodeIds = new Set(filteredNodes.map(n => n.id));
     const filteredLinks: Link[] = links
@@ -256,9 +239,6 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         const targetId = typeof d.target === "string" ? d.target : (d.target as any).id;
         const targetNode = filteredNodes.find(n => n.id === targetId);
         const type = targetNode?.type || "default";
-        if (settingShowCommunities && targetNode?.community) {
-          return COMMUNITY_COLORS[targetNode.community % COMMUNITY_COLORS.length];
-        }
         return TYPE_COLORS[type] || TYPE_COLORS.default;
       })
       .attr("stroke-width", 1.5)
@@ -331,12 +311,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     // Main filled circle (flat, solid color)
     nodeGroup.append("circle")
       .attr("r", d => nodeRadius(d.id))
-      .attr("fill", d => {
-        if (settingShowCommunities && d.community) {
-          return COMMUNITY_COLORS[d.community % COMMUNITY_COLORS.length];
-        }
-        return TYPE_COLORS[d.type] || TYPE_COLORS.default;
-      })
+      .attr("fill", d => TYPE_COLORS[d.type] || TYPE_COLORS.default)
       .attr("stroke", "#1A1D27")
       .attr("stroke-width", 2);
 
@@ -479,7 +454,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     linkPath.attr("opacity", 0).transition().duration(500).attr("opacity", 1);
 
     return () => { simulation.stop(); };
-  }, [nodes, links, settingNodeSize, settingTension, settingShowCommunities, temporalIndex, allTimestamps]);
+  }, [nodes, links, settingNodeSize, settingTension]);
 
   // ── Handle Visual State (Selection, Hover, Filters) ─────────────
   useEffect(() => {
@@ -624,29 +599,6 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
             </select>
           </div>
 
-          <div className="settings-divider" style={{ height: "1px", background: "var(--border)", margin: "12px 0" }} />
-          <div className="settings-subtitle" style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: "bold" }}>ADVANCED ANALYTICS</div>
-
-          <div className="settings-row">
-            <span className="settings-label">Community Clusters</span>
-            <input
-              type="checkbox"
-              checked={settingShowCommunities}
-              onChange={e => setSettingShowCommunities(e.target.checked)}
-            />
-          </div>
-
-          <div className="settings-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: "8px" }}>
-            <span className="settings-label">Temporal View (Knowledge Growth)</span>
-            <input
-              type="range"
-              min="0" max={Math.max(0, allTimestamps.length - 1)} step="1"
-              value={temporalIndex !== null ? Math.min(temporalIndex, Math.max(0, allTimestamps.length - 1)) : Math.max(0, allTimestamps.length - 1)}
-              onChange={e => setTemporalIndex(parseInt(e.target.value))}
-              style={{ width: "100%", opacity: allTimestamps.length <= 1 ? 0.3 : 1 }}
-              disabled={allTimestamps.length <= 1}
-            />
-          </div>
         </div>
       )}
 

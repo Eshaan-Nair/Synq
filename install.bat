@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=synq"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.2 - Smart Installer
+echo   SYNQ v1.4.4 - Smart Installer
 echo  ===================================
 echo.
 
@@ -72,10 +72,14 @@ set "GRAPH_BACKEND=groq"
 set "SELECTED_MODEL=llama3.1:8b"
 echo.
 echo  Groq selected. Backend will use Cloud API.
+set /p GROQ_API_KEY="Enter your Groq API Key (get it at console.groq.com): "
 goto POST_BACKEND
 
 :OLLAMA_SETUP
 set "GRAPH_BACKEND=ollama"
+echo.
+echo  Ollama selected. Backend will use Local-first RAG.
+set /p GROQ_API_KEY="Enter your Groq API Key for fallback (optional, press Enter to skip): "
 echo.
 echo  Select Ollama Model for your !VRAM_GB!GB VRAM:
 echo  [1] Llama 3.1 8b   - 8GB VRAM (Best Accuracy)
@@ -120,7 +124,7 @@ if not exist "dashboard\.env" (
 )
 
 REM Update .env with choices (PowerShell safe method)
-powershell -NoProfile -Command "$utf8 = New-Object System.Text.UTF8Encoding($false); $c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; if ('!USE_SQLITE!' -eq '1') { if ($c -match 'SYNQ_STORAGE_MODE=') { $c = $c -replace 'SYNQ_STORAGE_MODE=.*', 'SYNQ_STORAGE_MODE=sqlite' } else { $c += 'SYNQ_STORAGE_MODE=sqlite' } }; if ($c -notmatch '^SYNQ_SECRET=.') { $s = [System.Convert]::ToBase64String((1..32|%%{Get-Random -Max 256})); if ($c -match '^SYNQ_SECRET=') { $c = $c -replace '^SYNQ_SECRET=.*', \"SYNQ_SECRET=$s\" } else { $c += \"SYNQ_SECRET=$s\" }; Write-Host ' OK Generated random SYNQ_SECRET' }; [System.IO.File]::WriteAllLines('backend\.env', $c, $utf8); $s = ($c | Select-String '^SYNQ_SECRET=(.*)' | ForEach-Object { $_.Matches.Groups[1].Value }).Trim(); if ($s) { $dc = Get-Content dashboard\.env; if ($dc -match 'VITE_SYNQ_SECRET=') { $dc = $dc -replace 'VITE_SYNQ_SECRET=.*', \"VITE_SYNQ_SECRET=$s\" } else { $dc += \"VITE_SYNQ_SECRET=$s\" }; [System.IO.File]::WriteAllLines('dashboard\.env', $dc, $utf8); Write-Host ' OK Synced secret to dashboard' }"
+powershell -NoProfile -Command "$utf8 = New-Object System.Text.UTF8Encoding($false); $c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; if ('!GROQ_API_KEY!' -ne '') { if ($c -match 'GROQ_API_KEY=') { $c = $c -replace 'GROQ_API_KEY=.*', 'GROQ_API_KEY=!GROQ_API_KEY!' } else { $c += 'GROQ_API_KEY=!GROQ_API_KEY!' } }; if ('!USE_SQLITE!' -eq '1') { if ($c -match 'SYNQ_STORAGE_MODE=') { $c = $c -replace 'SYNQ_STORAGE_MODE=.*', 'SYNQ_STORAGE_MODE=sqlite' } else { $c += 'SYNQ_STORAGE_MODE=sqlite' } }; if ($c -notmatch '^SYNQ_SECRET=.') { $s = [System.Convert]::ToBase64String((1..32|%%{Get-Random -Max 256})); if ($c -match '^SYNQ_SECRET=') { $c = $c -replace '^SYNQ_SECRET=.*', \"SYNQ_SECRET=$s\" } else { $c += \"SYNQ_SECRET=$s\" }; Write-Host ' OK Generated random SYNQ_SECRET' }; [System.IO.File]::WriteAllLines('backend\.env', $c, $utf8); $s = ($c | Select-String '^SYNQ_SECRET=(.*)' | ForEach-Object { $_.Matches.Groups[1].Value }).Trim(); if ($s) { $dc = Get-Content dashboard\.env; if ($dc -match 'VITE_SYNQ_SECRET=') { $dc = $dc -replace 'VITE_SYNQ_SECRET=.*', \"VITE_SYNQ_SECRET=$s\" } else { $dc += \"VITE_SYNQ_SECRET=$s\" }; [System.IO.File]::WriteAllLines('dashboard\.env', $dc, $utf8); Write-Host ' OK Synced secret to dashboard' }"
 
 REM 6. Dependencies
 echo.

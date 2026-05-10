@@ -7,7 +7,7 @@ set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.2 - Starting up"
+echo "  SYNQ v1.4.4 - Starting up"
 echo " ==================================="
 echo ""
 
@@ -17,8 +17,8 @@ if [ ! -f "backend/.env" ]; then
     exit 1
 fi
 
-GRAPH_BACKEND=$(grep "GRAPH_BACKEND=" backend/.env | cut -d'=' -f2)
-OLLAMA_MODEL=$(grep "OLLAMA_MODEL=" backend/.env | cut -d'=' -f2)
+GRAPH_BACKEND=$(grep "GRAPH_BACKEND=" backend/.env | cut -d'=' -f2 | tr -d '\r')
+OLLAMA_MODEL=$(grep "OLLAMA_MODEL=" backend/.env | cut -d'=' -f2 | tr -d '\r')
 SYNQ_STORAGE_MODE=$(grep "SYNQ_STORAGE_MODE=" backend/.env | cut -d'=' -f2 | tr -d '\r')
 GRAPH_BACKEND=${GRAPH_BACKEND:-ollama}
 

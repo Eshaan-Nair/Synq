@@ -40,7 +40,7 @@ The SYNQ MCP server exposes your conversation memory to any MCP-compatible AI to
 
 ---
 
-## ⚡ Fast Setup (Recommended)
+## Fast Setup (Recommended)
 
 Instead of manually editing JSON files, use the configuration generator:
 
