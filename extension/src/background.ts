@@ -1,5 +1,5 @@
 /**
- * background.ts — v1.4.4
+ * background.ts — v1.4.5
  */
 
 import { SynqMessage } from "./types/messages";
@@ -36,14 +36,14 @@ async function synqFetch(path: string, options: RequestInit = {}) {
 
 const SYNQ_DEBUG = (globalThis as any).__synq_debug === true;
 const log = {
-  info:  (...args: any[]) => SYNQ_DEBUG && console.log("[SYNQ bg]", ...args),
-  warn:  (msg: string) => console.warn(`[SYNQ bg] ${msg}`),
+  info: (...args: any[]) => SYNQ_DEBUG && console.log("[SYNQ bg]", ...args),
+  warn: (msg: string) => console.warn(`[SYNQ bg] ${msg}`),
   error: (msg: string) => console.error(`[SYNQ bg] ${msg}`),
 };
 
 chrome.runtime.onMessage.addListener((message: SynqMessage, _sender, sendResponse) => {
   log.info(`[SYNQ bg] received: ${message.type}`);
-  
+
   switch (message.type) {
     case "INGEST_TEXT":
       handleIngest(message.payload).then(sendResponse);
@@ -123,9 +123,9 @@ async function handleRAGRetrieve(payload: {
     const res = await synqFetch("/api/rag/retrieve", {
       method: "POST",
       body: JSON.stringify({
-        prompt:    payload.prompt,
+        prompt: payload.prompt,
         sessionId: payload.sessionId,
-        topN:      payload.topN ?? 3,  // default 3 — sliding window chunks need more context
+        topN: payload.topN ?? 3,  // default 3 — sliding window chunks need more context
       }),
     });
     if (!res.ok) {
@@ -175,11 +175,11 @@ async function handleGetActiveSession() {
     const data = await res.json();
     if (data.activeSession) {
       const sessionData = {
-        sessionId:   data.activeSession._id,
+        sessionId: data.activeSession._id,
         projectName: data.activeSession.projectName,
         tripleCount: data.activeSession.tripleCount ?? 0,
-        topicCount:  data.activeSession.topicCount  ?? 0,
-        platform:    data.activeSession.platform,
+        topicCount: data.activeSession.topicCount ?? 0,
+        platform: data.activeSession.platform,
       };
       await chrome.storage.local.set({ synq_session: sessionData });
     } else {
@@ -209,7 +209,7 @@ async function handleCreateSession(payload: { projectName: string; platform: str
     log.info(`[SYNQ bg] session created: ${data.sessionId}`);
     await chrome.storage.local.set({ synq_session: data });
     // Auto-set as active so other tabs pick it up via GET_ACTIVE_SESSION
-    await handleSetActiveSession(data.sessionId).catch(() => {});
+    await handleSetActiveSession(data.sessionId).catch(() => { });
     // Broadcast new session to all open AI platform tabs so they update immediately
     broadcastSessionChanged(data.sessionId, data.projectName);
     return data;
@@ -299,7 +299,7 @@ async function handleTogglePause() {
   const result = await chrome.storage.local.get("synq_paused");
   const newState = result.synq_paused !== true;
   await chrome.storage.local.set({ synq_paused: newState });
-  
+
   // Broadcast to all tabs so they update their badge and detached state
   const type = newState ? "PAUSE_SYNQ" : "RESUME_SYNQ";
   const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*", "*://*.deepseek.com/*"];

@@ -25,9 +25,9 @@ router.get("/export/:id", async (req: Request, res: Response) => {
 
     const fullChat = await sessionStore.getFullChat(sessionId);
     const facts = await graphStore.getTriplesBySession(sessionId);
-    
+
     const exportData = {
-      version: "1.4.4",
+      version: "1.4.5",
       timestamp: new Date().toISOString(),
       session,
       fullChat,
@@ -54,7 +54,7 @@ router.post("/import", async (req: Request, res: Response) => {
 
   try {
     const { session, fullChat, facts } = data;
-    
+
     // 1. Create session
     const newSession = await sessionStore.createSession(session.projectName, session.platform);
     const newId = newSession._id;

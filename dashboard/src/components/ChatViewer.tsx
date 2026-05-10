@@ -1,5 +1,5 @@
 /**
- * ChatViewer.tsx — v1.4.4
+ * ChatViewer.tsx — v1.4.5
  *
  * Displays the full saved conversation as a scrollable chat view.
  * Each [User] and [Assistant] turn is styled differently.
@@ -15,16 +15,16 @@ interface Props {
 }
 
 const C = {
-  indigo:  "#818CF8",
-  cyan:    "#6366F1",
-  mint:    "#10B981",
-  cream:   "#F1F5F9",
+  indigo: "#818CF8",
+  cyan: "#6366F1",
+  mint: "#10B981",
+  cream: "#F1F5F9",
   surface: "#1A1D27",
-  border:  "rgba(255, 255, 255, 0.08)",
-  muted:   "#CBD5E1",
-  dim:     "#64748B",
-  bg:      "#0B0E14",
-  userBg:  "rgba(129, 140, 248, 0.18)",
+  border: "rgba(255, 255, 255, 0.08)",
+  muted: "#CBD5E1",
+  dim: "#64748B",
+  bg: "#0B0E14",
+  userBg: "rgba(129, 140, 248, 0.18)",
   userBorder: "rgba(129, 140, 248, 0.35)",
   asstBg: "rgba(99, 102, 241, 0.14)",
   asstBorder: "rgba(99, 102, 241, 0.25)",

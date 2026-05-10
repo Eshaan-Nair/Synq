@@ -169,7 +169,7 @@ export default function App() {
               if (activeSession) loadSession(activeSession);
             }
           }
-        } catch {}
+        } catch { }
       };
       poll();
       timer = setInterval(poll, 3000);
@@ -184,7 +184,7 @@ export default function App() {
       await apiClient.post("/api/jobs/clear");
       setJobStatus({ pending: 0, processing: 0, deadLettered: 0 });
       loadSessions();
-    } catch {}
+    } catch { }
   };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,7 +222,7 @@ export default function App() {
     loadSessions();
     const interval = setInterval(() => {
       if (!document.hidden) loadSessions();
-    }, 5000); // v1.4.2+: Poll every 5s for job status
+    }, 5000); // v1.4.5+: Poll every 5s for job status
     return () => clearInterval(interval);
   }, [loadSessions]);
 
@@ -291,7 +291,7 @@ export default function App() {
                   <line x1="3" y1="9" x2="21" y2="9"></line>
                   <line x1="9" y1="21" x2="9" y2="9"></line>
                 </svg>
-                <span>No sessions found.<br/>Capture context using the extension to get started.</span>
+                <span>No sessions found.<br />Capture context using the extension to get started.</span>
               </div>
             ) : (
               <>
@@ -309,47 +309,47 @@ export default function App() {
                 </div>
                 {filteredSessions.map((s) => {
                   const isActive = activeSession?._id === s._id;
-                return (
-                  <div
-                    key={s._id}
-                    className={`session-item ${isActive ? "active" : ""}`}
-                    onClick={() => loadSession(s)}
-                  >
-                    <div className="session-header">
-                      <div className="session-name">{s.projectName}</div>
-                      {s.isProcessingGraph && (
-                        <span className="processing-indicator" title="Graph extraction in progress...">
-                          <span className="processing-dot"></span>
-                          Updating...
-                        </span>
-                      )}
-                      <div className="session-actions">
-                        <button
-                          className="action-btn export-btn"
-                          onClick={(e) => { e.stopPropagation(); exportSession(s._id); }}
-                          title="Export session"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        </button>
-                        <button
-                          className="action-btn delete-btn"
-                          onClick={(e) => handleDelete(e, s._id)}
-                          title="Delete session"
-                        >
-                          {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
-                        </button>
+                  return (
+                    <div
+                      key={s._id}
+                      className={`session-item ${isActive ? "active" : ""}`}
+                      onClick={() => loadSession(s)}
+                    >
+                      <div className="session-header">
+                        <div className="session-name">{s.projectName}</div>
+                        {s.isProcessingGraph && (
+                          <span className="processing-indicator" title="Graph extraction in progress...">
+                            <span className="processing-dot"></span>
+                            Updating...
+                          </span>
+                        )}
+                        <div className="session-actions">
+                          <button
+                            className="action-btn export-btn"
+                            onClick={(e) => { e.stopPropagation(); exportSession(s._id); }}
+                            title="Export session"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                          </button>
+                          <button
+                            className="action-btn delete-btn"
+                            onClick={(e) => handleDelete(e, s._id)}
+                            title="Delete session"
+                          >
+                            {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="session-meta">
+                        <div className="session-stats">
+                          <span><strong>{s.tripleCount}</strong> facts</span>
+                          {s.topicCount ? <span><strong>{s.topicCount}</strong> topics</span> : null}
+                        </div>
+                        <span className="session-date">{new Date(s.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                       </div>
                     </div>
-                    <div className="session-meta">
-                      <div className="session-stats">
-                        <span><strong>{s.tripleCount}</strong> facts</span>
-                        {s.topicCount ? <span><strong>{s.topicCount}</strong> topics</span> : null}
-                      </div>
-                      <span className="session-date">{new Date(s.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
               </>
             )}
           </div>
@@ -461,55 +461,55 @@ export default function App() {
               {activeTab === "history" && (
                 <div className="history-tab-container">
                   <div className="history-list">
-                  {loadingSession ? (
-                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {["90%", "75%", "85%", "60%", "80%"].map((w, i) => (
-                        <div key={i} className="skeleton-box skeleton-pulse" style={{ height: 64, width: w, borderRadius: "12px", animationDelay: `${i * 0.12}s` }} />
-                      ))}
-                    </div>
-                  ) : triples.length === 0 ? (
-                    <div className="empty-state" style={{ height: "100%", flexDirection: "column" }}>
-                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.1, marginBottom: "16px" }}>
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                      </svg>
-                      No facts captured for this session.
-                    </div>
-                  ) : (
-
-                    <>
-                      {[...pagedTriples]
-                        .reverse()
-                        .map((t, i) => (
-                          <div key={i} className="history-item">
-                            <div className="history-item-subject">
-                              <span className="history-item-type">{t.subjectType}:</span> {t.subject}{" "}
-                              <span className="history-item-relation">—[{t.relation}]→</span>{" "}
-                              <span className="history-item-type">{t.objectType}:</span> {t.object}
-                            </div>
-                            <div className="history-item-date">
-                              {new Date(t.timestamp).toLocaleString()}
-                            </div>
-                          </div>
+                    {loadingSession ? (
+                      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {["90%", "75%", "85%", "60%", "80%"].map((w, i) => (
+                          <div key={i} className="skeleton-box skeleton-pulse" style={{ height: 64, width: w, borderRadius: "12px", animationDelay: `${i * 0.12}s` }} />
                         ))}
-                    </>
-                  )}
-                  {totalPages > 1 && (
-                    <div className="pagination">
-                      <button 
-                        disabled={factsPage === 0} 
-                        onClick={() => setFactsPage(p => p - 1)}
-                      >Prev</button>
-                      <span>Page {factsPage + 1} of {totalPages}</span>
-                      <button 
-                        disabled={factsPage >= totalPages - 1} 
-                        onClick={() => setFactsPage(p => p + 1)}
-                      >Next</button>
-                    </div>
-                  )}
+                      </div>
+                    ) : triples.length === 0 ? (
+                      <div className="empty-state" style={{ height: "100%", flexDirection: "column" }}>
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.1, marginBottom: "16px" }}>
+                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        No facts captured for this session.
+                      </div>
+                    ) : (
+
+                      <>
+                        {[...pagedTriples]
+                          .reverse()
+                          .map((t, i) => (
+                            <div key={i} className="history-item">
+                              <div className="history-item-subject">
+                                <span className="history-item-type">{t.subjectType}:</span> {t.subject}{" "}
+                                <span className="history-item-relation">—[{t.relation}]→</span>{" "}
+                                <span className="history-item-type">{t.objectType}:</span> {t.object}
+                              </div>
+                              <div className="history-item-date">
+                                {new Date(t.timestamp).toLocaleString()}
+                              </div>
+                            </div>
+                          ))}
+                      </>
+                    )}
+                    {totalPages > 1 && (
+                      <div className="pagination">
+                        <button
+                          disabled={factsPage === 0}
+                          onClick={() => setFactsPage(p => p - 1)}
+                        >Prev</button>
+                        <span>Page {factsPage + 1} of {totalPages}</span>
+                        <button
+                          disabled={factsPage >= totalPages - 1}
+                          onClick={() => setFactsPage(p => p + 1)}
+                        >Next</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
               {/* Chat tab */}
               {activeTab === "chat" && (

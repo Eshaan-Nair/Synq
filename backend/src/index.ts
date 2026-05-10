@@ -21,14 +21,14 @@ import jobsRoutes from "./routes/jobs";
 // ── #9: .env validation — fail fast with a clear message ──────────
 function validateEnv() {
   const STORAGE_MODE = (process.env.SYNQ_STORAGE_MODE || "docker").toLowerCase();
-  
+
   if (STORAGE_MODE === "docker") {
     // NEO4J, MONGO are only required in Docker mode
     const required: Record<string, string> = {
-      NEO4J_URI:      "e.g. bolt://localhost:7687",
-      NEO4J_USER:     "e.g. neo4j",
+      NEO4J_URI: "e.g. bolt://localhost:7687",
+      NEO4J_USER: "e.g. neo4j",
       NEO4J_PASSWORD: "Set in backend/.env",
-      MONGO_URI:      "e.g. mongodb://user:pass@localhost:27017/synqdb",
+      MONGO_URI: "e.g. mongodb://user:pass@localhost:27017/synqdb",
     };
     if (process.env.GRAPH_BACKEND === "groq") {
       required["GROQ_API_KEY"] = "Get a free key at https://console.groq.com";
@@ -56,9 +56,9 @@ const PORT = process.env.PORT || 3001;
 // Body parser — MUST be before routes. Raised limit for large chat saves.
 app.use(express.json({ limit: "5mb" }));
 // Issue #3 Fix: Restrict CORS to trusted origins only
-// v1.4.2: Added localhost:3001 — dashboard is now served from the same port as the API
+// v1.4.5: Added localhost:3001 — dashboard is now served from the same port as the API
 const ALLOWED_ORIGINS = [
-  `http://localhost:${PORT}`, // Dashboard (production build — v1.4.2)
+  `http://localhost:${PORT}`, // Dashboard (production build — v1.4.5)
   "http://localhost:3001",   // Default port fallback
   "http://localhost:5173",   // Vite dashboard (dev)
   "http://localhost:5174",   // Vite dashboard (dev alt)
@@ -73,7 +73,7 @@ app.use(cors({
     if (origin.startsWith("chrome-extension://")) return callback(null, true);
     // Allow any localhost origin (with or without port)
     if (origin.includes("://localhost") || origin.includes("://127.0.0.1")) return callback(null, true);
-    
+
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
     callback(new Error(`CORS: Origin ${origin} not allowed`));
   },
@@ -112,7 +112,7 @@ if (SYNQ_SECRET && !NO_AUTH) {
   app.use((req, res, next) => {
     // Only enforce auth on API routes. Static dashboard assets and health check are public.
     if (!req.path.startsWith("/api") || req.path === "/health") return next();
-    
+
     const provided = req.headers["x-synq-secret"] || req.query.secret;
     if (provided !== SYNQ_SECRET) {
       logger.warn(`Auth failed: provided=${String(provided).slice(0, 4)}... expected=${String(SYNQ_SECRET).slice(0, 4)}...`);
@@ -145,7 +145,7 @@ app.use("/api/jobs", jobsRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "SYNQ backend running",
-    version: "1.4.4",
+    version: "1.4.5",
     services: {
       backend: "ok",
       port: PORT,
@@ -153,7 +153,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// ── v1.4.2: Serve production dashboard build via sirv ─────────────
+// ── v1.4.5: Serve production dashboard build via sirv ─────────────
 // Eliminates the separate Vite dev server process for self-hosters.
 // Falls back gracefully with a clear message if the build hasn't run yet.
 const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
@@ -177,7 +177,7 @@ if (fs.existsSync(dashboardDist)) {
 async function start() {
   try {
     await initStorage();
-    
+
     // Start background job worker for extraction tasks
     await startWorker();
   } catch (err) {

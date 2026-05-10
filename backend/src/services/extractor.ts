@@ -37,7 +37,7 @@ export function chunkText(text: string): string[] {
   return chunks;
 }
 
-// ── v1.4.2: Smart Backend Selection ───────────────────────────────
+// ── v1.4.5: Smart Backend Selection ───────────────────────────────
 //
 // Priority:
 //   1. GRAPH_BACKEND env var (explicit override — "ollama" | "groq" | "local-openai")
@@ -56,8 +56,8 @@ let resolvedBackend: "ollama" | "groq" | "local-openai" | null = null;
 async function detectBackend(): Promise<"ollama" | "groq" | "local-openai"> {
   // Explicit override takes highest priority
   const envBackend = process.env.GRAPH_BACKEND?.toLowerCase();
-  if (envBackend === "groq")         return "groq";
-  if (envBackend === "ollama")       return "ollama";
+  if (envBackend === "groq") return "groq";
+  if (envBackend === "ollama") return "ollama";
   if (envBackend === "local-openai") return "local-openai";
 
   // Auto-detect: try to reach Ollama
@@ -85,7 +85,7 @@ async function detectBackend(): Promise<"ollama" | "groq" | "local-openai"> {
           "[SYNQ] No local LLM found and GROQ_API_KEY missing. " +
           "Graph extraction disabled — install Ollama or set GROQ_API_KEY in backend/.env"
         );
-        return "groq"; 
+        return "groq";
       }
     }
   }
@@ -129,7 +129,7 @@ async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
 async function callOllama(prompt: string, maxTokens = 1000): Promise<string> {
   const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
   const model = process.env.OLLAMA_MODEL ?? "llama3.1:8b";
-  
+
   const response = await axios.post(
     `${ollamaUrl}/api/generate`,
     {
@@ -147,7 +147,7 @@ async function callOllama(prompt: string, maxTokens = 1000): Promise<string> {
 async function callLocalOpenAI(prompt: string, maxTokens = 1000): Promise<string> {
   const url = process.env.LOCAL_OPENAI_URL ?? "http://localhost:1234/v1";
   const model = process.env.LOCAL_OPENAI_MODEL ?? "loaded_model"; // LM Studio usually uses whatever is loaded
-  
+
   const response = await axios.post(
     `${url}/chat/completions`,
     {
@@ -171,7 +171,7 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
     try {
       if (attempt > 0) {
         const waitTime = attempt * 15000; // 15s, 30s, 45s...
-        logger.info(`[SYNQ] LLM call retry ${attempt}/${MAX_RETRIES} in ${waitTime/1000}s...`);
+        logger.info(`[SYNQ] LLM call retry ${attempt}/${MAX_RETRIES} in ${waitTime / 1000}s...`);
         await sleep(waitTime);
       }
 
@@ -180,10 +180,10 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
         try {
           res = await callOllama(prompt, maxTokens);
         } catch (err: any) {
-          const isDown = err.code === "ECONNREFUSED" || 
-                         err.code === "ENOTFOUND" || 
-                         err.message?.includes("ECONNREFUSED") || 
-                         err.message?.includes("connection refused");
+          const isDown = err.code === "ECONNREFUSED" ||
+            err.code === "ENOTFOUND" ||
+            err.message?.includes("ECONNREFUSED") ||
+            err.message?.includes("connection refused");
           if (isDown && process.env.GROQ_API_KEY) {
             logger.warn(`[SYNQ] Ollama unreachable — falling back to Groq.`);
             res = await callGroq(prompt, maxTokens);
@@ -195,10 +195,10 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
         try {
           res = await callLocalOpenAI(prompt, maxTokens);
         } catch (err: any) {
-          const isDown = err.code === "ECONNREFUSED" || 
-                         err.code === "ENOTFOUND" || 
-                         err.message?.includes("ECONNREFUSED") || 
-                         err.message?.includes("connection refused");
+          const isDown = err.code === "ECONNREFUSED" ||
+            err.code === "ENOTFOUND" ||
+            err.message?.includes("ECONNREFUSED") ||
+            err.message?.includes("connection refused");
           if (isDown && process.env.GROQ_API_KEY) {
             logger.warn(`[SYNQ] Local OpenAI unreachable — falling back to Groq.`);
             res = await callGroq(prompt, maxTokens);
@@ -217,18 +217,18 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
     } catch (err: any) {
       lastErr = err;
       const isRateLimit = err?.response?.status === 429 || err?.message?.includes("429");
-      const isTimeout   = err.code === "ECONNABORTED" || err.message?.includes("timeout");
+      const isTimeout = err.code === "ECONNABORTED" || err.message?.includes("timeout");
       const isBadFormat = err?.message?.includes("JSON") || err?.message?.includes("formatting");
-      
+
       if ((isRateLimit || isTimeout || isBadFormat) && attempt < MAX_RETRIES) {
-        if (isTimeout)   logger.warn(`[SYNQ] LLM timeout (attempt ${attempt+1}). Model might be loading or hardware is slow.`);
+        if (isTimeout) logger.warn(`[SYNQ] LLM timeout (attempt ${attempt + 1}). Model might be loading or hardware is slow.`);
         if (isBadFormat) logger.warn("[SYNQ] Model returned malformed data. Retrying...");
-        continue; 
+        continue;
       }
-      
+
       // Permanent failure
       logger.error(`[SYNQ] LLM call failed permanently: ${err.message}`);
-      throw err; 
+      throw err;
     }
   }
   throw lastErr;
@@ -292,7 +292,7 @@ Entities:`;
   try {
     const raw = await llm(prompt, 100);
     if (!raw || raw.toLowerCase().includes("none")) return [];
-    
+
     // 1. Try to parse as JSON first
     try {
       const start = raw.indexOf("[");
@@ -314,10 +314,10 @@ Entities:`;
       .split(",")
       .map(e => e.trim())
       .filter(e => {
-        return e.length > 0 && 
-               e.length < 50 && 
-               e.toLowerCase() !== "none" &&
-               !e.toLowerCase().includes("not json");
+        return e.length > 0 &&
+          e.length < 50 &&
+          e.toLowerCase() !== "none" &&
+          !e.toLowerCase().includes("not json");
       });
   } catch (err) {
     logger.warn(`[SYNQ] Entity extraction failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -375,15 +375,15 @@ ${summary}
 Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
 
   const raw = await llm(prompt, 1500);
-  
+
   // More robust JSON extraction: find the first '[' and last ']'
   const start = raw.indexOf("[");
-  const end   = raw.lastIndexOf("]");
-  
+  const end = raw.lastIndexOf("]");
+
   if (start === -1 || end === -1) {
     throw new Error("Bad formatting: No JSON array found in model output");
   }
-  
+
   const clean = raw.slice(start, end + 1).trim();
   try {
     return JSON.parse(clean) as Triple[];
@@ -435,15 +435,15 @@ export async function extractTriples(text: string, startIndex = 0): Promise<{ tr
       logger.info(`  chunk ${i + 1}/${chunks.length} — summarizing...`);
 
       const summary = await summarizeChunk(chunks[i]);
-      
+
       // Delay to stay under Groq TPM limit
       await sleep(3000);
-      
+
       const triples = await extractTriplesFromSummary(summary);
       allTriples.push(...triples);
 
       logger.info(`  chunk ${i + 1} → ${triples.length} triples`);
-      
+
       // Delay before next chunk
       if (i < chunks.length - 1) await sleep(2000);
     } catch (err: any) {
@@ -465,16 +465,16 @@ export async function extractTriples(text: string, startIndex = 0): Promise<{ tr
 }
 
 /**
- * v1.4.4: Token Optimization via Snippet Extraction
+ * v1.4.5: Token Optimization via Snippet Extraction
  * Reads raw retrieved chunks and uses the LLM to extract ONLY the exact lines
  * relevant to the user's prompt. This prevents dumping 1500+ words of raw context
  * into the final RAG prompt, significantly reducing token cost and hallucination risk.
  */
 export async function extractRelevantSnippets(prompt: string, chunks: string[]): Promise<string> {
   if (!chunks.length) return "";
-  
-  const context = chunks.map((c, i) => `[CHUNK ${i+1}]\n${c}`).join("\n\n");
-  
+
+  const context = chunks.map((c, i) => `[CHUNK ${i + 1}]\n${c}`).join("\n\n");
+
   const fullPrompt = `USER PROMPT: ${prompt}
 
 TEXT CHUNKS:
@@ -492,7 +492,7 @@ Relevant parts:`;
     if (responseText.includes("None") || responseText.includes("NO_RELEVANCE") || responseText.trim().length < 5) {
       return "";
     }
-    
+
     return responseText.trim();
   } catch (err: any) {
     logger.warn(`[Extractor] Snippet extraction failed: ${err?.message || "Unknown error"}`);

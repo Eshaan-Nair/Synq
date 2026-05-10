@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SYNQ - Context Sovereignty Engine",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "Persistent memory layer for AI chats",
   "permissions": [
     "storage",
@@ -32,7 +32,9 @@
         "https://copilot.microsoft.com/*",
         "https://chat.mistral.ai/*"
       ],
-      "js": ["dist/content.js"],
+      "js": [
+        "dist/content.js"
+      ],
       "run_at": "document_idle"
     }
   ],

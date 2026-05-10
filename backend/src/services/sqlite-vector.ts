@@ -37,7 +37,7 @@ export class SqliteVectorStore implements IVectorStore {
     const queryEmbedding = await generateEmbedding(query);
     const vector = Buffer.from(new Float32Array(queryEmbedding).buffer);
 
-    // v1.4.4: Full query with Session ID filtering and Time-based Decay
+    // v1.4.5: Full query with Session ID filtering and Time-based Decay
     const rows = this.db.prepare(`
       SELECT 
         m.content,
@@ -59,7 +59,7 @@ export class SqliteVectorStore implements IVectorStore {
         const lastUpdate = new Date(row.updatedAt || row.createdAt || new Date()).getTime();
         const daysOld = (Date.now() - lastUpdate) / (1000 * 60 * 60 * 24);
         const decayFactor = 1.0 - Math.min(0.3, (daysOld / 180) * 0.3);
-        
+
         return {
           content: row.content,
           chunkIndex: row.chunkIndex,
@@ -95,7 +95,7 @@ export class SqliteVectorStore implements IVectorStore {
         const lastUpdate = new Date(row.updatedAt || row.createdAt || new Date()).getTime();
         const daysOld = (Date.now() - lastUpdate) / (1000 * 60 * 60 * 24);
         const decayFactor = 1.0 - Math.min(0.3, (daysOld / 180) * 0.3);
-        
+
         return {
           content: row.content,
           chunkIndex: row.chunkIndex,

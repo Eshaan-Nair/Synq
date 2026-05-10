@@ -14,7 +14,7 @@ import { logger } from "../src/utils/logger";
 
 async function runBenchmark() {
   logger.info("🚀 Starting RAG Benchmark...");
-  
+
   initSqlite();
   const vectorStore = new SqliteVectorStore();
   const graphStore = new SqliteGraphStore();
@@ -50,7 +50,7 @@ async function runBenchmark() {
   const db = (initSqlite as any).db || (require("../src/services/sqlite").getSqlite());
   console.log("Metadata Count:", db.prepare("SELECT count(*) as count FROM chunk_metadata").get().count);
   console.log("Vector Count:", db.prepare("SELECT count(*) as count FROM vec_chunks").get().count);
-  
+
   const storedSession = db.prepare("SELECT id FROM sessions LIMIT 1").get();
   const storedMeta = db.prepare("SELECT sessionId FROM chunk_metadata LIMIT 1").get();
   console.log("Bench SessionID:", sessionId);
@@ -96,7 +96,7 @@ async function runBenchmark() {
     if (rank > 0) {
       totalReciprocalRank += (1 / rank);
     }
-    
+
     logger.info(`Query: "${query.q}"`);
     logger.info(`  Top Match: ${topResult ? `Index ${topResult.chunkIndex} (Score: ${topResult.score.toFixed(4)})` : "NONE"}`);
     if (topResult) logger.info(`  Content: ${topResult.content.slice(0, 50)}...`);
@@ -106,7 +106,7 @@ async function runBenchmark() {
   const mrr = totalReciprocalRank / queries.length;
 
   console.log("\n" + "=".repeat(40));
-  console.log("📊 BENCHMARK RESULTS (v1.4.4)");
+  console.log("📊 BENCHMARK RESULTS (v1.4.5)");
   console.log("=".repeat(40));
   console.log(`Hit Rate @ 1:  ${hitRate.toFixed(2)}%`);
   console.log(`MRR:           ${mrr.toFixed(4)}`);
