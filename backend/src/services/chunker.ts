@@ -19,14 +19,14 @@ export interface WindowChunk {
  *
  * @param text        Full raw chat text (already PII-scrubbed)
  * @param sessionId   MongoDB session ID — used to generate deterministic chunk IDs
- * @param windowWords Number of words per chunk (default 300 ≈ ~400 tokens)
- * @param overlapWords Words shared between adjacent chunks (default 80)
+ * @param windowWords Number of words per chunk (default 450 ≈ ~600 tokens)
+ * @param overlapWords Words shared between adjacent chunks (default 100)
  */
 export function slidingWindowChunks(
   text: string,
   sessionId: string,
-  windowWords = 300,
-  overlapWords = 80,
+  windowWords = 450,
+  overlapWords = 100,
 ): WindowChunk[] {
   const words = text.split(/\s+/).filter(Boolean);
 

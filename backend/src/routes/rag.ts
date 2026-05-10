@@ -9,7 +9,7 @@
 
 import { Router, Request, Response } from "express";
 import { vectorStore, graphStore, RetrievedChunk } from "../services/storage";
-import { extractEntitiesFromQuery } from "../services/extractor";
+import { extractEntitiesFromQuery, extractRelevantSnippets } from "../services/extractor";
 import { logger } from "../utils/logger";
 import { wrapInContextBlock, sanitizeChunks } from "../middleware/sanitize";
 import { isValidObjectId } from "../utils/validators";
@@ -73,8 +73,13 @@ router.post("/retrieve", async (req: Request, res: Response) => {
     // Sanitise (redact injection patterns) then wrap in XML delimiters
     const sanitized = sanitizeChunks(safeChunks);
     
-    // Merge graph knowledge into the context block
-    let contextBlock = wrapInContextBlock(sanitized);
+    // v1.4.4: Snippet Extraction
+    const rawContent = sanitized.map(c => c.content);
+    const snippetContext = await extractRelevantSnippets(String(prompt), rawContent);
+    
+    let contextBlock = snippetContext 
+      ? `<synq_extracted_snippets>\n${snippetContext}\n</synq_extracted_snippets>`
+      : wrapInContextBlock(sanitized);
     if (relatedTriples.length > 0) {
       const graphText = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`).join("\n");
       contextBlock = `<synq_graph_knowledge>\n${graphText}\n</synq_graph_knowledge>\n\n${contextBlock}`;
@@ -131,7 +136,14 @@ router.post("/global", async (req: Request, res: Response) => {
 
     // Sanitise and wrap
     const sanitized = sanitizeChunks(safeChunks);
-    const contextBlock = wrapInContextBlock(sanitized);
+    
+    // v1.4.4: Snippet Extraction
+    const rawContent = sanitized.map(c => c.content);
+    const snippetContext = await extractRelevantSnippets(String(prompt), rawContent);
+    
+    const contextBlock = snippetContext 
+      ? `<synq_extracted_snippets>\n${snippetContext}\n</synq_extracted_snippets>`
+      : wrapInContextBlock(sanitized);
 
     logger.success(`RAG Global: Budget filled (${currentChars}/${MAX_TOTAL_CHARS} chars). ${sanitized.length} chunks used.`);
 

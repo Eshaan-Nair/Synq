@@ -4,54 +4,62 @@ import { SqliteVectorStore } from "../sqlite-vector";
 import { initSqlite, getSqlite } from "../sqlite";
 import * as embeddings from "../embeddings";
 
-// Mock uuid to avoid ESM issues
+let uuidCounter = 0;
 jest.mock("uuid", () => ({
-  v4: () => "test-uuid-123"
+  v4: () => `test-uuid-${++uuidCounter}`
 }));
 
 // Mock the embeddings service to avoid external API calls
 jest.mock("../embeddings", () => ({
-  generateEmbedding: jest.fn().mockResolvedValue(new Array(384).fill(0.1)),
-  generateEmbeddings: jest.fn().mockResolvedValue([new Array(384).fill(0.1)])
+  generateEmbedding: jest.fn().mockResolvedValue(new Array(768).fill(0.1)),
+  generateEmbeddings: jest.fn().mockResolvedValue([new Array(768).fill(0.1)])
 }));
 
 describe("SQLite Storage Layer", () => {
   let db: any;
+  let sessionStore: SqliteSessionStore;
+  let graphStore: SqliteGraphStore;
+  let vectorStore: SqliteVectorStore;
 
   beforeAll(() => {
-    // Force in-memory DB for tests
-    process.env.SQLITE_DB_PATH = ":memory:";
+    process.env.SQLITE_DB_PATH = "test.db";
     initSqlite();
     db = getSqlite();
+    sessionStore = new SqliteSessionStore();
+    graphStore = new SqliteGraphStore();
+    vectorStore = new SqliteVectorStore();
   });
 
   describe("SqliteSessionStore", () => {
-    const store = new SqliteSessionStore();
     let sessionId: string;
 
     it("should create a new session", async () => {
-      const session = await store.createSession("Test Project", "chrome");
+      const session = await sessionStore.createSession("Test Project", "chrome");
       expect(session.projectName).toBe("Test Project");
       expect(session._id).toBeDefined();
       sessionId = session._id;
     });
 
     it("should retrieve sessions", async () => {
-      const sessions = await store.getSessions();
+      const sessions = await sessionStore.getSessions();
       expect(sessions.length).toBeGreaterThan(0);
       expect(sessions[0].projectName).toBe("Test Project");
     });
 
     it("should handle active session state", async () => {
-      await store.setActiveSessionId(sessionId);
-      const active = await store.getActiveSessionId();
+      await sessionStore.setActiveSessionId(sessionId);
+      const active = await sessionStore.getActiveSessionId();
       expect(active).toBe(sessionId);
     });
   });
 
   describe("SqliteGraphStore", () => {
-    const store = new SqliteGraphStore();
-    const testSession = "test-session-123";
+    let testSessionId: string;
+
+    beforeAll(async () => {
+        const session = await sessionStore.createSession("Graph Project", "chrome");
+        testSessionId = session._id;
+    });
 
     it("should save and retrieve triples", async () => {
       const triple = {
@@ -60,41 +68,45 @@ describe("SQLite Storage Layer", () => {
         relation: "OWNS",
         object: "SplitSmart",
         objectType: "Project",
-        sessionId: testSession,
+        sessionId: testSessionId,
         timestamp: new Date().toISOString()
       };
 
-      await store.saveTriple(triple);
-      const triples = await store.getTriplesBySession(testSession);
+      await graphStore.saveTriple(triple);
+      const triples = await graphStore.getTriplesBySession(testSessionId);
       expect(triples).toHaveLength(1);
       expect(triples[0].subject).toBe("Noob");
     });
 
     it("should find related triples by entities", async () => {
-      const related = await store.findRelatedTriples(["Noob"], testSession);
+      const related = await graphStore.findRelatedTriples(["Noob"], testSessionId);
       expect(related).toHaveLength(1);
       expect(related[0].object).toBe("SplitSmart");
     });
   });
 
   describe("SqliteVectorStore", () => {
-    const store = new SqliteVectorStore();
-    const testSession = "test-session-vec";
+    let testSessionId: string;
+
+    beforeAll(async () => {
+        const session = await sessionStore.createSession("Vec Project", "chrome");
+        testSessionId = session._id;
+    });
 
     it("should store chunks and metadata", async () => {
       const chunks = [
         {
           id: "chunk-1",
-          sessionId: testSession,
+          sessionId: testSessionId,
           chunkIndex: 0,
           content: "Synq is a local knowledge graph tool."
         }
       ];
 
-      await store.storeChunks(chunks as any);
+      await vectorStore.storeChunks(chunks as any);
       
       // Verify metadata exists
-      const meta = db.prepare("SELECT * FROM chunk_metadata WHERE sessionId = ?").get(testSession);
+      const meta = db.prepare("SELECT * FROM chunk_metadata WHERE sessionId = ?").get(testSessionId);
       expect(meta.content).toContain("Synq");
     });
   });

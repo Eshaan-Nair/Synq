@@ -4,24 +4,32 @@ import path from "path";
 import fs from "fs";
 import { logger } from "../utils/logger";
 
-const DB_PATH = process.env.SQLITE_DB_PATH || path.join(process.cwd(), "synq.db");
+function getDbPath() {
+  return process.env.SQLITE_DB_PATH || path.join(process.cwd(), "synq.db");
+}
 
 let db: Database.Database;
 
 export function initSqlite() {
-  const dbDir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dbDir)) {
+  const dbPath = getDbPath();
+  const dbDir = path.dirname(dbPath);
+  if (dbPath !== ":memory:" && !fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
-  db = new Database(DB_PATH);
+  db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   
   // Load sqlite-vec extension
-  sqliteVec.load(db);
+  try {
+    sqliteVec.load(db);
+    logger.success("sqlite-vec extension loaded");
+  } catch (err) {
+    logger.error("Failed to load sqlite-vec extension. Vector search will be disabled.", err);
+  }
   
-  logger.success(`SQLite initialized at ${DB_PATH}`);
+  logger.success(`SQLite initialized at ${dbPath}`);
   
   createTables();
 }
@@ -117,6 +125,7 @@ function createTables() {
     )
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_chunks_session ON chunk_metadata(sessionId)");
+  logger.success("All SQLite tables initialized successfully");
 }
 
 export function getSqlite(): Database.Database {
