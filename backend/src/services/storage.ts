@@ -58,7 +58,7 @@ class DockerSessionStore implements ISessionStore {
     return this.mapMongoSession(s);
   }
   async getSessionByName(projectName: string, platform: string) {
-    const s = await mongoService.Session.findOne({ projectName, platform });
+    const s = await mongoService.Session.findOne({ projectName, platform } as any);
     return this.mapMongoSession(s);
   }
   async updateSession(id: string, update: any) {
