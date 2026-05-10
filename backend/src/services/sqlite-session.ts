@@ -37,6 +37,11 @@ export class SqliteSessionStore implements ISessionStore {
     return row ? this.mapRowToSession(row) : null;
   }
 
+  async getSessionByName(projectName: string, platform: string): Promise<Session | null> {
+    const row = this.db.prepare("SELECT * FROM sessions WHERE projectName = ? AND platform = ?").get(projectName, platform);
+    return row ? this.mapRowToSession(row) : null;
+  }
+
   async updateSession(id: string, update: Partial<Session>): Promise<void> {
     const fields = Object.keys(update)
       .filter(k => !["_id", "id", "createdAt"].includes(k))

@@ -362,12 +362,6 @@ export default function App() {
               <>
                 <span className="header-project-name">
                   {activeSession.projectName}
-                  {activeSession.isProcessingGraph && (
-                    <span className="processing-indicator large">
-                      <span className="processing-dot"></span>
-                      Knowledge Graph Update in Progress...
-                    </span>
-                  )}
                 </span>
                 <span className="header-meta">
                   {activeSession.tripleCount} facts
@@ -381,6 +375,34 @@ export default function App() {
           </div>
 
           <div className="header-right">
+            <div className="unified-action-bar">
+              <button
+                className={`load-ext-btn ${loadedToExtension ? "success" : ""}`}
+                onClick={loadIntoExtension}
+              >
+                {loadedToExtension ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Synced
+                  </span>
+                ) : "Load Extension"}
+              </button>
+
+              <div className="tab-divider" />
+
+              {(["history", "chat"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setIsClosed(false);
+                  }}
+                  className={`tab-btn ${activeTab === tab ? "active" : ""}`}
+                >
+                  {tab === "history" ? "Facts" : "Chat"}
+                </button>
+              ))}
+            </div>
 
             <div className="header-stats">
               {selectedNodeId && (
@@ -396,53 +418,13 @@ export default function App() {
         </div>
 
         {/* ── Job Progress Bar ─────────────────────────── */}
-        {(activeSession?.isProcessingGraph || jobStatus.deadLettered > 0) && (
-          <div className="job-status-bar floating-panel">
-            {activeSession?.isProcessingGraph ? (
-              <>
-                <div className="processing-dot pulse" />
-                <span>Extracting Knowledge...</span>
-                <button className="job-cancel-btn" onClick={handleClearJobs}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <span style={{ color: "var(--red)" }}>⚠ {jobStatus.deadLettered} jobs failed</span>
-                <button className="job-cancel-btn" onClick={handleClearJobs}>Dismiss</button>
-              </>
-            )}
+        {/* Job Failures only */}
+        {jobStatus.deadLettered > 0 && !activeSession?.isProcessingGraph && (
+          <div className="job-status-bar floating-panel" style={{ top: '110px' }}>
+            <span style={{ color: "var(--red)" }}>⚠ {jobStatus.deadLettered} jobs failed</span>
+            <button className="job-cancel-btn" onClick={handleClearJobs}>Dismiss</button>
           </div>
         )}
-
-        {/* ── Unified Action Bar (Floating Pill) ─────────────────────────── */}
-        <div className="unified-action-bar floating-panel">
-          <button
-            className={`load-ext-btn ${loadedToExtension ? "success" : ""}`}
-            onClick={loadIntoExtension}
-          >
-            {loadedToExtension ? (
-              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Synced
-              </span>
-            ) : "Load Extension"}
-          </button>
-
-
-          <div className="tab-divider" />
-
-          {(["history", "chat"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                setIsClosed(false);
-              }}
-              className={`tab-btn ${activeTab === tab ? "active" : ""}`}
-            >
-              {tab === "history" ? "Facts" : "Chat"}
-            </button>
-          ))}
-        </div>
 
         {/* ── Right Side Panel (Facts / Chat) ───────────────────── */}
         {activeTab !== null && (

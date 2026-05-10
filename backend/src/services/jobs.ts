@@ -164,13 +164,11 @@ async function handleTripleExtraction(jobId: any, payload: {
         payload: { ...payload, lastProcessedIndex: currentIndex }
       });
 
-      // Update session triple count
-      const s = await sessionStore.getSession(sessionId);
-      if (s) {
-        await sessionStore.updateSession(sessionId, {
-          tripleCount: (s.tripleCount || 0) + triples.length
-        });
-      }
+      // Update session triple count accurately from database
+      const count = await graphStore.getTripleCountBySession(sessionId);
+      await sessionStore.updateSession(sessionId, {
+        tripleCount: count
+      });
 
       // Delay to respect Groq rate limits
       if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 3000));

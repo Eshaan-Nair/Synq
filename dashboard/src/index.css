@@ -356,16 +356,13 @@ body {
 }
 
 .unified-action-bar {
-  position: absolute;
-  top: 60px;
-  right: 16px;
-  border-radius: 12px;
   display: flex;
   align-items: center;
-  padding: 6px 6px 6px 14px;
-  gap: 12px;
-  background: var(--surface);
+  padding: 0;
+  gap: 8px;
+  background: transparent;
   z-index: 60;
+  margin-right: 20px;
 }
 
 .tab-divider {
@@ -394,10 +391,9 @@ body {
 }
 
 .tab-btn.active {
-  border-bottom: 2px solid var(--accent);
   color: var(--accent);
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-glow);
 }
 
 .floating-side-content {
@@ -763,7 +759,10 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 12px;
-  max-width: 160px;
+  max-width: 180px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  z-index: 40;
 }
 
 .graph-legend-title {
