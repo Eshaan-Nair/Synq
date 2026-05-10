@@ -70,9 +70,10 @@ export interface ISessionStore {
   createJob(type: string, payload: any): Promise<Job>;
   getNextJob(): Promise<Job | null>;
   updateJob(id: string, update: Partial<Job>): Promise<void>;
-  getJobStatus(sessionId?: string): Promise<{ pending: number; processing: number; deadLettered: number }>;
+  getJobStatus(): Promise<{ pending: number; processing: number; deadLettered: number }>;
+  getJobStatusBySession(sessionId: string): Promise<{ pending: number; processing: number; deadLettered: number }>;
+  resetGhostJobs(): Promise<void>;
   clearJobs(): Promise<void>;
-  recoverStuckJobs(): Promise<void>;
 }
 
 export interface IGraphStore {

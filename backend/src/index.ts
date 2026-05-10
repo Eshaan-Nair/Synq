@@ -13,6 +13,7 @@ import graphRoutes from "./routes/graph";
 import chatRoutes from "./routes/chat";
 import ragRoutes from "./routes/rag";
 import sessionRoutes from "./routes/session";
+import jobsRoutes from "./routes/jobs";
 
 dotenv.config();
 
@@ -155,6 +156,7 @@ app.use("/api/chat/save", saveLimiter); // strict limit — BEFORE the route han
 app.use("/api/chat", chatRoutes);
 app.use("/api/rag", ragRoutes);
 app.use("/api/session", sessionRoutes);
+app.use("/api/jobs", jobsRoutes);
 
 // Health check — includes service status
 app.get("/health", (_req, res) => {
@@ -188,11 +190,6 @@ if (fs.existsSync(dashboardDist)) {
     "Run: cd dashboard && npm run build"
   );
 }
-
-app.post("/api/jobs/clear", async (req, res) => {
-  await clearAllJobs();
-  res.json({ success: true, message: "Job queue cleared" });
-});
 
 async function start() {
   try {
