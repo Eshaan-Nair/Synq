@@ -1,4 +1,4 @@
-// popup.ts — v1.4.2
+// popup.ts — v1.4.5
 // Replaced Connect/Disconnect with a Pause toggle
 // Auto-connect happens in content.ts on init — popup only shows state + pause control
 
@@ -11,24 +11,24 @@ interface SessionData {
   topicCount?: number;
 }
 
-const statusEl           = document.getElementById("status")           as HTMLElement;
-const sessionInfo        = document.getElementById("session-info")     as HTMLElement;
-const sessionNameEl      = document.getElementById("session-name")     as HTMLElement;
-const tripleCountEl      = document.getElementById("triple-count")     as HTMLElement;
-const topicCountEl       = document.getElementById("topic-count")      as HTMLElement;
-const saveBtn            = document.getElementById("save-btn")         as HTMLButtonElement;
-const pauseToggleBtn     = document.getElementById("pause-toggle-btn") as HTMLButtonElement;
-const unloadBtn          = document.getElementById("unload-btn")       as HTMLButtonElement;
-const injectBtn          = document.getElementById("inject-btn")       as HTMLButtonElement;
+const statusEl = document.getElementById("status") as HTMLElement;
+const sessionInfo = document.getElementById("session-info") as HTMLElement;
+const sessionNameEl = document.getElementById("session-name") as HTMLElement;
+const tripleCountEl = document.getElementById("triple-count") as HTMLElement;
+const topicCountEl = document.getElementById("topic-count") as HTMLElement;
+const saveBtn = document.getElementById("save-btn") as HTMLButtonElement;
+const pauseToggleBtn = document.getElementById("pause-toggle-btn") as HTMLButtonElement;
+const unloadBtn = document.getElementById("unload-btn") as HTMLButtonElement;
+const injectBtn = document.getElementById("inject-btn") as HTMLButtonElement;
 const detectedPlatformEl = document.getElementById("detected-platform") as HTMLElement;
-const platformDot        = document.getElementById("platform-dot")     as HTMLElement;
-const synqStatusBadge    = document.getElementById("synq-status-badge") as HTMLElement;
-const projectNameInput   = document.getElementById("project-name")     as HTMLInputElement;
+const platformDot = document.getElementById("platform-dot") as HTMLElement;
+const synqStatusBadge = document.getElementById("synq-status-badge") as HTMLElement;
+const projectNameInput = document.getElementById("project-name") as HTMLInputElement;
 
 const PLATFORM_LABELS: Record<Platform, string> = {
-  claude:  "Claude (claude.ai)",
+  claude: "Claude (claude.ai)",
   chatgpt: "ChatGPT (chatgpt.com)",
-  gemini:  "Gemini (gemini.google.com)",
+  gemini: "Gemini (gemini.google.com)",
   deepseek: "DeepSeek (chat.deepseek.com)",
   unknown: "Not on a supported platform",
 };
@@ -46,11 +46,11 @@ const PLATFORM_HOSTNAMES: Record<string, string> = {
 async function detectPlatformFromTab(): Promise<Platform> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url || "";
-  
+
   for (const [name, host] of Object.entries(PLATFORM_HOSTNAMES)) {
     if (url.includes(host)) return name as Platform;
   }
-  
+
   return "unknown";
 }
 
@@ -67,7 +67,7 @@ function getSmartUrlKey(url: string): string {
   try {
     const u = new URL(url);
     const host = u.hostname.replace("www.", "");
-    
+
     // ChatGPT: chatgpt.com/c/UUID
     if (host === "chatgpt.com" && u.pathname.startsWith("/c/")) {
       return host + u.pathname.split("/").slice(0, 3).join("/");
@@ -84,7 +84,7 @@ function getSmartUrlKey(url: string): string {
     if (host === "chat.deepseek.com" && u.pathname.startsWith("/a/chat/s/")) {
       return host + u.pathname.split("/").slice(0, 5).join("/");
     }
-    
+
     // Fallback: strip query params and hashes for a cleaner key
     return host + u.pathname.replace(/\/$/, "");
   } catch (e) {
@@ -129,10 +129,10 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
     chrome.runtime.sendMessage({ type: "GET_ACTIVE_SESSION" }, async (response) => {
       if (response?.activeSession) {
         showSession({
-          sessionId:   response.activeSession._id as string,
+          sessionId: response.activeSession._id as string,
           projectName: response.activeSession.projectName as string,
           tripleCount: response.activeSession.tripleCount as number,
-          topicCount:  response.activeSession.topicCount  as number,
+          topicCount: response.activeSession.topicCount as number,
         });
         resolve();
       } else {
@@ -140,20 +140,20 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         const tabUrl = tab?.url || "";
         const smartKey = getSmartUrlKey(tabUrl);
-        
+
         chrome.storage.local.get(["synq_session", "synq_url_map"], (result) => {
           const urlMap = (result.synq_url_map || {}) as Record<string, string>;
           const mappedId = urlMap[smartKey];
-          
+
           if (mappedId) {
-             // If this tab is mapped to a session, we should probably fetch it
-             // For now, let's just see if our "last known" session matches the ID
-             const lastSession = result.synq_session as SessionData;
-             if (lastSession && lastSession.sessionId === mappedId) {
-               showSession(lastSession);
-             } else {
-               // Future improvement: fetch the specific session by ID from backend
-             }
+            // If this tab is mapped to a session, we should probably fetch it
+            // For now, let's just see if our "last known" session matches the ID
+            const lastSession = result.synq_session as SessionData;
+            if (lastSession && lastSession.sessionId === mappedId) {
+              showSession(lastSession);
+            } else {
+              // Future improvement: fetch the specific session by ID from backend
+            }
           } else if (result.synq_session) {
             showSession(result.synq_session as SessionData);
           }
@@ -201,13 +201,13 @@ saveBtn.addEventListener("click", async () => {
 
   // Step 1: Create or update session from popup → background
   setStatus("Creating session...");
-  
+
   // Check if we already have a session for this specific URL or currently loaded
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const tabUrl = activeTab?.url || "";
   const smartKey = getSmartUrlKey(tabUrl);
   let existingSessionId: string | undefined;
-  
+
   if (tabUrl) {
     const result = await chrome.storage.local.get("synq_url_map");
     const urlMap = (result.synq_url_map || {}) as Record<string, string>;
@@ -216,7 +216,7 @@ saveBtn.addEventListener("click", async () => {
 
   // FIX: Prioritise currentSessionId if it exists to prevent duplicates
   const sessionIdToUse = currentSessionId || existingSessionId;
-  
+
   if (sessionIdToUse) {
     console.log(`[SYNQ popup] using session: ${sessionIdToUse} (current: ${!!currentSessionId}, url-mapped: ${!!existingSessionId})`);
   }
@@ -238,7 +238,7 @@ saveBtn.addEventListener("click", async () => {
     // If we tried to update an existing session but it was deleted on the backend
     if (sessionResult?.error === "Session not found" && sessionIdToUse) {
       console.warn(`[SYNQ popup] session ${sessionIdToUse} not found on backend. Clearing mapping and retrying...`);
-      
+
       // Clear mapping and state
       if (tabUrl) {
         const urlMapResult = await chrome.storage.local.get("synq_url_map");
@@ -264,7 +264,7 @@ saveBtn.addEventListener("click", async () => {
         setStatus(`❌ ${retryResult?.error || "Failed to create session"}`, "error");
         return;
       }
-      
+
       sessionResult.sessionId = retryResult.sessionId;
     } else {
       saveBtn.disabled = false;
@@ -292,13 +292,13 @@ saveBtn.addEventListener("click", async () => {
       if (response.success) {
         currentSessionId = sessionResult.sessionId as string;
         const sessionData: SessionData = {
-          sessionId:   sessionResult.sessionId as string,
+          sessionId: sessionResult.sessionId as string,
           projectName,
           tripleCount: response.triplesExtracted as number,
-          topicCount:  response.topicsExtracted  as number,
+          topicCount: response.topicsExtracted as number,
         };
         chrome.storage.local.set({ synq_session: sessionData });
-        
+
         // Save the URL -> sessionId mapping so we update instead of create next time
         if (tabUrl) {
           chrome.storage.local.get("synq_url_map", (result) => {
@@ -312,7 +312,7 @@ saveBtn.addEventListener("click", async () => {
 
         showSession(sessionData);
         const chunks = response.topicsExtracted as number;
-        const facts  = response.triplesExtracted as number;
+        const facts = response.triplesExtracted as number;
         setStatus(`✅ Saved! ${chunks} chunks stored, ${facts} facts extracted. SYNQ auto-connected.`);
 
         // ── Success State Glow ───────────────────────────────────────
@@ -337,7 +337,7 @@ pauseToggleBtn.addEventListener("click", async () => {
   // Tell the content script
   const ready = await ensureContentScript(tabId);
   if (ready) {
-    chrome.tabs.sendMessage(tabId, { type: isPaused ? "PAUSE_SYNQ" : "RESUME_SYNQ" }, () => {});
+    chrome.tabs.sendMessage(tabId, { type: isPaused ? "PAUSE_SYNQ" : "RESUME_SYNQ" }, () => { });
   }
 
   setStatus(isPaused ? "⏸ SYNQ paused" : "▶️ SYNQ resumed");
@@ -346,7 +346,7 @@ pauseToggleBtn.addEventListener("click", async () => {
 // ── Unload Session ───────────────────────────────────────────────
 unloadBtn.addEventListener("click", async () => {
   if (!currentSessionId) return;
-  
+
   unloadBtn.disabled = true;
   unloadBtn.textContent = "⏳ Unloading...";
 
@@ -388,10 +388,10 @@ injectBtn.addEventListener("click", async () => {
 // ── UI helpers ────────────────────────────────────────────────────
 function showSession(data: SessionData) {
   sessionInfo.style.display = "block";
-  sessionNameEl.textContent  = data.projectName   || "—";
-  tripleCountEl.textContent  = String(data.tripleCount ?? "—");
-  topicCountEl.textContent   = String(data.topicCount  ?? "—");
-  
+  sessionNameEl.textContent = data.projectName || "—";
+  tripleCountEl.textContent = String(data.tripleCount ?? "—");
+  topicCountEl.textContent = String(data.topicCount ?? "—");
+
   if (projectNameInput && data.projectName) {
     projectNameInput.value = data.projectName;
   }
@@ -418,6 +418,6 @@ function updatePauseUI() {
 
 function setStatus(msg: string, type: "ok" | "error" | "warn" = "ok") {
   statusEl.textContent = msg;
-  statusEl.className   = type;
+  statusEl.className = type;
   if (type === "ok") setTimeout(() => (statusEl.textContent = ""), 6000);
 }

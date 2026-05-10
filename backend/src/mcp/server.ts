@@ -11,7 +11,7 @@
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
- * Updated: v1.4.2
+ * Updated: v1.4.5
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -28,14 +28,14 @@ import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 dotenv.config({ path: path.resolve(__dirname, "../../../backend/.env") });
 
-import { recall }       from "./tools/recall";
-import { store }        from "./tools/store";
-import { search }       from "./tools/search";
+import { recall } from "./tools/recall";
+import { store } from "./tools/store";
+import { search } from "./tools/search";
 import { listProjects } from "./tools/projects";
-import { getSummary }   from "./tools/summary";
+import { getSummary } from "./tools/summary";
 import { identifyProject } from "./tools/detector";
-import { initStorage, sessionStore }  from "../services/storage";
-import { logger }       from "../utils/logger";
+import { initStorage, sessionStore } from "../services/storage";
+import { logger } from "../utils/logger";
 
 // ── Tool definitions ────────────────────────────────────────────────
 const TOOLS = [
@@ -47,9 +47,9 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        prompt:  { type: "string",  description: "The current task or question" },
-        project: { type: "string",  description: "Project ID to scope the search (optional)" },
-        topN:    { type: "number",  description: "Max chunks to return (default 3, max 6)" },
+        prompt: { type: "string", description: "The current task or question" },
+        project: { type: "string", description: "Project ID to scope the search (optional)" },
+        topN: { type: "number", description: "Max chunks to return (default 3, max 6)" },
       },
       required: ["prompt"],
     },
@@ -63,7 +63,7 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        text:    { type: "string", description: "Content to save" },
+        text: { type: "string", description: "Content to save" },
         project: { type: "string", description: "Project ID to associate with" },
       },
       required: ["text", "project"],
@@ -77,7 +77,7 @@ const TOOLS = [
       type: "object" as const,
       properties: {
         query: { type: "string", description: "Natural language search query" },
-        topN:  { type: "number", description: "Max results (default 5)" },
+        topN: { type: "number", description: "Max results (default 5)" },
       },
       required: ["query"],
     },
@@ -118,7 +118,7 @@ const TOOLS = [
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "synq-memory", version: "1.4.4" },
+  { name: "synq-memory", version: "1.4.5" },
   { capabilities: { tools: {}, resources: {} } }
 );
 
@@ -142,7 +142,7 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
 server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
   const uri = new URL(req.params.uri);
   const match = uri.pathname.match(/\/projects\/([^/]+)\/graph/);
-  
+
   if (!match) {
     throw new Error(`Invalid resource URI: ${req.params.uri}`);
   }

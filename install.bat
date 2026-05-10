@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=synq"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.4 - Smart Installer
+echo   SYNQ v1.4.5 - Smart Installer
 echo  ===================================
 echo.
 

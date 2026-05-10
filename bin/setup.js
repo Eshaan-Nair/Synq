@@ -14,7 +14,7 @@ const REPO_URL = 'https://github.com/Eshaan-Nair/Synq.git';
 
 console.log(`
  ===================================
-   SYNQ v1.4.4 - Initializer
+   SYNQ v1.4.5 - Initializer
  ===================================
 `);
 
@@ -36,7 +36,7 @@ async function run() {
   }
 
   console.log(`\n [*] Cloning Synq into ${fullPath}...`);
-  
+
   const clone = spawn('git', ['clone', REPO_URL, targetDir], { stdio: 'inherit' });
 
   clone.on('close', (code) => {

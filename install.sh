@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# SYNQ v1.4.4 - Smart Installer (Linux/macOS)
+# SYNQ v1.4.5 - Smart Installer (Linux/macOS)
 # -------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.4 - Smart Installer"
+echo "  SYNQ v1.4.5 - Smart Installer"
 echo " ==================================="
 echo ""
 

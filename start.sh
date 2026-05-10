@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# SYNQ v1.4.4 - Startup Script (Linux/macOS)
+# SYNQ v1.4.5 - Startup Script (Linux/macOS)
 # ------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.4 - Starting up"
+echo "  SYNQ v1.4.5 - Starting up"
 echo " ==================================="
 echo ""
 

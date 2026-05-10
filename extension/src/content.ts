@@ -1,5 +1,5 @@
 /**
- * SYNQ content.ts — v1.4.4
+ * SYNQ content.ts — v1.4.5
  *
  * Fix: Context injection now works reliably on all platforms.
  *
@@ -47,8 +47,8 @@ const seenMessageFingerprints = new Set<string>();
 
 const SYNQ_DEBUG = (window as any).__synq_debug === true;
 const log = {
-  info:  (...args: any[]) => SYNQ_DEBUG && console.log("[SYNQ]", ...args),
-  warn:  (...args: any[]) => console.warn("[SYNQ]", ...args),
+  info: (...args: any[]) => SYNQ_DEBUG && console.log("[SYNQ]", ...args),
+  warn: (...args: any[]) => console.warn("[SYNQ]", ...args),
   error: (...args: any[]) => console.error("[SYNQ]", ...args),
 };
 
@@ -574,11 +574,11 @@ function updateBadge(active: boolean) {
   if (!synqShadow) return;
   const badge = synqShadow.getElementById("synq-badge") as HTMLElement;
   const label = badge?.querySelector("span");
-  const dot   = badge?.querySelector(".status-dot") as HTMLElement;
+  const dot = badge?.querySelector(".status-dot") as HTMLElement;
   if (!badge || !label || !dot) return;
 
   badge.classList.remove("active", "paused");
-  
+
   if (isPaused) {
     label.textContent = "SYNQ OFF";
     badge.classList.add("paused");
@@ -645,7 +645,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "SESSION_CHANGED") {
     // Background broadcast: a new session was saved (or session was unloaded).
     const { sessionId: newId, projectName } = message.payload as { sessionId: string | null; projectName?: string };
-    
+
     if (newId === null) {
       log.info("[SYNQ] session unloaded via broadcast");
       sessionId = null;

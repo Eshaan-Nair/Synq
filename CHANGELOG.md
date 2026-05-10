@@ -4,6 +4,23 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.4.5] — 2026-05-11 — Frictionless Setup & UI Refinement
+
+### Installation & UX
+- **One-Command Setup** — Introduced `npx synq-setup` to automate repository cloning and installation.
+- **Automated Extension Loading** — The installer now automatically opens the extension folder and the Chrome extensions page.
+- **Smart URL Mapping** — Enhanced session persistence across varied platform URL formats (e.g. shared chats).
+
+### Dashboard & UI
+- **Unified Header** — Consolidated the dashboard top bar, moving Load Extension and Fact/Chat tabs into a unified, clean layout.
+- **Improved Alignment** — Fixed multiple layout regressions in the history list and chat bubbles.
+
+### Backend & MCP
+- **MCP Resilience** — Updated the Model Context Protocol server to v1.4.5 for parity.
+- **Logging** — Standardized backend logs to version 1.4.5.
+
+---
+
 ## [1.4.4] — 2026-05-10 — Architectural Hardening
 
 ### Retrieval & Process

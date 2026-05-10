@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=synq"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.4 - Starting up
+echo   SYNQ v1.4.5 - Starting up
 echo  ===================================
 echo.
 

@@ -1,5 +1,5 @@
 /**
- * chroma.ts — ChromaDB v2 REST API (v1.4.2)
+ * chroma.ts — ChromaDB v2 REST API (v1.4.5)
  *
  * Updated: TopicChunk -> WindowChunk to match the new sliding window chunker.
  * Deduplication in retrieve now uses chunkIndex instead of topicName.
@@ -12,7 +12,7 @@ import type { WindowChunk } from "./chunker";
 
 const COLLECTION_NAME = "synq_chunks_v2";
 const CHROMA_URL = (process.env.CHROMA_URL || "http://localhost:8000").replace(/\/$/, "");
-const TENANT   = "default_tenant";
+const TENANT = "default_tenant";
 const DATABASE = "default_database";
 const COLL_BASE = `${CHROMA_URL}/api/v2/tenants/${TENANT}/databases/${DATABASE}/collections`;
 
@@ -50,7 +50,7 @@ export async function storeWindowChunks(chunks: WindowChunk[]): Promise<void> {
   }
   if (chunks.length === 0) return;
 
-  // Purge ALL existing vectors for this session before storing new ones. Updated: v1.4.2
+  // Purge ALL existing vectors for this session before storing new ones. Updated: v1.4.5
   // The previous approach only deleted chunk IDs matching the NEW set — if the
   // conversation shrank and produced fewer chunks, the old extra vectors
   // remained and polluted RAG retrieval. Full purge ensures a clean re-save.
@@ -62,14 +62,14 @@ export async function storeWindowChunks(chunks: WindowChunk[]): Promise<void> {
   const embeddings = await generateEmbeddings(chunks.map(c => c.content));
 
   await axios.post(`${COLL_BASE}/${collectionId}/add`, {
-    ids:        chunks.map(c => c.id),
+    ids: chunks.map(c => c.id),
     embeddings,
-    documents:  chunks.map(c => c.content),
-    metadatas:  chunks.map(c => ({
-      sessionId:  c.sessionId,
+    documents: chunks.map(c => c.content),
+    metadatas: chunks.map(c => ({
+      sessionId: c.sessionId,
       chunkIndex: c.chunkIndex,
-      wordStart:  c.wordStart,
-      wordEnd:    c.wordEnd,
+      wordStart: c.wordStart,
+      wordEnd: c.wordEnd,
     })),
   }, { timeout: 10000 });
 
@@ -98,14 +98,14 @@ export async function retrieveRelevantChunks(
 
   const results = await axios.post(`${COLL_BASE}/${collectionId}/query`, {
     query_embeddings: [queryEmbedding],
-    n_results:        Math.min(fetchN, 100), // ChromaDB caps at collection size
-    where:            { sessionId },
-    include:          ["documents", "distances", "metadatas"],
+    n_results: Math.min(fetchN, 100), // ChromaDB caps at collection size
+    where: { sessionId },
+    include: ["documents", "distances", "metadatas"],
   }, { timeout: 10000 });
 
-  const docs:      string[] = results.data.documents?.[0]  || [];
-  const distances: number[] = results.data.distances?.[0]  || [];
-  const metadatas: any[]    = results.data.metadatas?.[0]  || [];
+  const docs: string[] = results.data.documents?.[0] || [];
+  const distances: number[] = results.data.distances?.[0] || [];
+  const metadatas: any[] = results.data.metadatas?.[0] || [];
 
   if (docs.length === 0) return [];
 
@@ -113,8 +113,8 @@ export async function retrieveRelevantChunks(
   // No conversion needed — score IS the cosine similarity directly
   const scored = docs.map((doc, i) => ({
     chunkIndex: (metadatas[i]?.chunkIndex as number) ?? i,
-    content:    doc,
-    score:      1 - (distances[i] ?? 1), // cosine distance → similarity
+    content: doc,
+    score: 1 - (distances[i] ?? 1), // cosine distance → similarity
   }));
 
   // Filter by threshold, deduplicate (keep best score per chunk), sort by score
@@ -144,26 +144,26 @@ export async function retrieveGlobalChunks(
 
   const results = await axios.post(`${COLL_BASE}/${collectionId}/query`, {
     query_embeddings: [queryEmbedding],
-    n_results:        Math.min(fetchN, 100),
+    n_results: Math.min(fetchN, 100),
     // No 'where' filter — searches all sessions
-    include:          ["documents", "distances", "metadatas"],
+    include: ["documents", "distances", "metadatas"],
   }, { timeout: 10000 });
 
-  const docs:      string[] = results.data.documents?.[0]  || [];
-  const distances: number[] = results.data.distances?.[0]  || [];
-  const metadatas: any[]    = results.data.metadatas?.[0]  || [];
+  const docs: string[] = results.data.documents?.[0] || [];
+  const distances: number[] = results.data.distances?.[0] || [];
+  const metadatas: any[] = results.data.metadatas?.[0] || [];
 
   if (docs.length === 0) return [];
 
   const scored = docs.map((doc, i) => ({
     chunkIndex: (metadatas[i]?.chunkIndex as number) ?? i,
-    content:    doc,
-    score:      1 - (distances[i] ?? 1),
+    content: doc,
+    score: 1 - (distances[i] ?? 1),
   }));
 
   // Use a slightly higher threshold for cross-session results to avoid irrelevant drift
   const filtered = scored.filter(r => r.score >= (SIMILARITY_THRESHOLD + 0.05));
-  
+
   // Deduplicate and sort
   const seen = new Map<string, RetrievedChunk>();
   for (const chunk of filtered) {
@@ -182,7 +182,7 @@ export async function deleteChunksBySession(sessionId: string): Promise<void> {
   if (!collectionId) return;
   try {
     const res = await axios.post(`${COLL_BASE}/${collectionId}/get`, {
-      where:   { sessionId },
+      where: { sessionId },
       include: [],
     }, { timeout: 10000 });
     if (res.data?.ids?.length > 0) {

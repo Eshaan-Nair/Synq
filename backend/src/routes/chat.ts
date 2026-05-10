@@ -1,5 +1,5 @@
 /**
- * chat.ts (backend route) — v1.4.2
+ * chat.ts (backend route) — v1.4.5
  *
  * RAG pipeline change:
  * - splitIntoTopics (Groq) replaced with slidingWindowChunks (pure function)
@@ -49,7 +49,7 @@ router.post("/save", async (req: Request, res: Response) => {
 
     // Save FullChat
     await sessionStore.saveFullChat(sessionId, cleanText, messageCount || 0, platform || "unknown");
-    
+
     // ── RAG: Vector Storage (Hybrid Sync/Async) ───────────────────
     const CHUNK_THRESHOLD = 10;
     const isLargeChat = windowChunks.length > CHUNK_THRESHOLD;
@@ -69,14 +69,14 @@ router.post("/save", async (req: Request, res: Response) => {
       logger.info(`Mega chat detected (${windowChunks.length} chunks) — offloading vector storage to background.`);
     }
 
-    // ── Graph: Async Triple Extraction (v1.4.2+) ───────────────────
+    // ── Graph: Async Triple Extraction (v1.4.5+) ───────────────────
     let jobId = null;
     try {
-      jobId = await enqueueJob("triple_extraction", { 
-        sessionId: sessionId.toString(), 
+      jobId = await enqueueJob("triple_extraction", {
+        sessionId: sessionId.toString(),
         text: cleanText,
         windowChunks: isLargeChat ? windowChunks : undefined, // Pass chunks if we need to process them in background
-        processVectors: isLargeChat 
+        processVectors: isLargeChat
       });
     } catch (jobErr: any) {
       logger.error(`Failed to enqueue extraction job: ${jobErr.message}`);
@@ -84,7 +84,7 @@ router.post("/save", async (req: Request, res: Response) => {
 
     await sessionStore.updateSession(sessionId, {
       hasFullChat: true,
-      topicCount:  windowChunks.length,
+      topicCount: windowChunks.length,
     });
 
     const warnings: string[] = [];
@@ -95,9 +95,9 @@ router.post("/save", async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      chunksStored:     windowChunks.length,
+      chunksStored: windowChunks.length,
       triplesExtracted: 0, // Now 0 initially because it's async
-      topicsExtracted:  windowChunks.length,
+      topicsExtracted: windowChunks.length,
       jobId,
       warnings: warnings.length > 0 ? warnings : undefined,
     });
@@ -116,7 +116,7 @@ router.get("/:sessionId", async (req: Request, res: Response) => {
       res.json({ found: false });
       return;
     }
-    
+
     // Generate topics on the fly for the dashboard
     const chunks = slidingWindowChunks(chat.rawText, sessionId as string);
     const topics = chunks.map(c => ({
@@ -126,12 +126,12 @@ router.get("/:sessionId", async (req: Request, res: Response) => {
     }));
 
     res.json({
-      found:        true,
-      rawText:      chat.rawText,
+      found: true,
+      rawText: chat.rawText,
       topics,
       messageCount: chat.messageCount,
-      topicCount:   topics.length,
-      createdAt:    chat.createdAt,
+      topicCount: topics.length,
+      createdAt: chat.createdAt,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve chat" });

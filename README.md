@@ -15,7 +15,7 @@ Every time you open a new chat, your AI starts from zero. SYNQ gives your AI per
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/issues)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Synq/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.4-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.5-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
@@ -23,21 +23,14 @@ Every time you open a new chat, your AI starts from zero. SYNQ gives your AI per
 
 https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
+<br/>
+
+### Get Started Instantly
+```bash
+npx synq-setup
+```
+
 </div>
-
----
-
-## Try SYNQ in 30 Seconds
-
-> Don't have Docker? No problem. Use the new **Zero-Docker (SQLite)** mode for a one-click setup.
-
-**Fastest path (macOS/Linux):**
-1. Install [Docker Desktop](https://docker.com) + [Ollama](https://ollama.com) + [Node 20](https://nodejs.org)
-2. `git clone https://github.com/Eshaan-Nair/Synq && cd Synq && ./install.sh`
-3. Load `extension/dist` as unpacked Chrome extension
-4. Open Claude/ChatGPT → click SYNQ badge → Save Chat
-
-⏱ **First install:** ~5 min (model download included)
 
 ---
 
@@ -60,7 +53,7 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v1.4.4](#whats-new-in-v144)
+- [Whats New in v1.4.5](#whats-new-in-v145)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -114,7 +107,13 @@ All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect
 
 ### First-time Setup
 
-**Windows** — double-click `install.bat`
+**Option A: The One-Command Way (Recommended)**
+```bash
+npx synq-setup
+```
+This script handles everything: cloning, dependency checks, and triggering the interactive installer.
+
+**Option B: Manual Setup (Windows)** — double-click `install.bat`
 ```
 Checks Docker + Node.js, opens Ollama download if missing,
 pulls models, installs npm deps, builds all packages,
@@ -126,9 +125,11 @@ Copy `backend/.env.example` to `backend/.env` and add your `GROQ_API_KEY` for fa
 
 **macOS / Linux:**
 ```bash
-git clone https://github.com/Eshaan-Nair/Synq.git
-cd Synq
-chmod +x install.sh && ./install.sh
+# Recommended:
+npx synq-setup
+
+# Or manual:
+git clone https://github.com/Eshaan-Nair/Synq.git && cd Synq && ./install.sh
 ```
 
 ### Daily Use
@@ -155,7 +156,7 @@ The dashboard is a production build served by the backend — no separate window
 
 ## MCP Server
 
-> **v1.4.4** — SYNQ now works in any MCP-compatible AI tool.
+> **v1.4.5** — SYNQ now works in any MCP-compatible AI tool.
 
 Build the backend first:
 ```bash
@@ -321,13 +322,13 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## Whats New in v1.4.4
+## Whats New in v1.4.5
 
-- **Architectural Hardening** — Resolved UI deadlocks, ghost jobs, and implemented robust API polling routes
-- **Data Portability** — Export and import entire sessions (with chat history and graphs) as JSON directly from the Dashboard
-- **Context Budgeting** — Character-based context window management to prevent LLM overflow
-- **Memory Decay** — Time-based relevance scoring for aging conversations
-- **Test Coverage & Benchmarking** — Expanded unit test suite and introduced a quantitative RAG benchmarking harness
+- **One-Command Setup** — Introduced `npx synq-setup` for a frictionless, zero-cloning installation experience.
+- **Improved Extension Workflow** — The installer now automatically opens the extension folder and the Chrome extensions page.
+- **Unified UI Layout** — Consolidated the Dashboard header for a cleaner, professional look.
+- **Smart URL Mapping** — Enhanced session persistence across different AI platform URL formats.
+- **Architectural Hardening** — Improved error handling for stalled jobs and better session cleanup logic.
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
