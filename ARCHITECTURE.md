@@ -1,8 +1,8 @@
-# SYNQ — Architecture
+# GLIA — Architecture
 
 ## Overview
 
-SYNQ has three layers:
+GLIA has three layers:
 
 1. **Chrome Extension** — scrapes AI conversations, intercepts prompts, injects context
 2. **Node.js Backend** — processes text, orchestrates services, handles RAG retrieval, serves the dashboard, runs the MCP server
@@ -82,7 +82,7 @@ AI tool (Cursor/Claude Code/etc.) → MCP stdio call
 | Security headers | helmet on every response |
 | PII scrubbing | `src/utils/privacy.ts` — runs before any transmission |
 | Prompt injection | `src/middleware/sanitize.ts` — 10 pattern scan + XML context delimiters |
-| Shared secret | Optional `X-SYNQ-Secret` header — when `SYNQ_SECRET` is set, all non-health requests authenticated |
+| Shared secret | Optional `X-GLIA-Secret` header — when `GLIA_SECRET` is set, all non-health requests authenticated |
 
 ---
 
@@ -152,7 +152,7 @@ These schemas apply to both **SQLite tables** and **MongoDB collections**.
 
 ### ChromaDB
 
-**Collection:** `synq_chunks_v2`
+**Collection:** `glia_chunks_v2`
 
 ```json
 {
@@ -182,8 +182,8 @@ These schemas apply to both **SQLite tables** and **MongoDB collections**.
 | `SESSION_CHANGED` | background → content (broadcast) | Notify all tabs of session change |
 | `GET_PAUSE_STATE` | popup → background | Read pause state |
 | `SET_PAUSE_STATE` | popup → background | Write pause state |
-| `PAUSE_SYNQ` | popup → content | Suspend interception |
-| `RESUME_SYNQ` | popup → content | Resume interception |
+| `PAUSE_GLIA` | popup → content | Suspend interception |
+| `RESUME_GLIA` | popup → content | Resume interception |
 | `INJECT_NOW` | popup → content | One-time injection |
 | `PING` | popup → content | Check if content script is alive |
 
@@ -204,12 +204,12 @@ All configured in `backend/.env`:
 | `NEO4J_URI` | Yes | `bolt://localhost:7687` | Neo4j Bolt connection |
 | `NEO4J_USER` | Yes | `neo4j` | Neo4j username |
 | `NEO4J_PASSWORD` | Yes | — | Neo4j password |
-| `MONGO_URI` | Yes | `mongodb://localhost:27017/synqdb` | MongoDB connection |
+| `MONGO_URI` | Yes | `mongodb://localhost:27017/gliadb` | MongoDB connection |
 | `GROQ_API_KEY` | No | — | Groq fallback key (only needed if Ollama unavailable) |
 | `GRAPH_BACKEND` | No | auto-detect | `ollama` or `groq` — overrides auto-detection |
 | `OLLAMA_URL` | No | `http://localhost:11434` | Ollama base URL |
 | `OLLAMA_MODEL` | No | `llama3.1:8b` | Model for graph extraction |
 | `CHROMA_URL` | No | `http://localhost:8000` | ChromaDB base URL |
-| `SYNQ_SECRET` | No | — | Shared secret for request auth |
-| `SYNQ_PROFILE` | No | auto-detect | `full` or `lite` — overrides RAM detection |
+| `GLIA_SECRET` | No | — | Shared secret for request auth |
+| `GLIA_PROFILE` | No | auto-detect | `full` or `lite` — overrides RAM detection |
 | `PORT` | No | `3001` | Backend server port |

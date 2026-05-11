@@ -37,7 +37,7 @@ export class SqliteVectorStore implements IVectorStore {
     const queryEmbedding = await generateEmbedding(query);
     const vector = Buffer.from(new Float32Array(queryEmbedding).buffer);
 
-    // v1.4.5: Full query with Session ID filtering and Time-based Decay
+    // v1.4.6: Full query with Session ID filtering and Time-based Decay
     const rows = this.db.prepare(`
       SELECT 
         m.content,

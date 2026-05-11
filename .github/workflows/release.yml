@@ -25,19 +25,19 @@ jobs:
         with:
           generate_release_notes: true   # auto-generates changelog from commits
           body: |
-            ## SYNQ ${{ github.ref_name }}
+            ## GLIA ${{ github.ref_name }}
 
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full release notes.
 
             ### One-Command Setup (Recommended)
             ```bash
-            npx synq-setup
+            npx glia-setup
             ```
 
             ### Manual Setup
             ```bash
             git clone https://github.com/${{ github.repository }}.git
-            cd Synq
+            cd Glia
 
             # Installation
             ./install.sh # Linux/macOS
@@ -51,5 +51,5 @@ jobs:
             ### Load the Extension
             1. After installation, open `chrome://extensions`
             2. Enable **Developer mode**
-            3. **Load unpacked** → select `Synq/extension`
-            4. SYNQ will automatically open the folder and page for you at the end of setup.
+            3. **Load unpacked** → select `Glia/extension`
+            4. GLIA will automatically open the folder and page for you at the end of setup.

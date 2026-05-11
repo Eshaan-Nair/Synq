@@ -45,7 +45,7 @@ jobs:
                 "## Selector Staleness Detected",
                 "",
                 "The weekly selector smoke test failed. One or more AI platforms may have",
-                "updated their UI, breaking SYNQ's ability to find the input or response elements.",
+                "updated their UI, breaking GLIA's ability to find the input or response elements.",
                 "",
                 "**Platforms checked:** Claude.ai, ChatGPT, Gemini, Perplexity, DeepSeek",
                 "",

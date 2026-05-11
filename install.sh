@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# SYNQ v1.4.5 - Smart Installer (Linux/macOS)
+# GLIA v1.4.6 - Smart Installer (Linux/macOS)
 # -------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.5 - Smart Installer"
+echo "  GLIA v1.4.6 - Smart Installer"
 echo " ==================================="
 echo ""
 
@@ -149,16 +149,16 @@ fi
 # SQLite mode update
 if [ "$USE_SQLITE" == "1" ]; then
     if [[ "$OS_TYPE" == "Darwin" ]]; then
-        if grep -q "SYNQ_STORAGE_MODE=" backend/.env; then
-            sed -i '' "s/SYNQ_STORAGE_MODE=.*/SYNQ_STORAGE_MODE=sqlite/" backend/.env
+        if grep -q "GLIA_STORAGE_MODE=" backend/.env; then
+            sed -i '' "s/GLIA_STORAGE_MODE=.*/GLIA_STORAGE_MODE=sqlite/" backend/.env
         else
-            echo "SYNQ_STORAGE_MODE=sqlite" >> backend/.env
+            echo "GLIA_STORAGE_MODE=sqlite" >> backend/.env
         fi
     else
-        if grep -q "SYNQ_STORAGE_MODE=" backend/.env; then
-            sed -i "s/SYNQ_STORAGE_MODE=.*/SYNQ_STORAGE_MODE=sqlite/" backend/.env
+        if grep -q "GLIA_STORAGE_MODE=" backend/.env; then
+            sed -i "s/GLIA_STORAGE_MODE=.*/GLIA_STORAGE_MODE=sqlite/" backend/.env
         else
-            echo "SYNQ_STORAGE_MODE=sqlite" >> backend/.env
+            echo "GLIA_STORAGE_MODE=sqlite" >> backend/.env
         fi
     fi
 fi
@@ -168,35 +168,35 @@ grep -q "GRAPH_BACKEND=" backend/.env || echo "GRAPH_BACKEND=$GRAPH_BACKEND" >> 
 grep -q "OLLAMA_MODEL=" backend/.env || echo "OLLAMA_MODEL=$SELECTED_MODEL" >> backend/.env
 
 # v1.4.2+: Auto-generate secret if missing
-if ! grep -q "^SYNQ_SECRET=." backend/.env; then
+if ! grep -q "^GLIA_SECRET=." backend/.env; then
   if command -v openssl &> /dev/null; then
     NEW_SECRET=$(openssl rand -base64 32)
-    if grep -q "^SYNQ_SECRET=" backend/.env; then
+    if grep -q "^GLIA_SECRET=" backend/.env; then
       if [[ "$OS_TYPE" == "Darwin" ]]; then
-        sed -i '' "s|^SYNQ_SECRET=.*|SYNQ_SECRET=$NEW_SECRET|" backend/.env
+        sed -i '' "s|^GLIA_SECRET=.*|GLIA_SECRET=$NEW_SECRET|" backend/.env
       else
-        sed -i "s|^SYNQ_SECRET=.*|SYNQ_SECRET=$NEW_SECRET|" backend/.env
+        sed -i "s|^GLIA_SECRET=.*|GLIA_SECRET=$NEW_SECRET|" backend/.env
       fi
     else
-      echo "SYNQ_SECRET=$NEW_SECRET" >> backend/.env
+      echo "GLIA_SECRET=$NEW_SECRET" >> backend/.env
     fi
-    echo " OK Generated random SYNQ_SECRET"
+    echo " OK Generated random GLIA_SECRET"
   else
-    echo " WARNING: openssl not found. Could not generate SYNQ_SECRET."
+    echo " WARNING: openssl not found. Could not generate GLIA_SECRET."
   fi
 fi
 
 # Sync secret to dashboard
-BACKEND_SECRET=$(grep "^SYNQ_SECRET=" backend/.env | cut -d'=' -f2-)
+BACKEND_SECRET=$(grep "^GLIA_SECRET=" backend/.env | cut -d'=' -f2-)
 if [ -n "$BACKEND_SECRET" ]; then
-  if grep -q "VITE_SYNQ_SECRET=" dashboard/.env; then
+  if grep -q "VITE_GLIA_SECRET=" dashboard/.env; then
     if [[ "$OS_TYPE" == "Darwin" ]]; then
-      sed -i '' "s|VITE_SYNQ_SECRET=.*|VITE_SYNQ_SECRET=$BACKEND_SECRET|" dashboard/.env
+      sed -i '' "s|VITE_GLIA_SECRET=.*|VITE_GLIA_SECRET=$BACKEND_SECRET|" dashboard/.env
     else
-      sed -i "s|VITE_SYNQ_SECRET=.*|VITE_SYNQ_SECRET=$BACKEND_SECRET|" dashboard/.env
+      sed -i "s|VITE_GLIA_SECRET=.*|VITE_GLIA_SECRET=$BACKEND_SECRET|" dashboard/.env
     fi
   else
-    echo "VITE_SYNQ_SECRET=$BACKEND_SECRET" >> dashboard/.env
+    echo "VITE_GLIA_SECRET=$BACKEND_SECRET" >> dashboard/.env
   fi
   echo " OK Synced secret to dashboard"
 fi
@@ -230,7 +230,7 @@ fi
 
 echo ""
 echo " ==================================="
-echo "  SYNQ Installed Successfully"
+echo "  GLIA Installed Successfully"
 echo " ==================================="
 if [ "$GRAPH_BACKEND" == "groq" ]; then
     echo "  IMPORTANT: Ensure GROQ_API_KEY is set in backend/.env"

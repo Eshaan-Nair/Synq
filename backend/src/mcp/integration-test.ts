@@ -9,8 +9,8 @@ import path from "path";
 import dotenv from "dotenv";
 
 // Setup environment for Zero-Docker mode
-process.env.SYNQ_STORAGE_MODE = "sqlite";
-process.env.SQLITE_DB_PATH = path.resolve(__dirname, "../../synq.db");
+process.env.GLIA_STORAGE_MODE = "sqlite";
+process.env.SQLITE_DB_PATH = path.resolve(__dirname, "../../glia.db");
 dotenv.config();
 
 // Imports after env setup
@@ -31,7 +31,7 @@ async function runThoroughTest() {
 
   // 1. Test Project Detection
   console.log("\n--- [1] Project Detection ---");
-  const testPath = "C:/Code/Synq-Test-Project";
+  const testPath = "C:/Code/Glia-Test-Project";
   const detectionResult = await identifyProject(testPath);
   console.log(`Input Path: ${testPath}`);
   console.log(`Result: ${detectionResult}`);
@@ -52,7 +52,7 @@ async function runThoroughTest() {
 
   // 3. Test Store Memory (Dashboard Integration + Extraction)
   console.log(`\n--- [3] Store Memory (Project: ${targetProject.projectName}) ---`);
-  const testFact = "The Synq project uses a Hybrid Search engine combining SQLite-vec and custom Graph logic.";
+  const testFact = "The Glia project uses a Hybrid Search engine combining SQLite-vec and custom Graph logic.";
   const storeResult = await store(testFact, targetId);
   console.log(storeResult);
 
@@ -63,7 +63,7 @@ async function runThoroughTest() {
 
   // 5. Test Global Hybrid Search
   console.log("\n--- [5] Global Hybrid Search ---");
-  const globalSearchResult = await search("Synq search engine");
+  const globalSearchResult = await search("Glia search engine");
   console.log(globalSearchResult);
 
   // 6. Test Resource Summary

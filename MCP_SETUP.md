@@ -1,12 +1,12 @@
-# SYNQ MCP Server — Setup Guide
+# GLIA MCP Server — Setup Guide
 
-The SYNQ MCP server exposes your conversation memory to any MCP-compatible AI tool. After setup, your AI tool can call SYNQ tools directly — no browser extension needed.
+The GLIA MCP server exposes your conversation memory to any MCP-compatible AI tool. After setup, your AI tool can call GLIA tools directly — no browser extension needed.
 
 ---
 
 ## Prerequisites
 
-1. SYNQ backend has been built:
+1. GLIA backend has been built:
    ```bash
    cd backend && npm run build
    ```
@@ -32,11 +32,11 @@ The SYNQ MCP server exposes your conversation memory to any MCP-compatible AI to
 | Tool | What it does |
 |---|---|
 | `recall_context` | Retrieves top-N memory chunks (Hybrid Search). Call this at the start of a session. |
-| `store_memory` | Saves text/chat to SYNQ memory. **Updates Dashboard History**. |
+| `store_memory` | Saves text/chat to GLIA memory. **Updates Dashboard History**. |
 | `search_memory` | Global Hybrid Search across all projects and sessions. |
 | `list_projects` | Lists all saved project names with metadata. |
 | `get_project_summary` | Returns the knowledge graph summary for a project. |
-| `identify_active_project`| Automatically matches your CWD to a Synq Project ID. |
+| `identify_active_project`| Automatically matches your CWD to a Glia Project ID. |
 
 ---
 
@@ -62,15 +62,15 @@ Config file location:
 ```json
 {
   "mcpServers": {
-    "synq": {
+    "glia": {
       "command": "node",
-      "args": ["C:/path/to/Synq/backend/dist/mcp/server.js"]
+      "args": ["C:/path/to/Glia/backend/dist/mcp/server.js"]
     }
   }
 }
 ```
 
-Restart Claude Desktop. SYNQ tools appear in the tool picker.
+Restart Claude Desktop. GLIA tools appear in the tool picker.
 
 ---
 
@@ -78,7 +78,7 @@ Restart Claude Desktop. SYNQ tools appear in the tool picker.
 
 ```bash
 # In your project directory:
-claude mcp add synq node /path/to/Synq/backend/dist/mcp/server.js
+claude mcp add glia node /path/to/Glia/backend/dist/mcp/server.js
 
 # Or add to .mcp.json in your project root:
 ```
@@ -87,9 +87,9 @@ claude mcp add synq node /path/to/Synq/backend/dist/mcp/server.js
 ```json
 {
   "mcpServers": {
-    "synq": {
+    "glia": {
       "command": "node",
-      "args": ["/path/to/Synq/backend/dist/mcp/server.js"]
+      "args": ["/path/to/Glia/backend/dist/mcp/server.js"]
     }
   }
 }
@@ -104,15 +104,15 @@ Create `.cursor/mcp.json` in your project root:
 ```json
 {
   "mcpServers": {
-    "synq": {
+    "glia": {
       "command": "node",
-      "args": ["/path/to/Synq/backend/dist/mcp/server.js"]
+      "args": ["/path/to/Glia/backend/dist/mcp/server.js"]
     }
   }
 }
 ```
 
-Restart Cursor. SYNQ appears in the MCP tool list.
+Restart Cursor. GLIA appears in the MCP tool list.
 
 ---
 
@@ -123,9 +123,9 @@ Create `.windsurf/mcp.json` in your project root:
 ```json
 {
   "mcpServers": {
-    "synq": {
+    "glia": {
       "command": "node",
-      "args": ["/path/to/Synq/backend/dist/mcp/server.js"]
+      "args": ["/path/to/Glia/backend/dist/mcp/server.js"]
     }
   }
 }
@@ -135,7 +135,7 @@ Create `.windsurf/mcp.json` in your project root:
 
 ## Usage Examples
 
-Once connected, your AI tool can use SYNQ tools like this:
+Once connected, your AI tool can use GLIA tools like this:
 
 **At the start of a session:**
 > "Use recall_context to retrieve relevant memory for: implementing JWT refresh token rotation"
@@ -157,7 +157,7 @@ Once connected, your AI tool can use SYNQ tools like this:
 No memory has been saved yet, or ChromaDB is not running. Run `docker compose --profile full up -d`.
 
 **"MongoDB connection failed"**
-MongoDB is not running. Check: `docker ps | grep synq_mongo`.
+MongoDB is not running. Check: `docker ps | grep glia_mongo`.
 
 **"Ollama embedding failed"**
 Ollama is not running. Run `ollama serve` then `ollama pull nomic-embed-text`.

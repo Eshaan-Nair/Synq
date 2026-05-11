@@ -1,5 +1,5 @@
 /**
- * chat.ts (backend route) — v1.4.5
+ * chat.ts (backend route) — v1.4.6
  *
  * RAG pipeline change:
  * - splitIntoTopics (Groq) replaced with slidingWindowChunks (pure function)
@@ -69,7 +69,7 @@ router.post("/save", async (req: Request, res: Response) => {
       logger.info(`Mega chat detected (${windowChunks.length} chunks) — offloading vector storage to background.`);
     }
 
-    // ── Graph: Async Triple Extraction (v1.4.5+) ───────────────────
+    // ── Graph: Async Triple Extraction (v1.4.6+) ───────────────────
     let jobId = null;
     try {
       jobId = await enqueueJob("triple_extraction", {

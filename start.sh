@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# SYNQ v1.4.5 - Startup Script (Linux/macOS)
+# GLIA v1.4.6 - Startup Script (Linux/macOS)
 # ------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  SYNQ v1.4.5 - Starting up"
+echo "  GLIA v1.4.6 - Starting up"
 echo " ==================================="
 echo ""
 
@@ -19,16 +19,16 @@ fi
 
 GRAPH_BACKEND=$(grep "GRAPH_BACKEND=" backend/.env | cut -d'=' -f2 | tr -d '\r')
 OLLAMA_MODEL=$(grep "OLLAMA_MODEL=" backend/.env | cut -d'=' -f2 | tr -d '\r')
-SYNQ_STORAGE_MODE=$(grep "SYNQ_STORAGE_MODE=" backend/.env | cut -d'=' -f2 | tr -d '\r')
+GLIA_STORAGE_MODE=$(grep "GLIA_STORAGE_MODE=" backend/.env | cut -d'=' -f2 | tr -d '\r')
 GRAPH_BACKEND=${GRAPH_BACKEND:-ollama}
 
 USE_SQLITE=0
-if [ "$SYNQ_STORAGE_MODE" == "sqlite" ]; then USE_SQLITE=1; fi
+if [ "$GLIA_STORAGE_MODE" == "sqlite" ]; then USE_SQLITE=1; fi
 
 # 2. Check Dependencies (skip Docker if SQLite)
 if [ "$USE_SQLITE" == "0" ]; then
     if ! command -v docker &> /dev/null; then
-        echo " ERROR: Docker not found. Use Zero-Docker mode by setting SYNQ_STORAGE_MODE=sqlite in .env"
+        echo " ERROR: Docker not found. Use Zero-Docker mode by setting GLIA_STORAGE_MODE=sqlite in .env"
         exit 1
     fi
     echo " OK Docker ready"
@@ -76,8 +76,8 @@ else
 fi
 
 # 6. Security & Build Check
-if ! grep -q "SYNQ_SECRET=" backend/.env; then
-    echo " WARN SYNQ_SECRET not found in .env. API will be unauthorized."
+if ! grep -q "GLIA_SECRET=" backend/.env; then
+    echo " WARN GLIA_SECRET not found in .env. API will be unauthorized."
 fi
 
 if [ ! -d "dashboard/dist" ]; then
@@ -98,7 +98,7 @@ echo " Starting backend..."
 
 echo ""
 echo " ==================================="
-echo "  SYNQ is running!"
+echo "  GLIA is running!"
 echo " ==================================="
 echo "  Dashboard: http://localhost:3001"
 echo ""

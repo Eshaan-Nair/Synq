@@ -11,14 +11,14 @@ async function runBenchmark() {
   }
 
   console.log("==========================================");
-  console.log("   SYNQ RAG Benchmark - Snippet Extraction");
+  console.log("   GLIA RAG Benchmark - Snippet Extraction");
   console.log("==========================================\n");
 
   const prompt = "How does the caching layer work?";
   
   // Simulated retrieval chunks
   const chunks = [
-    "The Synq architecture consists of a frontend dashboard and a Node.js backend. It uses SQLite for both relational and vector storage.",
+    "The Glia architecture consists of a frontend dashboard and a Node.js backend. It uses SQLite for both relational and vector storage.",
     "For performance, we implemented an LRU caching layer using an in-memory Map structure. The caching layer caches API responses and invalidates them after 5 minutes.",
     "The Knowledge Graph is built by extracting semantic triples using a local LLM or Groq. The triples are stored in the 'facts' table."
   ];

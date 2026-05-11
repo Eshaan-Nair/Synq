@@ -1,4 +1,4 @@
-# Contributing to SYNQ
+# Contributing to GLIA
 
 Thanks for your interest in contributing. Bug fixes, new platform support, UI improvements, documentation, and test coverage are all welcome.
 
@@ -7,8 +7,8 @@ Thanks for your interest in contributing. Bug fixes, new platform support, UI im
 ## Getting Started
 
 ```bash
-git clone https://github.com/Eshaan-Nair/Synq.git
-cd Synq
+git clone https://github.com/Eshaan-Nair/Glia-AI.git
+cd Glia-AI
 git checkout -b your-branch-name
 
 # First-time setup
@@ -93,7 +93,7 @@ type(scope): short description
 Examples:
 feat(extension): add Example platform support
 fix(rag): lower similarity threshold for shorter queries
-docs(readme): update quick start for v1.4.5
+docs(readme): update quick start for v1.4.6
 test(pipeline): add edge case for empty conversation
 chore(deps): bump chromadb to 0.6.4
 ```
@@ -219,10 +219,10 @@ Add a section for the new platform with selectors and stability notes.
 
 ## Good First Issues
 
-Labelled [`good first issue`](https://github.com/Eshaan-Nair/Synq/issues?q=is%3Aissue+label%3A%22good+first+issue%22) in the issue tracker. These are scoped, well-defined, and don't require deep system knowledge.
+Labelled [`good first issue`](https://github.com/Eshaan-Nair/Glia/issues?q=is%3Aissue+label%3A%22good+first+issue%22) in the issue tracker. These are scoped, well-defined, and don't require deep system knowledge.
 
 ---
 
 ## Questions
 
-Open a [Discussion](https://github.com/Eshaan-Nair/Synq/discussions) for questions, ideas, or anything that isn't a bug.
+Open a [Discussion](https://github.com/Eshaan-Nair/Glia/discussions) for questions, ideas, or anything that isn't a bug.

@@ -26,14 +26,14 @@ async function runBenchmark() {
 
   // 1. Ingest Gold Standard Knowledge
   const documents = [
-    { id: "chunk-1", content: "Synq uses better-sqlite3 and sqlite-vec for Zero-Docker local storage. This allows it to run without MongoDB or Neo4j." },
-    { id: "chunk-2", content: "The Model Context Protocol (MCP) allows AI tools like Claude Code and Cursor to access Synq memory via stdio." },
+    { id: "chunk-1", content: "Glia uses better-sqlite3 and sqlite-vec for Zero-Docker local storage. This allows it to run without MongoDB or Neo4j." },
+    { id: "chunk-2", content: "The Model Context Protocol (MCP) allows AI tools like Claude Code and Cursor to access Glia memory via stdio." },
     { id: "chunk-3", content: "Hybrid Search combines Vector embeddings with Knowledge Graph facts for improved recall accuracy." },
     { id: "chunk-4", content: "Privacy is a core pillar. All PII is redacted in the browser before being sent to the backend." }
   ];
 
   const facts = [
-    { subject: "Synq", relation: "uses", object: "sqlite-vec" },
+    { subject: "Glia", relation: "uses", object: "sqlite-vec" },
     { subject: "MCP", relation: "enables", object: "Claude Code" }
   ];
 
@@ -72,8 +72,8 @@ async function runBenchmark() {
 
   // 2. Define Queries and Expected Results
   const queries = [
-    { q: "What storage does Synq use for local mode?", expectedId: 0 }, // Should match chunk-1
-    { q: "How do AI tools connect to Synq?", expectedId: 1 },         // Should match chunk-2
+    { q: "What storage does Glia use for local mode?", expectedId: 0 }, // Should match chunk-1
+    { q: "How do AI tools connect to Glia?", expectedId: 1 },         // Should match chunk-2
     { q: "Tell me about search accuracy improvements", expectedId: 2 }, // Should match chunk-3
     { q: "How is data privacy handled?", expectedId: 3 }             // Should match chunk-4
   ];
@@ -106,7 +106,7 @@ async function runBenchmark() {
   const mrr = totalReciprocalRank / queries.length;
 
   console.log("\n" + "=".repeat(40));
-  console.log("📊 BENCHMARK RESULTS (v1.4.5)");
+  console.log("📊 BENCHMARK RESULTS (v1.4.6)");
   console.log("=".repeat(40));
   console.log(`Hit Rate @ 1:  ${hitRate.toFixed(2)}%`);
   console.log(`MRR:           ${mrr.toFixed(4)}`);

@@ -1,5 +1,5 @@
 /**
- * Centralized constants for the SYNQ backend.
+ * Centralized constants for the GLIA backend.
  */
 
 export const VALID_PLATFORMS = [

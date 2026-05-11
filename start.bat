@@ -4,11 +4,11 @@ setlocal EnableDelayedExpansion
 REM Always run from the script's own directory
 cd /d "%~dp0"
 
-set "COMPOSE_PROJECT_NAME=synq"
+set "COMPOSE_PROJECT_NAME=glia"
 
 echo.
 echo  ===================================
-echo   SYNQ v1.4.5 - Starting up
+echo   GLIA v1.4.6 - Starting up
 echo  ===================================
 echo.
 
@@ -19,23 +19,23 @@ if not exist "backend\.env" (
   exit /b 1
 )
 
-set "SYNQ_STORAGE_MODE=docker"
+set "GLIA_STORAGE_MODE=docker"
 for /f "tokens=1,2 delims==" %%a in (backend\.env) do (
     if "%%a"=="GRAPH_BACKEND" set "GRAPH_BACKEND=%%b"
     if "%%a"=="OLLAMA_MODEL" set "OLLAMA_MODEL=%%b"
-    if "%%a"=="SYNQ_STORAGE_MODE" set "SYNQ_STORAGE_MODE=%%b"
+    if "%%a"=="GLIA_STORAGE_MODE" set "GLIA_STORAGE_MODE=%%b"
 )
 if "!GRAPH_BACKEND!"=="" set "GRAPH_BACKEND=ollama"
 
 set "USE_SQLITE=0"
-if "!SYNQ_STORAGE_MODE!"=="sqlite" set "USE_SQLITE=1"
+if "!GLIA_STORAGE_MODE!"=="sqlite" set "USE_SQLITE=1"
 
 REM 2. Check Docker (skip if SQLite)
 
 if "!USE_SQLITE!"=="0" (
   where docker >nul 2>&1
   if errorlevel 1 (
-    echo  ERROR: Docker not found. Defaulting to SQLite? Or set SYNQ_STORAGE_MODE=sqlite in .env
+    echo  ERROR: Docker not found. Defaulting to SQLite? Or set GLIA_STORAGE_MODE=sqlite in .env
     pause
     exit /b 1
   )
@@ -84,9 +84,9 @@ if "!USE_SQLITE!"=="0" (
 echo.
 
 REM 6. Security Check
-findstr /C:"SYNQ_SECRET=" backend\.env >nul
+findstr /C:"GLIA_SECRET=" backend\.env >nul
 if errorlevel 1 (
-    echo  WARN SYNQ_SECRET not found in .env. API will be unauthorized.
+    echo  WARN GLIA_SECRET not found in .env. API will be unauthorized.
 )
 
 REM 7. Build components (Ensure UI is always up-to-date)
@@ -104,12 +104,12 @@ REM 7. Start backend
 echo.
 echo  Starting backend...
 cd backend
-start "SYNQ Backend" cmd /k "npm run dev"
+start "GLIA Backend" cmd /k "npm run dev"
 cd ..
 
 echo.
 echo  ===================================
-echo   SYNQ is running!
+echo   GLIA is running!
 echo  ===================================
 echo   Dashboard: http://localhost:3001
 echo.

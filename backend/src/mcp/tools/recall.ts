@@ -18,7 +18,7 @@ export async function recall(
     const session = await sessionStore.getSession(projectStr);
     
     if (!session) {
-      return `Synq project ID "${projectStr}" not found. Use list_projects to see valid IDs.`;
+      return `Glia project ID "${projectStr}" not found. Use list_projects to see valid IDs.`;
     }
 
     // 1. Graph Enrichment (Extract entities -> find related triples)

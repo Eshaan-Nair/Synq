@@ -99,7 +99,7 @@ describe("SQLite Storage Layer", () => {
           id: "chunk-1",
           sessionId: testSessionId,
           chunkIndex: 0,
-          content: "Synq is a local knowledge graph tool."
+          content: "Glia is a local knowledge graph tool."
         }
       ];
 
@@ -107,7 +107,7 @@ describe("SQLite Storage Layer", () => {
       
       // Verify metadata exists
       const meta = db.prepare("SELECT * FROM chunk_metadata WHERE sessionId = ?").get(testSessionId);
-      expect(meta.content).toContain("Synq");
+      expect(meta.content).toContain("Glia");
     });
   });
 });

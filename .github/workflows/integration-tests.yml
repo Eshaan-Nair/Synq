@@ -1,4 +1,4 @@
-name: synq
+name: glia
 on:
   push:
     branches: [main]
@@ -29,9 +29,9 @@ jobs:
         ports:
           - "27017:27017"
         env:
-          MONGO_INITDB_ROOT_USERNAME: synq
-          MONGO_INITDB_ROOT_PASSWORD: synqpassword123
-          MONGO_INITDB_DATABASE: synqdb_test
+          MONGO_INITDB_ROOT_USERNAME: glia
+          MONGO_INITDB_ROOT_PASSWORD: gliapassword123
+          MONGO_INITDB_DATABASE: gliadb_test
         options: >-
           --health-cmd "mongosh --eval 'db.runCommand({ping:1})' --quiet"
           --health-interval 10s
@@ -68,13 +68,13 @@ jobs:
         run: npm run test:integration
         working-directory: backend
         env:
-          MONGO_URI: mongodb://synq:synqpassword123@localhost:27017/synqdb_test?authSource=admin
+          MONGO_URI: mongodb://glia:gliapassword123@localhost:27017/gliadb_test?authSource=admin
           CHROMA_URL: http://localhost:8000
           NEO4J_URI: ""
           NEO4J_USER: ""
           NEO4J_PASSWORD: ""
           GRAPH_BACKEND: ollama
-          SYNQ_NO_AUTH: "true"
+          GLIA_NO_AUTH: "true"
 
   mcp-tests:
     name: MCP Tool Integration Tests
@@ -114,7 +114,7 @@ jobs:
         run: npx ts-node src/mcp/integration-test.ts
         working-directory: backend
         env:
-          SYNQ_STORAGE_MODE: sqlite
-          SQLITE_DB_PATH: ./synq.db
+          GLIA_STORAGE_MODE: sqlite
+          SQLITE_DB_PATH: ./glia.db
           GRAPH_BACKEND: ollama
           OLLAMA_URL: http://localhost:11434

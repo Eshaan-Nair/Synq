@@ -14,7 +14,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     try {
       if (attempt > 0) {
         await new Promise(r => setTimeout(r, 5000 * attempt));
-        logger.info(`[SYNQ] Retrying embedding generation (attempt ${attempt}/${MAX_RETRIES})...`);
+        logger.info(`[GLIA] Retrying embedding generation (attempt ${attempt}/${MAX_RETRIES})...`);
       }
 
       const response = await axios.post(`${OLLAMA_URL}/api/embeddings`, {
@@ -32,7 +32,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       }
 
       if (isTimeout && attempt < MAX_RETRIES) {
-        logger.warn(`[SYNQ] Embedding timeout. Ollama might be busy or model is loading.`);
+        logger.warn(`[GLIA] Embedding timeout. Ollama might be busy or model is loading.`);
         continue;
       }
 
@@ -54,14 +54,14 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
-    logger.info(`[SYNQ] Embedding batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(texts.length/BATCH_SIZE)}...`);
+    logger.info(`[GLIA] Embedding batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(texts.length/BATCH_SIZE)}...`);
     
     try {
       // Process this batch in parallel
       const batchResults = await Promise.all(batch.map(text => generateEmbedding(text)));
       results.push(...batchResults);
     } catch (err: any) {
-      logger.error(`[SYNQ] Batch embedding failed at index ${i}: ${err.message}`);
+      logger.error(`[GLIA] Batch embedding failed at index ${i}: ${err.message}`);
       throw err;
     }
     

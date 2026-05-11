@@ -28,7 +28,7 @@ which allowed XSS to steal tokens. We fixed this by setting httpOnly and Secure 
 The session is stored in Redis with a 7-day TTL.
 `;
 
-const TEST_PROJECT  = "synq-pipeline-test";
+const TEST_PROJECT  = "glia-pipeline-test";
 const TEST_SESSION  = `test-session-${Date.now()}`;
 
 let testSessionId: string;

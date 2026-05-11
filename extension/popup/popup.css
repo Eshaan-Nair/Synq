@@ -59,7 +59,7 @@ body.success-glow {
 }
 
 /* Status badge */
-.synq-status {
+.glia-status {
   font-size: 10px;
   font-weight: 700;
   padding: 4px 10px;
@@ -68,9 +68,9 @@ body.success-glow {
   text-transform: uppercase;
 }
 
-.synq-status.active { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
-.synq-status.paused { background: rgba(100,116,139,0.1); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.2); }
-.synq-status.idle   { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
+.glia-status.active { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.glia-status.paused { background: rgba(100,116,139,0.1); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.2); }
+.glia-status.idle   { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
 
 /* Platform badge */
 .platform-bar {

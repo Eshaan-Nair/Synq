@@ -1,21 +1,21 @@
 <div align="center">
 
-<img src="./dashboard/icon48.png" width="300">
+<img src="./dashboard/public/Logo.png" width="300">
 
-# SYNQ
+# GLIA
 
-### Your AI forgets. SYNQ makes it remember.
+### Your AI forgets. GLIA makes it remember.
 
-Every time you open a new chat, your AI starts from zero. SYNQ gives your AI persistent, cross-session memory.
+Every time you open a new chat, your AI starts from zero. GLIA gives your AI persistent, cross-session memory.
 
 <br/>
 
-[![Stars](https://img.shields.io/github/stars/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/Synq/stargazers)
-[![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/Synq/forks)
-[![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Synq?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/issues)
-[![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Synq/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Synq/actions)
+[![Stars](https://img.shields.io/github/stars/Eshaan-Nair/Glia?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/Glia/stargazers)
+[![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Glia?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/Glia/forks)
+[![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Glia?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia/issues)
+[![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Glia/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.5-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.6-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
@@ -27,7 +27,7 @@ https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
 ### Get Started Instantly
 ```bash
-npx synq-setup
+npx glia-ai-setup
 ```
 
 </div>
@@ -38,7 +38,7 @@ npx synq-setup
 
 You're deep into a complex project. You've had 12 conversations with Claude about your architecture, your auth flow, your database schema. Then you open a new chat — **it's all gone.**
 
-SYNQ captures your conversations, distills them into a semantic knowledge graph, and **automatically injects the most relevant context into every new prompt**.
+GLIA captures your conversations, distills them into a semantic knowledge graph, and **automatically injects the most relevant context into every new prompt**.
 
 ---
 
@@ -53,7 +53,7 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v1.4.5](#whats-new-in-v145)
+- [Whats New in v1.4.6](#whats-new-in-v145)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -87,10 +87,10 @@ SYNQ captures your conversations, distills them into a semantic knowledge graph,
 
 ### No Docker? Use SQLite Mode
 
-Set `SYNQ_STORAGE_MODE=sqlite` in `backend/.env` before starting.
+Set `GLIA_STORAGE_MODE=sqlite` in `backend/.env` before starting.
 The installer detects Docker automatically and sets this for you if Docker is missing.
 
-All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect RAM and choose the right mode. Override with `SYNQ_PROFILE=full` or `SYNQ_PROFILE=lite`.
+All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect RAM and choose the right mode. Override with `GLIA_PROFILE=full` or `GLIA_PROFILE=lite`.
 
 ---
 
@@ -109,7 +109,7 @@ All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect
 
 **Option A: The One-Command Way (Recommended)**
 ```bash
-npx synq-setup
+npx glia-ai-setup
 ```
 This script handles everything: cloning, dependency checks, and triggering the interactive installer.
 
@@ -126,10 +126,10 @@ Copy `backend/.env.example` to `backend/.env` and add your `GROQ_API_KEY` for fa
 **macOS / Linux:**
 ```bash
 # Recommended:
-npx synq-setup
+npx glia-ai-setup
 
 # Or manual:
-git clone https://github.com/Eshaan-Nair/Synq.git && cd Synq && ./install.sh
+git clone https://github.com/Eshaan-Nair/Glia-AI.git && cd Glia-AI && ./install.sh
 ```
 
 ### Daily Use
@@ -143,8 +143,8 @@ macOS/Linux:    ./start.sh
 
 1. Open Chrome → `chrome://extensions`
 2. Enable **Developer mode** (top-right toggle)
-3. **Load unpacked** → select `Synq/extension/dist`
-4. The SYNQ badge appears on Claude, ChatGPT, Gemini, and DeepSeek
+3. **Load unpacked** → select `Glia/extension/dist`
+4. The GLIA badge appears on Claude, ChatGPT, Gemini, and DeepSeek
 
 ### Dashboard
 
@@ -156,7 +156,7 @@ The dashboard is a production build served by the backend — no separate window
 
 ## MCP Server
 
-> **v1.4.5** — SYNQ now works in any MCP-compatible AI tool.
+> **v1.4.6** — GLIA now works in any MCP-compatible AI tool.
 
 Build the backend first:
 ```bash
@@ -169,9 +169,9 @@ Add to your AI tool's config:
 ```json
 {
   "mcpServers": {
-    "synq": {
+    "glia": {
       "command": "node",
-      "args": ["/path/to/Synq/backend/dist/mcp/server.js"]
+      "args": ["/path/to/Glia/backend/dist/mcp/server.js"]
     }
   }
 }
@@ -181,7 +181,7 @@ Add to your AI tool's config:
 ```json
 {
   "mcpServers": {
-    "synq": { "command": "node", "args": ["/path/to/Synq/backend/dist/mcp/server.js"] }
+    "glia": { "command": "node", "args": ["/path/to/Glia/backend/dist/mcp/server.js"] }
   }
 }
 ```
@@ -197,13 +197,13 @@ Full guide: [MCP_SETUP.md](MCP_SETUP.md)
 ### Saving a Conversation
 
 1. Have a conversation on Claude, ChatGPT, Gemini, or DeepSeek
-2. Click the SYNQ icon in the toolbar
+2. Click the GLIA icon in the toolbar
 3. Enter a project name and click **Save Chat**
-4. SYNQ scrubs PII, chunks, embeds locally, and extracts graph triples — typically under 5 seconds
+4. GLIA scrubs PII, chunks, embeds locally, and extracts graph triples — typically under 5 seconds
 
 ### Auto-Connect
 
-Once a session is active, SYNQ **auto-attaches on every page load**. Just type — context is prepended automatically. Click **Pause** in the popup to suspend. Click again to resume.
+Once a session is active, GLIA **auto-attaches on every page load**. Just type — context is prepended automatically. Click **Pause** in the popup to suspend. Click again to resume.
 
 ### Classic Inject
 
@@ -249,7 +249,7 @@ Open **http://localhost:3001**:
 ## Architecture
 
 ```
-Synq/
+Glia/
 ├── backend/src/
 │   ├── mcp/           server.ts + tools/recall|store|search|projects|summary
 │   ├── middleware/    sanitize.ts
@@ -316,15 +316,15 @@ Ollama is the **primary** extraction backend — fully local. Groq is an automat
 | CORS | `localhost:3001`, `localhost:5173`, `chrome-extension://` only |
 | Input validation | sessionId as ObjectId, platform as enum, text length enforced |
 | Security headers | helmet on every response |
-| Shared secret | Optional `X-SYNQ-Secret` header |
+| Shared secret | Optional `X-GLIA-Secret` header |
 
 See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability reporting policy.
 
 ---
 
-## Whats New in v1.4.5
+## Whats New in v1.4.6
 
-- **One-Command Setup** — Introduced `npx synq-setup` for a frictionless, zero-cloning installation experience.
+- **One-Command Setup** — Introduced `npx glia-ai-setup` for a frictionless, zero-cloning installation experience.
 - **Improved Extension Workflow** — The installer now automatically opens the extension folder and the Chrome extensions page.
 - **Unified UI Layout** — Consolidated the Dashboard header for a cleaner, professional look.
 - **Smart URL Mapping** — Enhanced session persistence across different AI platform URL formats.
@@ -356,7 +356,7 @@ Bug fixes, new platform support, UI improvements, documentation, and test covera
 
 [Contributing Guide](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
-Good first issues: [`good first issue`](https://github.com/Eshaan-Nair/Synq/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
+Good first issues: [`good first issue`](https://github.com/Eshaan-Nair/Glia/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
 
 ---
 

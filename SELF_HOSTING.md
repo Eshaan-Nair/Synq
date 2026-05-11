@@ -1,6 +1,6 @@
-# SYNQ — Self-Hosting Guide
+# GLIA — Self-Hosting Guide
 
-This guide covers custom configuration, port changes, backups, and running SYNQ behind a reverse proxy.
+This guide covers custom configuration, port changes, backups, and running GLIA behind a reverse proxy.
 
 ---
 
@@ -23,7 +23,7 @@ Edit `backend/.env`:
 
 ```env
 NEO4J_PASSWORD=your-strong-password
-MONGO_URI=mongodb://synq:your-strong-password@localhost:27017/synqdb?authSource=admin
+MONGO_URI=mongodb://glia:your-strong-password@localhost:27017/gliadb?authSource=admin
 ```
 
 And update `docker-compose.yml` to match:
@@ -35,7 +35,7 @@ neo4j:
 
 mongodb:
   environment:
-    - MONGO_INITDB_ROOT_USERNAME=synq
+    - MONGO_INITDB_ROOT_USERNAME=glia
     - MONGO_INITDB_ROOT_PASSWORD=your-strong-password
 ```
 
@@ -45,7 +45,7 @@ Restart: `docker compose down && docker compose --profile full up -d`
 
 ## Docker Profiles
 
-SYNQ supports two Docker profiles:
+GLIA supports two Docker profiles:
 
 | Profile | Services | Use when |
 |---|---|---|
@@ -62,7 +62,7 @@ docker compose --profile lite up -d
 docker compose -f docker-compose.lite.yml up -d
 ```
 
-Override RAM auto-detection: `SYNQ_PROFILE=full` or `SYNQ_PROFILE=lite` before running a launcher.
+Override RAM auto-detection: `GLIA_PROFILE=full` or `GLIA_PROFILE=lite` before running a launcher.
 
 ---
 
@@ -72,9 +72,9 @@ All data lives in named Docker volumes:
 
 | Volume | Contains |
 |---|---|
-| `synq_neo4j_data` | Knowledge graph triples |
-| `synq_mongo_data` | Sessions, FullChat documents |
-| `synq_chroma_data` | Vector embeddings |
+| `glia_neo4j_data` | Knowledge graph triples |
+| `glia_mongo_data` | Sessions, FullChat documents |
+| `glia_chroma_data` | Vector embeddings |
 
 ### Backup
 
@@ -83,20 +83,20 @@ All data lives in named Docker volumes:
 docker compose down
 
 # Backup each volume
-docker run --rm -v synq_mongo_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v glia_mongo_data:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/mongo_$(date +%Y%m%d).tar.gz /data
 
-docker run --rm -v synq_neo4j_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v glia_neo4j_data:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/neo4j_$(date +%Y%m%d).tar.gz /data
 
-docker run --rm -v synq_chroma_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v glia_chroma_data:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/chroma_$(date +%Y%m%d).tar.gz /data
 ```
 
 ### Restore
 
 ```bash
-docker run --rm -v synq_mongo_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v glia_mongo_data:/data -v $(pwd)/backups:/backup alpine \
   tar xzf /backup/mongo_20260505.tar.gz -C /
 ```
 
@@ -119,7 +119,7 @@ To expose the dashboard at a custom domain:
 
 ```nginx
 server {
-    server_name synq.yourdomain.com;
+    server_name glia.yourdomain.com;
 
     location / {
         proxy_pass http://localhost:3001;
@@ -134,7 +134,7 @@ Update `ALLOWED_ORIGINS` in `backend/src/index.ts` to include your domain:
 ```typescript
 const ALLOWED_ORIGINS = [
   "http://localhost:3001",
-  "https://synq.yourdomain.com",
+  "https://glia.yourdomain.com",
   // ...
 ];
 ```
@@ -143,12 +143,12 @@ Enable request authentication for production:
 
 ```env
 # backend/.env
-SYNQ_SECRET=your-random-secret-here
+GLIA_SECRET=your-random-secret-here
 ```
 
 The extension and all API clients must then include the header:
 ```
-X-SYNQ-Secret: your-random-secret-here
+X-GLIA-Secret: your-random-secret-here
 ```
 
 ---
@@ -201,5 +201,5 @@ curl http://localhost:7474
 curl http://localhost:11434/api/tags
 
 # MongoDB
-docker exec synq_mongo mongosh --eval "db.adminCommand('ping')"
+docker exec glia_mongo mongosh --eval "db.adminCommand('ping')"
 ```

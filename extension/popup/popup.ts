@@ -1,4 +1,4 @@
-// popup.ts — v1.4.5
+// popup.ts — v1.4.6
 // Replaced Connect/Disconnect with a Pause toggle
 // Auto-connect happens in content.ts on init — popup only shows state + pause control
 
@@ -22,7 +22,7 @@ const unloadBtn = document.getElementById("unload-btn") as HTMLButtonElement;
 const injectBtn = document.getElementById("inject-btn") as HTMLButtonElement;
 const detectedPlatformEl = document.getElementById("detected-platform") as HTMLElement;
 const platformDot = document.getElementById("platform-dot") as HTMLElement;
-const synqStatusBadge = document.getElementById("synq-status-badge") as HTMLElement;
+const gliaStatusBadge = document.getElementById("glia-status-badge") as HTMLElement;
 const projectNameInput = document.getElementById("project-name") as HTMLInputElement;
 
 const PLATFORM_LABELS: Record<Platform, string> = {
@@ -101,13 +101,25 @@ async function isContentScriptReady(tabId: number): Promise<boolean> {
 }
 
 async function ensureContentScript(tabId: number): Promise<boolean> {
+  // v1.4.6: Prevent injection on restricted URLs (chrome://, about:, etc.)
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const url = tab?.url || "";
+  if (!url || url.startsWith("chrome://") || url.startsWith("about:") || url.startsWith("chrome-extension://") || url.startsWith("edge://")) {
+    return false;
+  }
+
   if (await isContentScriptReady(tabId)) return true;
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: ["dist/content.js"] });
     await new Promise(r => setTimeout(r, 500));
     return true;
   } catch (err) {
-    console.error("[SYNQ popup] Could not inject content script:", err);
+    // If it's a restricted page we missed, don't log it as a scary error
+    const msg = String(err);
+    if (msg.includes("Cannot access") || msg.includes("restricted")) {
+      return false;
+    }
+    console.error("[GLIA popup] Could not inject content script:", err);
     return false;
   }
 }
@@ -141,21 +153,21 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
         const tabUrl = tab?.url || "";
         const smartKey = getSmartUrlKey(tabUrl);
 
-        chrome.storage.local.get(["synq_session", "synq_url_map"], (result) => {
-          const urlMap = (result.synq_url_map || {}) as Record<string, string>;
+        chrome.storage.local.get(["glia_session", "glia_url_map"], (result) => {
+          const urlMap = (result.glia_url_map || {}) as Record<string, string>;
           const mappedId = urlMap[smartKey];
 
           if (mappedId) {
             // If this tab is mapped to a session, we should probably fetch it
             // For now, let's just see if our "last known" session matches the ID
-            const lastSession = result.synq_session as SessionData;
+            const lastSession = result.glia_session as SessionData;
             if (lastSession && lastSession.sessionId === mappedId) {
               showSession(lastSession);
             } else {
               // Future improvement: fetch the specific session by ID from backend
             }
-          } else if (result.synq_session) {
-            showSession(result.synq_session as SessionData);
+          } else if (result.glia_session) {
+            showSession(result.glia_session as SessionData);
           }
           resolve();
         });
@@ -209,8 +221,8 @@ saveBtn.addEventListener("click", async () => {
   let existingSessionId: string | undefined;
 
   if (tabUrl) {
-    const result = await chrome.storage.local.get("synq_url_map");
-    const urlMap = (result.synq_url_map || {}) as Record<string, string>;
+    const result = await chrome.storage.local.get("glia_url_map");
+    const urlMap = (result.glia_url_map || {}) as Record<string, string>;
     existingSessionId = urlMap[smartKey] || urlMap[tabUrl];
   }
 
@@ -218,7 +230,7 @@ saveBtn.addEventListener("click", async () => {
   const sessionIdToUse = currentSessionId || existingSessionId;
 
   if (sessionIdToUse) {
-    console.log(`[SYNQ popup] using session: ${sessionIdToUse} (current: ${!!currentSessionId}, url-mapped: ${!!existingSessionId})`);
+    console.log(`[GLIA popup] using session: ${sessionIdToUse} (current: ${!!currentSessionId}, url-mapped: ${!!existingSessionId})`);
   }
 
   const sessionResult = await new Promise<any>((resolve) => {
@@ -237,15 +249,15 @@ saveBtn.addEventListener("click", async () => {
   if (!sessionResult?.sessionId) {
     // If we tried to update an existing session but it was deleted on the backend
     if (sessionResult?.error === "Session not found" && sessionIdToUse) {
-      console.warn(`[SYNQ popup] session ${sessionIdToUse} not found on backend. Clearing mapping and retrying...`);
+      console.warn(`[GLIA popup] session ${sessionIdToUse} not found on backend. Clearing mapping and retrying...`);
 
       // Clear mapping and state
       if (tabUrl) {
-        const urlMapResult = await chrome.storage.local.get("synq_url_map");
-        const urlMap = (urlMapResult.synq_url_map || {}) as Record<string, string>;
+        const urlMapResult = await chrome.storage.local.get("glia_url_map");
+        const urlMap = (urlMapResult.glia_url_map || {}) as Record<string, string>;
         delete urlMap[smartKey];
         delete urlMap[tabUrl];
-        await chrome.storage.local.set({ synq_url_map: urlMap });
+        await chrome.storage.local.set({ glia_url_map: urlMap });
       }
       currentSessionId = null;
 
@@ -297,23 +309,23 @@ saveBtn.addEventListener("click", async () => {
           tripleCount: response.triplesExtracted as number,
           topicCount: response.topicsExtracted as number,
         };
-        chrome.storage.local.set({ synq_session: sessionData });
+        chrome.storage.local.set({ glia_session: sessionData });
 
         // Save the URL -> sessionId mapping so we update instead of create next time
         if (tabUrl) {
-          chrome.storage.local.get("synq_url_map", (result) => {
-            const urlMap = (result.synq_url_map || {}) as Record<string, string>;
+          chrome.storage.local.get("glia_url_map", (result) => {
+            const urlMap = (result.glia_url_map || {}) as Record<string, string>;
             urlMap[smartKey] = sessionResult.sessionId;
             // Also map the original URL just in case
             urlMap[tabUrl] = sessionResult.sessionId;
-            chrome.storage.local.set({ synq_url_map: urlMap });
+            chrome.storage.local.set({ glia_url_map: urlMap });
           });
         }
 
         showSession(sessionData);
         const chunks = response.topicsExtracted as number;
         const facts = response.triplesExtracted as number;
-        setStatus(`✅ Saved! ${chunks} chunks stored, ${facts} facts extracted. SYNQ auto-connected.`);
+        setStatus(`✅ Saved! ${chunks} chunks stored, ${facts} facts extracted. GLIA auto-connected.`);
 
         // ── Success State Glow ───────────────────────────────────────
         document.body.classList.add("success-glow");
@@ -337,10 +349,10 @@ pauseToggleBtn.addEventListener("click", async () => {
   // Tell the content script
   const ready = await ensureContentScript(tabId);
   if (ready) {
-    chrome.tabs.sendMessage(tabId, { type: isPaused ? "PAUSE_SYNQ" : "RESUME_SYNQ" }, () => { });
+    chrome.tabs.sendMessage(tabId, { type: isPaused ? "PAUSE_GLIA" : "RESUME_GLIA" }, () => { });
   }
 
-  setStatus(isPaused ? "⏸ SYNQ paused" : "▶️ SYNQ resumed");
+  setStatus(isPaused ? "⏸ GLIA paused" : "▶️ GLIA resumed");
 });
 
 // ── Unload Session ───────────────────────────────────────────────
@@ -356,7 +368,7 @@ unloadBtn.addEventListener("click", async () => {
 
     if (response?.success) {
       currentSessionId = null;
-      chrome.storage.local.remove("synq_session");
+      chrome.storage.local.remove("glia_session");
       sessionInfo.style.display = "none";
       updatePauseUI();
       setStatus("🔌 Session unloaded");
@@ -404,15 +416,15 @@ function showSession(data: SessionData) {
 
 function updatePauseUI() {
   if (isPaused) {
-    pauseToggleBtn.textContent = "▶️ Resume SYNQ";
+    pauseToggleBtn.textContent = "▶️ Resume GLIA";
     pauseToggleBtn.classList.add("paused");
-    synqStatusBadge.textContent = "⏸ Paused";
-    synqStatusBadge.className = "synq-status paused";
+    gliaStatusBadge.textContent = "⏸ Paused";
+    gliaStatusBadge.className = "glia-status paused";
   } else {
-    pauseToggleBtn.textContent = "⏸ Pause SYNQ";
+    pauseToggleBtn.textContent = "⏸ Pause GLIA";
     pauseToggleBtn.classList.remove("paused");
-    synqStatusBadge.textContent = currentSessionId ? "🟢 Active" : "⚪ No session";
-    synqStatusBadge.className = `synq-status ${currentSessionId ? "active" : "idle"}`;
+    gliaStatusBadge.textContent = currentSessionId ? "🟢 Active" : "⚪ No session";
+    gliaStatusBadge.className = `glia-status ${currentSessionId ? "active" : "idle"}`;
   }
 }
 

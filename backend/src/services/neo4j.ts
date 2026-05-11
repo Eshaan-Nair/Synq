@@ -34,7 +34,7 @@ export async function connectNeo4j() {
 // crashing with "Cannot read properties of null (reading 'session')".
 export function getDriver(): Driver {
   if (!driver) {
-    throw new Error("[SYNQ] Neo4j driver is not initialized. connectNeo4j() has not completed yet.");
+    throw new Error("[GLIA] Neo4j driver is not initialized. connectNeo4j() has not completed yet.");
   }
   return driver;
 }

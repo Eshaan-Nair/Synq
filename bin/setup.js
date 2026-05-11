@@ -10,11 +10,11 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const REPO_URL = 'https://github.com/Eshaan-Nair/Synq.git';
+const REPO_URL = 'https://github.com/Eshaan-Nair/Glia-AI.git';
 
 console.log(`
  ===================================
-   SYNQ v1.4.5 - Initializer
+   GLIA v1.4.6 - Initializer
  ===================================
 `);
 
@@ -27,7 +27,7 @@ function ask(question, defaultVal) {
 }
 
 async function run() {
-  const targetDir = await ask('Where should we install Synq?', 'synq');
+  const targetDir = await ask('Where should we install Glia?', 'glia');
   const fullPath = path.resolve(process.cwd(), targetDir);
 
   if (fs.existsSync(fullPath)) {
@@ -35,7 +35,7 @@ async function run() {
     process.exit(1);
   }
 
-  console.log(`\n [*] Cloning Synq into ${fullPath}...`);
+  console.log(`\n [*] Cloning Glia into ${fullPath}...`);
 
   const clone = spawn('git', ['clone', REPO_URL, targetDir], { stdio: 'inherit' });
 

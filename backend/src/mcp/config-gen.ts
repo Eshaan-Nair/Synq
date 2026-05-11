@@ -12,10 +12,10 @@ function generateConfig() {
   const rootDir = path.resolve(__dirname, "../../..");
   const backendDir = path.resolve(__dirname, "../..");
   const serverJs = path.join(backendDir, "dist", "mcp", "server.js");
-  const dbPath = path.join(rootDir, "synq.db");
+  const dbPath = path.join(rootDir, "glia.db");
   const envPath = path.join(backendDir, ".env");
 
-  console.log("\n--- SYNQ MCP CONFIGURATION GENERATOR ---");
+  console.log("\n--- GLIA MCP CONFIGURATION GENERATOR ---");
   console.log("Detected Paths:");
   console.log(`- Server executable: ${serverJs}`);
   console.log(`- Database file:     ${dbPath}`);
@@ -26,11 +26,11 @@ function generateConfig() {
   }
 
   const config = {
-    synq: {
+    glia: {
       command: "node",
       args: [serverJs],
       env: {
-        SYNQ_STORAGE_MODE: "sqlite",
+        GLIA_STORAGE_MODE: "sqlite",
         SQLITE_DB_PATH: dbPath,
         NODE_ENV: "production"
       }

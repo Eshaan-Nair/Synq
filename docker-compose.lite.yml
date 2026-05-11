@@ -1,4 +1,4 @@
-# docker-compose.lite.yml — SYNQ Lite Mode
+# docker-compose.lite.yml — GLIA Lite Mode
 #
 # Use when RAM < 8 GB. Skips Neo4j and knowledge graph extraction.
 # RAG (vector search) still works — you just won't get graph-based context.
@@ -6,22 +6,22 @@
 # Usage: docker compose -f docker-compose.lite.yml up -d
 # Or:    start.bat will auto-select this if < 8 GB RAM is detected.
 
-name: synq-lite
+name: glia-lite
 services:
   mongodb:
     image: mongo:7.0
-    container_name: synq_mongo
+    container_name: glia_mongo
     ports:
       - "127.0.0.1:27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-synq}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-synqpassword123}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-glia}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-gliapassword123}
     volumes:
       - mongo_data:/data/db
 
   chromadb:
     image: chromadb/chroma:0.6.3
-    container_name: synq_chroma
+    container_name: glia_chroma
     ports:
       - "127.0.0.1:8000:8000"
     volumes:

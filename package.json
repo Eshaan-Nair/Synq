@@ -1,10 +1,10 @@
 {
-  "name": "synq-setup",
+  "name": "glia-ai-setup",
   "version": "1.4.6",
   "description": "Smart, local-first RAG and Knowledge Graph for AI conversations.",
   "main": "index.js",
   "bin": {
-    "synq-setup": "bin/setup.js"
+    "glia-ai-setup": "bin/setup.js"
   },
   "files": [
     "bin/",
@@ -16,10 +16,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Eshaan-Nair/Synq.git"
+    "url": "https://github.com/Eshaan-Nair/Glia-AI"
   },
   "keywords": [
-    "synq",
+    "glia",
     "ai",
     "memory",
     "rag",

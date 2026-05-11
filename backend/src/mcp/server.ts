@@ -1,17 +1,17 @@
 /**
- * mcp/server.ts — SYNQ MCP Server (stdio transport)
+ * mcp/server.ts — GLIA MCP Server (stdio transport)
  *
- * Transforms SYNQ into a universal memory layer accessible from any
+ * Transforms GLIA into a universal memory layer accessible from any
  * MCP-compatible AI tool: Claude Code, Cursor, Windsurf, Claude Desktop.
  *
  * Five tools exposed:
  *   - recall_context      → retrieve relevant memory for a prompt
- *   - store_memory        → save text to SYNQ long-term memory
+ *   - store_memory        → save text to GLIA long-term memory
  *   - search_memory       → semantic search across all sessions
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
- * Updated: v1.4.5
+ * Updated: v1.4.6
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -43,7 +43,7 @@ const TOOLS = [
     name: "recall_context",
     description:
       "Retrieve the most relevant memory chunks for a given prompt. " +
-      "Returns sanitised chunks wrapped in <synq_retrieved_context> delimiters.",
+      "Returns sanitised chunks wrapped in <glia_retrieved_context> delimiters.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -57,7 +57,7 @@ const TOOLS = [
   {
     name: "store_memory",
     description:
-      "Save text or a full conversation transcript to SYNQ long-term memory. " +
+      "Save text or a full conversation transcript to GLIA long-term memory. " +
       "This updates the Knowledge Graph and makes the chat visible in the Dashboard history. " +
       "Use this to 'save' a coding session or a key decision.",
     inputSchema: {
@@ -84,7 +84,7 @@ const TOOLS = [
   },
   {
     name: "list_projects",
-    description: "List all project names and IDs stored in SYNQ memory.",
+    description: "List all project names and IDs stored in GLIA memory.",
     inputSchema: {
       type: "object" as const,
       properties: {},
@@ -105,7 +105,7 @@ const TOOLS = [
   },
   {
     name: "identify_active_project",
-    description: "Automatically identify the Synq project ID based on a folder path or CWD.",
+    description: "Automatically identify the Glia project ID based on a folder path or CWD.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -118,7 +118,7 @@ const TOOLS = [
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "synq-memory", version: "1.4.5" },
+  { name: "glia-memory", version: "1.4.6" },
   { capabilities: { tools: {}, resources: {} } }
 );
 
@@ -131,7 +131,7 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
   const sessions = await sessionStore.getSessions();
   return {
     resources: sessions.map(s => ({
-      uri: `synq://projects/${s._id}/graph`,
+      uri: `glia://projects/${s._id}/graph`,
       name: `${s.projectName} Knowledge Graph`,
       mimeType: "text/markdown",
       description: `Structured knowledge graph facts for ${s.projectName}`
@@ -214,15 +214,15 @@ server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolRes
 
 // ── Bootstrap: start server ─────────────────────
 async function main() {
-  const STORAGE_MODE = (process.env.SYNQ_STORAGE_MODE || "docker").toLowerCase();
+  const STORAGE_MODE = (process.env.GLIA_STORAGE_MODE || "docker").toLowerCase();
   await initStorage();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  process.stderr.write(`[SYNQ MCP] Server ready (Mode: ${STORAGE_MODE.toUpperCase()}) — listening via stdio\n`);
+  process.stderr.write(`[GLIA MCP] Server ready (Mode: ${STORAGE_MODE.toUpperCase()}) — listening via stdio\n`);
 }
 
 main().catch(err => {
-  process.stderr.write(`[SYNQ MCP] Fatal: ${err}\n`);
+  process.stderr.write(`[GLIA MCP] Fatal: ${err}\n`);
   process.exit(1);
 });

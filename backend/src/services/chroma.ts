@@ -1,5 +1,5 @@
 /**
- * chroma.ts — ChromaDB v2 REST API (v1.4.5)
+ * chroma.ts — ChromaDB v2 REST API (v1.4.6)
  *
  * Updated: TopicChunk -> WindowChunk to match the new sliding window chunker.
  * Deduplication in retrieve now uses chunkIndex instead of topicName.
@@ -10,7 +10,7 @@ import { generateEmbedding, generateEmbeddings } from "./embeddings";
 import { logger } from "../utils/logger";
 import type { WindowChunk } from "./chunker";
 
-const COLLECTION_NAME = "synq_chunks_v2";
+const COLLECTION_NAME = "glia_chunks_v2";
 const CHROMA_URL = (process.env.CHROMA_URL || "http://localhost:8000").replace(/\/$/, "");
 const TENANT = "default_tenant";
 const DATABASE = "default_database";
@@ -50,7 +50,7 @@ export async function storeWindowChunks(chunks: WindowChunk[]): Promise<void> {
   }
   if (chunks.length === 0) return;
 
-  // Purge ALL existing vectors for this session before storing new ones. Updated: v1.4.5
+  // Purge ALL existing vectors for this session before storing new ones. Updated: v1.4.6
   // The previous approach only deleted chunk IDs matching the NEW set — if the
   // conversation shrank and produced fewer chunks, the old extra vectors
   // remained and polluted RAG retrieval. Full purge ensures a clean re-save.
