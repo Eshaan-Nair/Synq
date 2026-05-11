@@ -43,9 +43,6 @@ export async function exportSession(sessionId: string) {
   // Use direct URL for download - assumes API_URL is correct in apiClient
   const baseUrl = apiClient.defaults.baseURL || "http://localhost:3001";
   const url = new URL(`${baseUrl}/api/session/export/${sessionId}`);
-  if (SECRET) {
-    url.searchParams.append("secret", SECRET);
-  }
   window.open(url.toString(), "_blank");
 }
 

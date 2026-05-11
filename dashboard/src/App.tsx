@@ -45,6 +45,7 @@ export default function App() {
   const [isClosed, setIsClosed] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [graphTypeFilter, setGraphTypeFilter] = useState<string | null>(null); // visual only, not sent to backend
+  const [sidebarTab, setSidebarTab] = useState<"projects" | "legend">("projects");
   const [sessionSearch, setSessionSearch] = useState("");
   const [factsPage, setFactsPage] = useState(0);
   const [jobStatus, setJobStatus] = useState({ pending: 0, processing: 0, deadLettered: 0 });
@@ -270,7 +271,6 @@ export default function App() {
             onNodeClick={(id) => setSelectedNodeId(prev => prev === id ? null : id)}
             selectedNodeId={selectedNodeId}
             filterType={graphTypeFilter}
-            onFilterChange={setGraphTypeFilter}
           />
         )}
       </div>
@@ -280,77 +280,117 @@ export default function App() {
         {/* ── Sidebar ───────────────────────────────────────────────── */}
         <div className="sidebar floating-panel">
           <div className="sidebar-header">
-            <div className="sidebar-title">GLIA</div>
-            <div className="sidebar-subtitle">AI Memory Layer</div>
+            <div className="sidebar-tabs">
+              <button 
+                className={`sidebar-tab ${sidebarTab === "projects" ? "active" : ""}`} 
+                onClick={() => setSidebarTab("projects")}
+              >
+                Projects
+              </button>
+              <button 
+                className={`sidebar-tab ${sidebarTab === "legend" ? "active" : ""}`} 
+                onClick={() => setSidebarTab("legend")}
+              >
+                Legend
+              </button>
+            </div>
           </div>
-          <div className="session-list">
-            {sessions.length === 0 ? (
-              <div className="empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.2, marginBottom: "12px" }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="3" y1="9" x2="21" y2="9"></line>
-                  <line x1="9" y1="21" x2="9" y2="9"></line>
-                </svg>
-                <span>No sessions found.<br />Capture context using the extension to get started.</span>
+
+          <div className="sidebar-content">
+            {sidebarTab === "projects" ? (
+              <div className="session-list">
+                {sessions.length === 0 ? (
+                  <div className="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.2, marginBottom: "12px" }}>
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="3" y1="9" x2="21" y2="9"></line>
+                      <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    <span>No sessions found.<br />Capture context using the extension to get started.</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="session-list-header">
+                      <input
+                        className="search-input"
+                        placeholder="Search projects..."
+                        value={sessionSearch}
+                        onChange={(e) => setSessionSearch(e.target.value)}
+                      />
+                      <label className="import-btn-label" title="Import Session">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <input type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
+                      </label>
+                    </div>
+                    {filteredSessions.map((s) => {
+                      const isActive = activeSession?._id === s._id;
+                      return (
+                        <div
+                          key={s._id}
+                          className={`session-item ${isActive ? "active" : ""}`}
+                          onClick={() => loadSession(s)}
+                        >
+                          <div className="session-header">
+                            <div className="session-name">{s.projectName}</div>
+                            {s.isProcessingGraph && (
+                              <span className="processing-indicator" title="Graph extraction in progress...">
+                                <span className="processing-dot"></span>
+                                Updating...
+                              </span>
+                            )}
+                            <div className="session-actions">
+                              <button
+                                className="action-btn export-btn"
+                                onClick={(e) => { e.stopPropagation(); exportSession(s._id); }}
+                                title="Export session"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                              </button>
+                              <button
+                                className="action-btn delete-btn"
+                                onClick={(e) => handleDelete(e, s._id)}
+                                title="Delete session"
+                              >
+                                {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="session-meta">
+                            <div className="session-stats">
+                              <span><strong>{s.tripleCount}</strong> facts</span>
+                              {s.topicCount ? <span><strong>{s.topicCount}</strong> topics</span> : null}
+                            </div>
+                            <span className="session-date">{new Date(s.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             ) : (
-              <>
-                <div className="session-list-header">
-                  <input
-                    className="search-input"
-                    placeholder="Search projects..."
-                    value={sessionSearch}
-                    onChange={(e) => setSessionSearch(e.target.value)}
-                  />
-                  <label className="import-btn-label" title="Import Session">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    <input type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
-                  </label>
-                </div>
-                {filteredSessions.map((s) => {
-                  const isActive = activeSession?._id === s._id;
-                  return (
-                    <div
-                      key={s._id}
-                      className={`session-item ${isActive ? "active" : ""}`}
-                      onClick={() => loadSession(s)}
-                    >
-                      <div className="session-header">
-                        <div className="session-name">{s.projectName}</div>
-                        {s.isProcessingGraph && (
-                          <span className="processing-indicator" title="Graph extraction in progress...">
-                            <span className="processing-dot"></span>
-                            Updating...
-                          </span>
-                        )}
-                        <div className="session-actions">
-                          <button
-                            className="action-btn export-btn"
-                            onClick={(e) => { e.stopPropagation(); exportSession(s._id); }}
-                            title="Export session"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
-                            onClick={(e) => handleDelete(e, s._id)}
-                            title="Delete session"
-                          >
-                            {deletingId === s._id ? "..." : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>}
-                          </button>
+              <div className="legend-sidebar-list">
+                <div className="sidebar-section-title">Entity Types (Filter)</div>
+                {nodes.length === 0 ? (
+                  <div className="empty-state">No graph data.</div>
+                ) : (
+                  <div className="legend-items">
+                    {[...new Set(nodes.map(n => n.type))].map(type => (
+                      <div 
+                        key={type} 
+                        className={`legend-sidebar-item ${graphTypeFilter === type ? "active" : ""}`}
+                        onClick={() => setGraphTypeFilter(graphTypeFilter === type ? null : type)}
+                      >
+                        <div className="legend-dot-wrapper">
+                          <div className="legend-dot" style={{ background: (window as any).TYPE_COLORS?.[type] || "#475569" }} />
                         </div>
+                        <span className="legend-text">{type}</span>
+                        {graphTypeFilter === type && <div className="legend-active-indicator" />}
                       </div>
-                      <div className="session-meta">
-                        <div className="session-stats">
-                          <span><strong>{s.tripleCount}</strong> facts</span>
-                          {s.topicCount ? <span><strong>{s.topicCount}</strong> topics</span> : null}
-                        </div>
-                        <span className="session-date">{new Date(s.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

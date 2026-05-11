@@ -125,26 +125,46 @@ body {
 }
 
 .sidebar-header {
-  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
-  text-align: center;
+  background: rgba(0, 0, 0, 0.1);
 }
 
-.sidebar-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: 0.15em;
-  color: var(--text-main);
-  text-transform: uppercase;
+.sidebar-tabs {
+  display: flex;
+  width: 100%;
 }
 
-.sidebar-subtitle {
-  font-size: 9px;
+.sidebar-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 14px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text-muted);
-  margin-top: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sidebar-tab:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sidebar-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .session-list {
@@ -749,53 +769,89 @@ body {
 }
 
 
-/* Graph Overlays */
-.graph-legend {
-  position: absolute;
-  top: 60px;
-  left: 266px;
-  background: rgba(15, 17, 26, 0.85);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  max-width: 180px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-  z-index: 40;
+/* Sidebar Legend */
+.legend-sidebar-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.graph-legend-title {
+.sidebar-section-title {
   font-size: 9px;
   color: var(--text-dim);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  margin-bottom: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
-.graph-legend-item {
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legend-sidebar-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding: 4px 6px;
-  border-radius: 6px;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+  border: 1px solid transparent;
 }
 
-.graph-legend-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+.legend-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.graph-legend-item.active {
+.legend-sidebar-item.active {
   background: var(--accent-dim);
+  border-color: var(--accent-glow);
 }
 
-.graph-legend-text {
-  font-size: 9px;
+.legend-dot-wrapper {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.legend-sidebar-item.active .legend-dot {
+  box-shadow: 0 0 12px currentColor;
+}
+
+.legend-text {
+  font-size: 13px;
   color: var(--text-muted);
-  white-space: nowrap;
+  font-weight: 500;
+}
+
+.legend-sidebar-item.active .legend-text {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.legend-active-indicator {
+  position: absolute;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
 }
 
 .clear-legend-btn {
