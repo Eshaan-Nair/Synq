@@ -4,7 +4,7 @@
  * Handles enqueuing and processing of slow tasks (like triple extraction).
  * Fully abstracted — works with both Docker (Mongo) and SQLite storage modes.
  *
- * Updated: v1.4.5
+ * Updated: v1.4.6
  */
 
 import { sessionStore, graphStore, vectorStore } from "./storage";
@@ -112,7 +112,7 @@ export async function processNextJob(): Promise<boolean> {
 }
 
 /**
- * Logic for Triple Extraction job with Checkpointing (v1.4.5)
+ * Logic for Triple Extraction job with Checkpointing (v1.4.6)
  */
 async function handleTripleExtraction(jobId: any, payload: {
   sessionId: string;

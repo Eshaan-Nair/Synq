@@ -222,7 +222,7 @@ export default function App() {
     loadSessions();
     const interval = setInterval(() => {
       if (!document.hidden) loadSessions();
-    }, 5000); // v1.4.5+: Poll every 5s for job status
+    }, 5000); // v1.4.6+: Poll every 5s for job status
     return () => clearInterval(interval);
   }, [loadSessions]);
 
@@ -281,7 +281,7 @@ export default function App() {
         <div className="sidebar floating-panel">
           <div className="sidebar-header">
             <div className="sidebar-title">GLIA</div>
-            <div className="sidebar-subtitle">Context Sovereignty Engine</div>
+            <div className="sidebar-subtitle">AI Memory Layer</div>
           </div>
           <div className="session-list">
             {sessions.length === 0 ? (

@@ -56,9 +56,9 @@ const PORT = process.env.PORT || 3001;
 // Body parser — MUST be before routes. Raised limit for large chat saves.
 app.use(express.json({ limit: "5mb" }));
 // Issue #3 Fix: Restrict CORS to trusted origins only
-// v1.4.5: Added localhost:3001 — dashboard is now served from the same port as the API
+// v1.4.6: Added localhost:3001 — dashboard is now served from the same port as the API
 const ALLOWED_ORIGINS = [
-  `http://localhost:${PORT}`, // Dashboard (production build — v1.4.5)
+  `http://localhost:${PORT}`, // Dashboard (production build — v1.4.6)
   "http://localhost:3001",   // Default port fallback
   "http://localhost:5173",   // Vite dashboard (dev)
   "http://localhost:5174",   // Vite dashboard (dev alt)
@@ -145,7 +145,7 @@ app.use("/api/jobs", jobsRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "GLIA backend running",
-    version: "1.4.5",
+    version: "1.4.6",
     services: {
       backend: "ok",
       port: PORT,
@@ -153,7 +153,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// ── v1.4.5: Serve production dashboard build via sirv ─────────────
+// ── v1.4.6: Serve production dashboard build via sirv ─────────────
 // Eliminates the separate Vite dev server process for self-hosters.
 // Falls back gracefully with a clear message if the build hasn't run yet.
 const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");

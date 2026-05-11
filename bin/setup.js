@@ -10,11 +10,11 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const REPO_URL = 'https://github.com/Eshaan-Nair/Glia.git';
+const REPO_URL = 'https://github.com/Eshaan-Nair/Glia-AI.git';
 
 console.log(`
  ===================================
-   GLIA v1.4.5 - Initializer
+   GLIA v1.4.6 - Initializer
  ===================================
 `);
 

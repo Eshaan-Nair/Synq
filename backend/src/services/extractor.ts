@@ -37,7 +37,7 @@ export function chunkText(text: string): string[] {
   return chunks;
 }
 
-// ── v1.4.5: Smart Backend Selection ───────────────────────────────
+// ── v1.4.6: Smart Backend Selection ───────────────────────────────
 //
 // Priority:
 //   1. GRAPH_BACKEND env var (explicit override — "ollama" | "groq" | "local-openai")
@@ -465,7 +465,7 @@ export async function extractTriples(text: string, startIndex = 0): Promise<{ tr
 }
 
 /**
- * v1.4.5: Token Optimization via Snippet Extraction
+ * v1.4.6: Token Optimization via Snippet Extraction
  * Reads raw retrieved chunks and uses the LLM to extract ONLY the exact lines
  * relevant to the user's prompt. This prevents dumping 1500+ words of raw context
  * into the final RAG prompt, significantly reducing token cost and hallucination risk.

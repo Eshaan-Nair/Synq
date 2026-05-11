@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=glia"
 
 echo.
 echo  ===================================
-echo   GLIA v1.4.5 - Starting up
+echo   GLIA v1.4.6 - Starting up
 echo  ===================================
 echo.
 

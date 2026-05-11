@@ -1,4 +1,4 @@
-// rag.ts (backend route) — v1.4.5
+// rag.ts (backend route) — v1.4.6
 
 import { Router, Request, Response } from "express";
 import { vectorStore, graphStore, RetrievedChunk } from "../services/storage";
@@ -18,13 +18,13 @@ router.post("/retrieve", async (req: Request, res: Response) => {
     return;
   }
 
-  // v1.4.5: Use unified validator for Mongo/SQLite IDs
+  // v1.4.6: Use unified validator for Mongo/SQLite IDs
   if (!isValidObjectId(sessionId)) {
     res.status(400).json({ error: "Invalid sessionId format" });
     return;
   }
 
-  // v1.4.5: Character-based context budgeting
+  // v1.4.6: Character-based context budgeting
   // We retrieve a larger pool and fill until the budget is reached.
   const MAX_TOTAL_CHARS = 6000;
 
@@ -66,7 +66,7 @@ router.post("/retrieve", async (req: Request, res: Response) => {
     // Sanitise (redact injection patterns) then wrap in XML delimiters
     const sanitized = sanitizeChunks(safeChunks);
 
-    // v1.4.5: Snippet Extraction
+    // v1.4.6: Snippet Extraction
     const rawContent = sanitized.map(c => c.content);
     const snippetContext = await extractRelevantSnippets(String(prompt), rawContent);
 
@@ -103,7 +103,7 @@ router.post("/global", async (req: Request, res: Response) => {
     return;
   }
 
-  // v1.4.5: Character-based context budgeting
+  // v1.4.6: Character-based context budgeting
   const MAX_TOTAL_CHARS = 4000; // Lower for global to avoid noisy context
 
   try {
@@ -130,7 +130,7 @@ router.post("/global", async (req: Request, res: Response) => {
     // Sanitise and wrap
     const sanitized = sanitizeChunks(safeChunks);
 
-    // v1.4.5: Snippet Extraction
+    // v1.4.6: Snippet Extraction
     const rawContent = sanitized.map(c => c.content);
     const snippetContext = await extractRelevantSnippets(String(prompt), rawContent);
 

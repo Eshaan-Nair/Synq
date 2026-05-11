@@ -27,7 +27,7 @@ router.get("/export/:id", async (req: Request, res: Response) => {
     const facts = await graphStore.getTriplesBySession(sessionId);
 
     const exportData = {
-      version: "1.4.5",
+      version: "1.4.6",
       timestamp: new Date().toISOString(),
       session,
       fullChat,

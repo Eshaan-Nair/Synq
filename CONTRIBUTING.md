@@ -7,8 +7,8 @@ Thanks for your interest in contributing. Bug fixes, new platform support, UI im
 ## Getting Started
 
 ```bash
-git clone https://github.com/Eshaan-Nair/Glia.git
-cd Glia
+git clone https://github.com/Eshaan-Nair/Glia-AI.git
+cd Glia-AI
 git checkout -b your-branch-name
 
 # First-time setup
@@ -93,7 +93,7 @@ type(scope): short description
 Examples:
 feat(extension): add Example platform support
 fix(rag): lower similarity threshold for shorter queries
-docs(readme): update quick start for v1.4.5
+docs(readme): update quick start for v1.4.6
 test(pipeline): add edge case for empty conversation
 chore(deps): bump chromadb to 0.6.4
 ```

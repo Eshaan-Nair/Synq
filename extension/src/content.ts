@@ -1,5 +1,5 @@
 /**
- * GLIA content.ts — v1.4.5
+ * GLIA content.ts — v1.4.6
  *
  * Fix: Context injection now works reliably on all platforms.
  *

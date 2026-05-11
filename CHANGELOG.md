@@ -4,10 +4,20 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.4.6] — 2026-05-11 — The Glia-AI Rebrand
+
+### Rebranding & Identity
+- **Project Rebrand** — Transitioned the project identity from **Synq** to **Glia-AI**.
+- **CLI Refresh** — Updated the one-command installer to `npx glia-ai-setup`.
+- **Infrastructure Update** — Renamed all environment variables (`GLIA_SECRET`, `GLIA_STORAGE_MODE`), Docker containers, and internal storage keys.
+- **Documentation Audit** — Comprehensive update of all guides, architecture diagrams, and repository metadata.
+
+---
+
 ## [1.4.5] — 2026-05-11 — Frictionless Setup & UI Refinement
 
 ### Installation & UX
-- **One-Command Setup** — Introduced `npx glia-setup` to automate repository cloning and installation.
+- **One-Command Setup** — Introduced the automated repository cloning and installation script.
 - **Automated Extension Loading** — The installer now automatically opens the extension folder and the Chrome extensions page.
 - **Smart URL Mapping** — Enhanced session persistence across varied platform URL formats (e.g. shared chats).
 
@@ -16,8 +26,8 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 - **Improved Alignment** — Fixed multiple layout regressions in the history list and chat bubbles.
 
 ### Backend & MCP
-- **MCP Resilience** — Updated the Model Context Protocol server to v1.4.5 for parity.
-- **Logging** — Standardized backend logs to version 1.4.5.
+- **MCP Resilience** — Updated the Model Context Protocol server for parity.
+- **Logging** — Standardized backend logs for improved debugging.
 
 ---
 

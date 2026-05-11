@@ -106,7 +106,7 @@ async function runBenchmark() {
   const mrr = totalReciprocalRank / queries.length;
 
   console.log("\n" + "=".repeat(40));
-  console.log("📊 BENCHMARK RESULTS (v1.4.5)");
+  console.log("📊 BENCHMARK RESULTS (v1.4.6)");
   console.log("=".repeat(40));
   console.log(`Hit Rate @ 1:  ${hitRate.toFixed(2)}%`);
   console.log(`MRR:           ${mrr.toFixed(4)}`);

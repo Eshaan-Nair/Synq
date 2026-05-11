@@ -7,7 +7,7 @@
  *   2. wrapInContextBlock() — wraps all injected context in XML-style
  *      delimiters that most LLMs treat as data, not instructions.
  *
- * Updated: v1.4.5
+ * Updated: v1.4.6
  */
 
 import { logger } from "../utils/logger";
