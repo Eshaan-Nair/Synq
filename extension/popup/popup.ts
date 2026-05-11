@@ -101,12 +101,24 @@ async function isContentScriptReady(tabId: number): Promise<boolean> {
 }
 
 async function ensureContentScript(tabId: number): Promise<boolean> {
+  // v1.4.6: Prevent injection on restricted URLs (chrome://, about:, etc.)
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const url = tab?.url || "";
+  if (!url || url.startsWith("chrome://") || url.startsWith("about:") || url.startsWith("chrome-extension://") || url.startsWith("edge://")) {
+    return false;
+  }
+
   if (await isContentScriptReady(tabId)) return true;
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: ["dist/content.js"] });
     await new Promise(r => setTimeout(r, 500));
     return true;
   } catch (err) {
+    // If it's a restricted page we missed, don't log it as a scary error
+    const msg = String(err);
+    if (msg.includes("Cannot access") || msg.includes("restricted")) {
+      return false;
+    }
     console.error("[GLIA popup] Could not inject content script:", err);
     return false;
   }

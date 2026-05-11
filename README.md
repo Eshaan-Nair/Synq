@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./dashboard/icon48.png" width="300">
+<img src="./dashboard/public/Logo.png" width="300">
 
 # GLIA
 

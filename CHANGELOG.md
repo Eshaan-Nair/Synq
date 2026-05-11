@@ -11,6 +11,7 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 - **CLI Refresh** — Updated the one-command installer to `npx glia-ai-setup`.
 - **Infrastructure Update** — Renamed all environment variables (`GLIA_SECRET`, `GLIA_STORAGE_MODE`), Docker containers, and internal storage keys.
 - **Documentation Audit** — Comprehensive update of all guides, architecture diagrams, and repository metadata.
+- **Extension Stability** — Fixed a crash in the popup when opened on restricted browser pages (`chrome://`, `edge://`).
 
 ---
 

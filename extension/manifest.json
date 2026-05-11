@@ -40,7 +40,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_icon": "icons/icon48.png"
+    "default_icon": "icons/Logo.png"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:* http://127.0.0.1:*"
