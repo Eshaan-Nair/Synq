@@ -27,15 +27,21 @@ router.get("/export/:id", async (req: Request, res: Response) => {
     const facts = await graphStore.getTriplesBySession(sessionId);
 
     const exportData = {
-      version: "1.4.6",
+      version: "1.4.7",
       timestamp: new Date().toISOString(),
       session,
       fullChat,
       facts
     };
 
+    const safeName = (session.projectName || "session")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
     res.setHeader("Content-Type", "application/json");
-    res.setHeader("Content-Disposition", `attachment; filename="glia-session-${sessionId}.json"`);
+    res.setHeader("Content-Disposition", `attachment; filename="glia-${safeName}.json"`);
     res.send(JSON.stringify(exportData, null, 2));
   } catch (err) {
     logger.error("Export error:", err);

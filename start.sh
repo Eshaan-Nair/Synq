@@ -75,10 +75,7 @@ else
     echo " Skipping Docker Compose (SQLite mode active)."
 fi
 
-# 6. Security & Build Check
-if ! grep -q "GLIA_SECRET=" backend/.env; then
-    echo " WARN GLIA_SECRET not found in .env. API will be unauthorized."
-fi
+# 6. Build Check
 
 if [ ! -d "dashboard/dist" ]; then
     echo " Dashboard build missing. Building..."

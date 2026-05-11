@@ -167,39 +167,7 @@ fi
 grep -q "GRAPH_BACKEND=" backend/.env || echo "GRAPH_BACKEND=$GRAPH_BACKEND" >> backend/.env
 grep -q "OLLAMA_MODEL=" backend/.env || echo "OLLAMA_MODEL=$SELECTED_MODEL" >> backend/.env
 
-# v1.4.2+: Auto-generate secret if missing
-if ! grep -q "^GLIA_SECRET=." backend/.env; then
-  if command -v openssl &> /dev/null; then
-    NEW_SECRET=$(openssl rand -base64 32)
-    if grep -q "^GLIA_SECRET=" backend/.env; then
-      if [[ "$OS_TYPE" == "Darwin" ]]; then
-        sed -i '' "s|^GLIA_SECRET=.*|GLIA_SECRET=$NEW_SECRET|" backend/.env
-      else
-        sed -i "s|^GLIA_SECRET=.*|GLIA_SECRET=$NEW_SECRET|" backend/.env
-      fi
-    else
-      echo "GLIA_SECRET=$NEW_SECRET" >> backend/.env
-    fi
-    echo " OK Generated random GLIA_SECRET"
-  else
-    echo " WARNING: openssl not found. Could not generate GLIA_SECRET."
-  fi
-fi
-
-# Sync secret to dashboard
-BACKEND_SECRET=$(grep "^GLIA_SECRET=" backend/.env | cut -d'=' -f2-)
-if [ -n "$BACKEND_SECRET" ]; then
-  if grep -q "VITE_GLIA_SECRET=" dashboard/.env; then
-    if [[ "$OS_TYPE" == "Darwin" ]]; then
-      sed -i '' "s|VITE_GLIA_SECRET=.*|VITE_GLIA_SECRET=$BACKEND_SECRET|" dashboard/.env
-    else
-      sed -i "s|VITE_GLIA_SECRET=.*|VITE_GLIA_SECRET=$BACKEND_SECRET|" dashboard/.env
-    fi
-  else
-    echo "VITE_GLIA_SECRET=$BACKEND_SECRET" >> dashboard/.env
-  fi
-  echo " OK Synced secret to dashboard"
-fi
+# v1.4.7+
 
 # 5. Dependencies
 echo ""

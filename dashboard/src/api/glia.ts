@@ -1,4 +1,4 @@
-import { apiClient, extractErrorMessage, SECRET } from "./client";
+import { apiClient, extractErrorMessage } from "./client";
 
 export async function fetchGraphBySession(sessionId: string) {
   const res = await apiClient.get(`/api/graph/session/${sessionId}`);

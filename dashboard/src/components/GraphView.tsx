@@ -130,7 +130,9 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
           .id(d => d.id)
           .distance(d => {
             const baseDist = settingTension === "loose" ? 280 : 180;
-            return baseDist + getNodeRadius(d.source.degree || 0) + getNodeRadius(d.target.degree || 0);
+            const s = d.source as Node;
+            const t = d.target as Node;
+            return baseDist + getNodeRadius(s.degree || 0) + getNodeRadius(t.degree || 0);
           })
           .strength(0.4)
         )

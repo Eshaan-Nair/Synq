@@ -91,14 +91,16 @@ if errorlevel 1 (
 
 REM 7. Build components (Ensure UI is always up-to-date)
 echo  Building Dashboard...
-cd dashboard && call npm run build && cd ..
+pushd dashboard
+call npm run build
+popd
 
 echo  Building extension...
-cd extension
+pushd extension
 call npx esbuild src/content.ts    --bundle --outfile=dist/content.js    --format=iife --target=es2020 --log-level=error
 call npx esbuild src/background.ts --bundle --outfile=dist/background.js --format=iife --target=es2020 --log-level=error
 call npx esbuild popup/popup.ts    --bundle --outfile=popup/popup.js     --format=iife --target=es2020 --log-level=error
-cd ..
+popd
 
 REM 7. Start backend
 echo.
