@@ -33,6 +33,7 @@ jobs:
             ```bash
             npx glia-ai-setup
             ```
+            ```bash
             # Regular Start
             ./start.sh # Linux/macOS
             ./start.bat # Windows
@@ -41,7 +42,7 @@ jobs:
             ### Manual Setup
             ```bash
             git clone https://github.com/${{ github.repository }}.git
-            cd Glia
+            cd Glia-AI
 
             # Installation
             ./install.sh # Linux/macOS
@@ -55,5 +56,5 @@ jobs:
             ### Load the Extension
             1. After installation, open `chrome://extensions`
             2. Enable **Developer mode**
-            3. **Load unpacked** → select `Glia/extension`
+            3. **Load unpacked** → select `Glia-AI/extension`
             4. GLIA will automatically open the folder and page for you at the end of setup.
