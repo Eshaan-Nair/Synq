@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="./dashboard/public/Logo.png" width="300">
-
 # GLIA
 
 ### Your AI forgets. GLIA makes it remember.
@@ -10,10 +8,10 @@ Every time you open a new chat, your AI starts from zero. GLIA gives your AI per
 
 <br/>
 
-[![Stars](https://img.shields.io/github/stars/Eshaan-Nair/Glia?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/Glia/stargazers)
-[![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Glia?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/Glia/forks)
-[![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Glia?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia/issues)
-[![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Glia/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia/actions)
+[![Stars](https://img.shields.io/github/stars/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/Glia-AI/stargazers)
+[![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/Glia-AI/forks)
+[![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/issues)
+[![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Glia-AI/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.4.6-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
@@ -143,7 +141,7 @@ macOS/Linux:    ./start.sh
 
 1. Open Chrome → `chrome://extensions`
 2. Enable **Developer mode** (top-right toggle)
-3. **Load unpacked** → select `Glia/extension/dist`
+3. **Load unpacked** → select `Glia-AI/extension/dist`
 4. The GLIA badge appears on Claude, ChatGPT, Gemini, and DeepSeek
 
 ### Dashboard
@@ -171,7 +169,7 @@ Add to your AI tool's config:
   "mcpServers": {
     "glia": {
       "command": "node",
-      "args": ["/path/to/Glia/backend/dist/mcp/server.js"]
+      "args": ["/path/to/Glia-AI/backend/dist/mcp/server.js"]
     }
   }
 }
@@ -181,7 +179,7 @@ Add to your AI tool's config:
 ```json
 {
   "mcpServers": {
-    "glia": { "command": "node", "args": ["/path/to/Glia/backend/dist/mcp/server.js"] }
+    "glia": { "command": "node", "args": ["/path/to/Glia-AI/backend/dist/mcp/server.js"] }
   }
 }
 ```
@@ -249,7 +247,7 @@ Open **http://localhost:3001**:
 ## Architecture
 
 ```
-Glia/
+Glia-AI/
 ├── backend/src/
 │   ├── mcp/           server.ts + tools/recall|store|search|projects|summary
 │   ├── middleware/    sanitize.ts
@@ -356,7 +354,7 @@ Bug fixes, new platform support, UI improvements, documentation, and test covera
 
 [Contributing Guide](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
-Good first issues: [`good first issue`](https://github.com/Eshaan-Nair/Glia/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
+Good first issues: [`good first issue`](https://github.com/Eshaan-Nair/Glia-AI/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
 
 ---
 

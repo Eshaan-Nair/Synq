@@ -1,6 +1,6 @@
 {
   "name": "glia-ai-setup",
-  "version": "1.4.6",
+  "version": "1.4.8",
   "description": "Smart, local-first RAG and Knowledge Graph for AI conversations.",
   "main": "index.js",
   "bin": {
