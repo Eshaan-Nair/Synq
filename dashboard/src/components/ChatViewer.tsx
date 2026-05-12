@@ -1,5 +1,5 @@
 /**
- * ChatViewer.tsx — v1.4.6
+ * ChatViewer.tsx — v1.4.7
  *
  * Displays the full saved conversation as a scrollable chat view.
  * Each [User] and [Assistant] turn is styled differently.

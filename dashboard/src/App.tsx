@@ -223,7 +223,7 @@ export default function App() {
     loadSessions();
     const interval = setInterval(() => {
       if (!document.hidden) loadSessions();
-    }, 5000); // v1.4.6+: Poll every 5s for job status
+    }, 5000); // v1.4.7+: Poll every 5s for job status
     return () => clearInterval(interval);
   }, [loadSessions]);
 

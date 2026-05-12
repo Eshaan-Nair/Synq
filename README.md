@@ -51,7 +51,7 @@ GLIA captures your conversations, distills them into a semantic knowledge graph,
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v1.4.6](#whats-new-in-v145)
+- [Whats New in v1.4.7](#whats-new-in-v147)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -154,7 +154,7 @@ The dashboard is a production build served by the backend — no separate window
 
 ## MCP Server
 
-> **v1.4.6** — GLIA now works in any MCP-compatible AI tool.
+> **v1.4.7** — GLIA now works in any MCP-compatible AI tool.
 
 Build the backend first:
 ```bash
@@ -320,7 +320,7 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## Whats New in v1.4.6
+## Whats New in v1.4.7
 
 - **One-Command Setup** — Introduced `npx glia-ai-setup` for a frictionless, zero-cloning installation experience.
 - **Improved Extension Workflow** — The installer now automatically opens the extension folder and the Chrome extensions page.

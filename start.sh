@@ -7,7 +7,7 @@ set -e
 
 echo ""
 echo " ==================================="
-echo "  GLIA v1.4.6 - Starting up"
+echo "  GLIA v1.4.7 - Starting up"
 echo " ==================================="
 echo ""
 

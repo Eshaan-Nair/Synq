@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// v1.4.6+: Configurable backend URL and auth secret via environment variables
+// v1.4.7: Configurable backend URL and auth secret via environment variables
 const BACKEND = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
 export const apiClient = axios.create({
   baseURL: BACKEND,
