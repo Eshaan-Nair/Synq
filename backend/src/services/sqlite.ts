@@ -20,6 +20,7 @@ export function initSqlite() {
   db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
+  db.pragma("busy_timeout = 5000"); // Wait up to 5s if DB is locked
   
   // Load sqlite-vec extension
   try {
@@ -46,9 +47,25 @@ function createTables() {
       topicCount INTEGER DEFAULT 0,
       hasFullChat INTEGER DEFAULT 0,
       createdAt TEXT,
-      updatedAt TEXT
+      updatedAt TEXT,
+      externalChatId TEXT UNIQUE
     )
   `);
+
+  // Migration: Add externalChatId column if it doesn't exist
+  try {
+    const tableInfo = db.prepare("PRAGMA table_info(sessions)").all() as any[];
+    const hasCol = tableInfo.some(col => col.name === "externalChatId");
+    if (!hasCol) {
+      // SQLite does NOT allow adding a UNIQUE column via ALTER TABLE
+      // We must add it normally and then create a UNIQUE INDEX
+      db.exec("ALTER TABLE sessions ADD COLUMN externalChatId TEXT");
+      db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_externalChatId ON sessions(externalChatId)");
+      logger.info("Database migration: Added externalChatId column and unique index");
+    }
+  } catch (e) {
+    logger.warn(`Database migration warning: ${e instanceof Error ? e.message : String(e)}`);
+  }
 
   // Full Chats
   db.exec(`

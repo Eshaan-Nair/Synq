@@ -9,8 +9,43 @@ import { logger } from "../utils/logger";
 // distance=12 → 0.55, distance=17 → 0.43, distance=24 → 0.30
 const l2ToScore = (distance: number) => Math.exp(-distance / 20);
 
-const SESSION_THRESHOLD = 0.45;  // ~distance ≤ 16 — filters clearly unrelated content
-const GLOBAL_THRESHOLD  = 0.40;  // ~distance ≤ 18 — stricter for cross-session to avoid noise
+const SESSION_THRESHOLD = 0.30;  // Allowed history queries to pass Tier 1
+const GLOBAL_THRESHOLD  = 0.30;  // Uniform sensitivity across both tiers
+
+/**
+ * Local 'Sentence Trimmer' (Option D)
+ * Splits a retrieved chunk into sentences and returns only those that share
+ * keywords with the user prompt. 
+ */
+function getRelevantSentences(content: string, prompt: string, limit = 5): string {
+  const sentences = content.split(/(?<=[.!?])\s+/);
+  const pLower = prompt.toLowerCase();
+  const promptWords = pLower.split(/\W+/).filter(w => w.length > 3);
+  
+  // Detect "History Queries" (e.g., "what did we talk about")
+  const isHistoryQuery = /\b(talk|chat|convo|discuss|last|previous|before|history|remember)\b/i.test(pLower);
+
+  const scored = sentences.map(s => {
+    const sLower = s.toLowerCase();
+    let score = 0;
+    for (const word of promptWords) {
+      if (sLower.includes(word)) score++;
+    }
+    return { s, score };
+  });
+
+  const filtered = scored
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(item => item.s);
+
+  if (filtered.length > 0) return filtered.join(" ");
+
+  // Fallback: Only allow first 3 sentences if it's a history-seeking query.
+  // Otherwise, return empty (effectively filters out unrelated noise like slippers vs credit cards).
+  return isHistoryQuery ? sentences.slice(0, 3).join(" ") : "";
+}
 
 export class SqliteVectorStore implements IVectorStore {
   private db = getSqlite();
@@ -39,7 +74,7 @@ export class SqliteVectorStore implements IVectorStore {
     logger.success(`Stored ${chunks.length} chunks in SQLite-vec`);
   }
 
-  async retrieveRelevantChunks(query: string, sessionId: string, topN = 3): Promise<RetrievedChunk[]> {
+  async retrieveRelevantChunks(query: string, sessionId: string, topN = 3, keywords: string[] = []): Promise<RetrievedChunk[]> {
     const queryEmbedding = await generateEmbedding(query);
     const vector = Buffer.from(new Float32Array(queryEmbedding).buffer);
 
@@ -69,10 +104,18 @@ export class SqliteVectorStore implements IVectorStore {
         const daysOld = (Date.now() - lastUpdate) / (1000 * 60 * 60 * 24);
         const decayFactor = 1.0 - Math.min(0.3, (daysOld / 180) * 0.3);
 
+        // Hybrid Boost: Each unique keyword match adds 10% to the score (max 1.5x)
+        let keywordBoost = 1.0;
+        if (keywords.length > 0) {
+          const contentLower = row.content.toLowerCase();
+          const matches = keywords.filter(k => contentLower.includes(k.toLowerCase())).length;
+          keywordBoost = 1.0 + Math.min(0.5, matches * 0.1);
+        }
+
         return {
-          content: row.content,
+          content: getRelevantSentences(row.content, query),
           chunkIndex: row.chunkIndex,
-          score: semanticScore * decayFactor
+          score: semanticScore * decayFactor * keywordBoost
         };
       })
       .filter(r => r.score >= SESSION_THRESHOLD)
@@ -80,7 +123,7 @@ export class SqliteVectorStore implements IVectorStore {
       .slice(0, topN);
   }
 
-  async retrieveGlobalChunks(query: string, topN = 3): Promise<RetrievedChunk[]> {
+  async retrieveGlobalChunks(query: string, topN = 3, keywords: string[] = []): Promise<RetrievedChunk[]> {
     const queryEmbedding = await generateEmbedding(query);
     const vector = Buffer.from(new Float32Array(queryEmbedding).buffer);
 
@@ -106,10 +149,18 @@ export class SqliteVectorStore implements IVectorStore {
         const daysOld = (Date.now() - lastUpdate) / (1000 * 60 * 60 * 24);
         const decayFactor = 1.0 - Math.min(0.3, (daysOld / 180) * 0.3);
 
+        // Hybrid Boost: Each unique keyword match adds 10% to the score (max 1.5x)
+        let keywordBoost = 1.0;
+        if (keywords.length > 0) {
+          const contentLower = row.content.toLowerCase();
+          const matches = keywords.filter(k => contentLower.includes(k.toLowerCase())).length;
+          keywordBoost = 1.0 + Math.min(0.5, matches * 0.1);
+        }
+
         return {
-          content: row.content,
+          content: getRelevantSentences(row.content, query),
           chunkIndex: row.chunkIndex,
-          score: semanticScore * decayFactor
+          score: semanticScore * decayFactor * keywordBoost
         };
       })
       .filter(r => r.score >= GLOBAL_THRESHOLD)

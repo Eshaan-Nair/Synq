@@ -99,18 +99,38 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
   const [settingEdgeLabels, setSettingEdgeLabels] = useState<"always" | "hover">("hover");
   const [settingTension, setSettingTension] = useState<"loose" | "tight">("loose");
 
-  // Pre-process nodes with degree
+  // Pre-process nodes with degree and coordinate persistence
   const processedData = useMemo(() => {
     const dMap = new Map<string, number>();
+    const posMap = new Map<string, { x?: number, y?: number, vx?: number, vy?: number }>();
+    
+    // Capture existing positions from the active simulation to prevent resetting on prop updates
+    if (simulationRef.current) {
+      simulationRef.current.nodes().forEach(n => {
+        posMap.set(n.id, { x: n.x, y: n.y, vx: n.vx, vy: n.vy });
+      });
+    }
+
     nodes.forEach(n => dMap.set(n.id, 0));
     links.forEach(l => {
-      const s = typeof l.source === "string" ? l.source : l.source.id;
-      const t = typeof l.target === "string" ? l.target : l.target.id;
+      const s = typeof l.source === "string" ? l.source : (l.source as any).id;
+      const t = typeof l.target === "string" ? l.target : (l.target as any).id;
       dMap.set(s, (dMap.get(s) || 0) + 1);
       dMap.set(t, (dMap.get(t) || 0) + 1);
     });
+
     return {
-      nodes: nodes.map(n => ({ ...n, degree: dMap.get(n.id) || 0 })),
+      nodes: nodes.map(n => {
+        const pos = posMap.get(n.id);
+        return { 
+          ...n, 
+          degree: dMap.get(n.id) || 0,
+          x: pos?.x, 
+          y: pos?.y, 
+          vx: pos?.vx, 
+          vy: pos?.vy 
+        };
+      }),
       links: links.map(l => ({ ...l })),
       degreeMap: dMap
     };
@@ -131,7 +151,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
 
     // Custom wander force: nudges every node by a tiny random amount each tick
     // This keeps the graph "alive" without disrupting the layout
-    const wanderStrength = 0.04;
+    const wanderStrength = 0.08;
     const wanderForce = () => {
       processedData.nodes.forEach((n: any) => {
         n.vx = (n.vx || 0) + (Math.random() - 0.5) * wanderStrength;
@@ -160,12 +180,19 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         .alphaDecay(0.02)
         .alphaMin(0.001)     // Never fully freeze
         .alphaTarget(0.002)  // Keep a tiny constant energy level
-        .velocityDecay(0.6); // High damping keeps movement slow & calm
+        .velocityDecay(0.45); // Lower damping = faster, more fluid movement
     } else {
+      const prevNodes = simulationRef.current.nodes();
+      const hasChanged = prevNodes.length !== processedData.nodes.length || 
+                         (simulationRef.current.force("link") as any).links().length !== processedData.links.length;
+
       simulationRef.current.nodes(processedData.nodes);
       (simulationRef.current.force("link") as d3.ForceLink<Node, Link>).links(processedData.links);
       simulationRef.current.force("wander", wanderForce);
-      simulationRef.current.alpha(0.3).restart();
+      
+      if (hasChanged) {
+        simulationRef.current.alpha(0.2).restart(); // Gentle nudge for new data
+      }
     }
 
     return () => {

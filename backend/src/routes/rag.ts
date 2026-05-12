@@ -38,8 +38,8 @@ router.post("/retrieve", async (req: Request, res: Response) => {
       relatedTriples = await graphStore.findRelatedTriples(entities, sessionId);
     }
 
-    // Retrieve a larger candidate pool for budgeting
-    const candidateChunks = await vectorStore.retrieveRelevantChunks(prompt, sessionId, 10);
+    // Retrieve a larger candidate pool for budgeting with Keyword Boosting
+    const candidateChunks = await vectorStore.retrieveRelevantChunks(prompt, sessionId, 10, entities);
 
     if (candidateChunks.length === 0 && relatedTriples.length === 0) {
       res.json({ found: false, chunks: [], graphFacts: [] });
@@ -67,10 +67,16 @@ router.post("/retrieve", async (req: Request, res: Response) => {
     const sanitized = sanitizeChunks(safeChunks);
 
     // v1.4.4 style: inject raw chunks directly (no LLM extraction step)
-    let contextBlock = wrapInContextBlock(sanitized);
+    let contextBlockRaw = wrapInContextBlock(sanitized);
     if (relatedTriples.length > 0) {
       const graphText = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`).join("\n");
-      contextBlock = `<glia_graph_knowledge>\n${graphText}\n</glia_graph_knowledge>\n\n${contextBlock}`;
+      contextBlockRaw = `RELATED KNOWLEDGE:\n${graphText}\n\nRETRIEVED CONTEXT:\n${contextBlockRaw}`;
+    }
+
+    const contextBlock = contextBlockRaw.trim();
+    if (!contextBlock) {
+      res.json({ found: false, chunks: [], graphFacts: [] });
+      return;
     }
 
     logger.success(`RAG: Budget filled (${currentChars}/${MAX_TOTAL_CHARS} chars). ${sanitized.length} chunks used.`);
@@ -104,8 +110,11 @@ router.post("/global", async (req: Request, res: Response) => {
   try {
     logger.info(`RAG Global (budget=${MAX_TOTAL_CHARS}): "${String(prompt).slice(0, 60)}..."`);
 
-    // Retrieve a larger candidate pool
-    const candidateChunks = await vectorStore.retrieveGlobalChunks(prompt, 8);
+    // Extract entities for Global search boosting
+    const entities = await extractEntitiesFromQuery(prompt);
+
+    // Retrieve a larger candidate pool with Keyword Boosting
+    const candidateChunks = await vectorStore.retrieveGlobalChunks(prompt, 8, entities);
 
     if (candidateChunks.length === 0) {
       res.json({ found: false, chunks: [] });
@@ -122,9 +131,13 @@ router.post("/global", async (req: Request, res: Response) => {
       currentChars += chunk.content.length;
     }
 
-    // Sanitise and wrap (v1.4.4 style — direct injection, no LLM extraction)
     const sanitized = sanitizeChunks(safeChunks);
-    const contextBlock = wrapInContextBlock(sanitized);
+    const contextBlock = wrapInContextBlock(sanitized).trim();
+    
+    if (!contextBlock) {
+      res.json({ found: false, chunks: [] });
+      return;
+    }
 
     logger.success(`RAG Global: Budget filled (${currentChars}/${MAX_TOTAL_CHARS} chars). ${sanitized.length} chunks used.`);
 

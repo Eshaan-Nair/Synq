@@ -227,7 +227,16 @@ saveBtn.addEventListener("click", async () => {
   }
 
   // FIX: Prioritise currentSessionId if it exists to prevent duplicates
-  const sessionIdToUse = currentSessionId || existingSessionId;
+  // BUT: Verify it belongs to this smartKey to prevent session hijacking across tabs
+  let sessionIdToUse = currentSessionId || existingSessionId;
+  if (sessionIdToUse && sessionIdToUse !== existingSessionId && existingSessionId) {
+    console.warn("[GLIA popup] Session ID mismatch for this URL. Resetting to URL-mapped ID.");
+    sessionIdToUse = existingSessionId;
+  } else if (sessionIdToUse && !existingSessionId && currentSessionId) {
+    // We are on a new URL but the popup has an old session in memory
+    console.info("[GLIA popup] New URL detected. Clearing stale session ID.");
+    sessionIdToUse = undefined;
+  }
 
   if (sessionIdToUse) {
     console.log(`[GLIA popup] using session: ${sessionIdToUse} (current: ${!!currentSessionId}, url-mapped: ${!!existingSessionId})`);
@@ -235,7 +244,15 @@ saveBtn.addEventListener("click", async () => {
 
   const sessionResult = await new Promise<any>((resolve) => {
     chrome.runtime.sendMessage(
-      { type: "CREATE_SESSION", payload: { projectName, platform, sessionId: sessionIdToUse } },
+      { 
+        type: "CREATE_SESSION", 
+        payload: { 
+          projectName, 
+          platform, 
+          sessionId: sessionIdToUse,
+          externalChatId: smartKey 
+        } 
+      },
       (response) => {
         if (chrome.runtime.lastError) {
           resolve({ error: chrome.runtime.lastError.message });
@@ -282,6 +299,10 @@ saveBtn.addEventListener("click", async () => {
       saveBtn.disabled = false;
       saveBtn.textContent = "💾 Save Chat";
       setStatus(`❌ ${sessionResult?.error || "Failed to create session. Is the backend running?"}`, "error");
+      
+      // Trigger shake animation on input
+      projectNameInput.classList.add("shake");
+      setTimeout(() => projectNameInput.classList.remove("shake"), 500);
       return;
     }
   }

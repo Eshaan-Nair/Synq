@@ -183,7 +183,7 @@ async function handleGetActiveSession() {
   }
 }
 
-async function handleCreateSession(payload: { projectName: string; platform: string; sessionId?: string }) {
+async function handleCreateSession(payload: { projectName: string; platform: string; sessionId?: string; externalChatId?: string }) {
   try {
     log.info(`[GLIA bg] creating/updating session: ${payload.projectName} on ${payload.platform} (ID: ${payload.sessionId || "new"})`);
     const res = await gliaFetch("/api/context/session", {
