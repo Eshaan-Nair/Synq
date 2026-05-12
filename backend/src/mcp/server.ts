@@ -11,7 +11,7 @@
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
- * Updated: v1.4.6
+ * Updated: v1.4.7
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -118,7 +118,7 @@ const TOOLS = [
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "glia-memory", version: "1.4.6" },
+  { name: "glia-memory", version: "1.4.7" },
   { capabilities: { tools: {}, resources: {} } }
 );
 

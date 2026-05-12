@@ -1,15 +1,9 @@
 /**
- * GLIA content.ts — v1.4.6
+ * GLIA content.ts — v1.4.7-final
  *
- * Fix: Context injection now works reliably on all platforms.
- *
- * Root cause: The previous injectAndSend() cleared input.textContent = ""
- * then dispatched a "beforeinput" event. React/framework-controlled inputs
- * (ChatGPT uses React, Gemini uses Angular/custom elements) intercept DOM
- * mutations and reset the value back to "" because no React state was updated.
- * The prompt was lost and the AI received an empty message.
- *
- * Fix: Use execCommand("insertText") which triggers the browser's native
+ * Fix: History-aware sentence trimming + authoritative headers.
+ * 
+ * Note: Use execCommand("insertText") which triggers the browser's native
  * input pipeline and is correctly intercepted by all frameworks. Fall back
  * to clipboard paste simulation if execCommand is unavailable.
  */
@@ -73,22 +67,57 @@ function addFingerprint(fp: string): void {
 }
 
 // ── Boot ─────────────────────────────────────────────────────────
+function getSmartUrlKey(url: string): string {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace("www.", "");
+    if (host === "chatgpt.com" && u.pathname.startsWith("/c/")) return host + u.pathname.split("/").slice(0, 3).join("/");
+    if (host === "claude.ai" && u.pathname.startsWith("/chat/")) return host + u.pathname.split("/").slice(0, 3).join("/");
+    if (host === "gemini.google.com" && u.pathname.startsWith("/app/")) return host + u.pathname.split("/").slice(0, 3).join("/");
+    if (host === "chat.deepseek.com" && u.pathname.startsWith("/a/chat/s/")) return host + u.pathname.split("/").slice(0, 5).join("/");
+    return host + u.pathname.replace(/\/$/, "");
+  } catch (e) { return url; }
+}
+
+let lastSmartKey = getSmartUrlKey(window.location.href);
+
+function handleUrlChange() {
+  const newPlatform = detectPlatform();
+  const newSmartKey = getSmartUrlKey(window.location.href);
+  
+  if (newPlatform !== platform) {
+    log.info(`[GLIA] platform changed: ${platform} → ${newPlatform}`);
+    detachPromptInterceptor();
+    platform = newPlatform;
+    config = getPlatformConfig(newPlatform);
+    if (!isPaused && sessionId && config) attachPromptInterceptor();
+  }
+
+  if (newSmartKey !== lastSmartKey) {
+    log.info(`[GLIA] Chat ID changed: ${lastSmartKey} → ${newSmartKey}`);
+    lastSmartKey = newSmartKey;
+    
+    sendMessage({ type: "GET_ACTIVE_SESSION" }).then(activeData => {
+      if (activeData?.activeSession) {
+        sessionId = activeData.activeSession._id as string;
+        updateBadge(!isPaused && !!sessionId);
+        log.info(`[GLIA] Sync: URL belongs to session ${activeData.activeSession.projectName}`);
+      } else {
+        sessionId = null;
+        updateBadge(false);
+        log.info("[GLIA] Sync: New Chat URL detected, session cleared.");
+      }
+    });
+  }
+}
+
 async function init() {
-  // Clear fingerprint cache on every init (new page / URL navigation)
-  // so fresh chats are never incorrectly marked as "already saved".
   seenMessageFingerprints.clear();
-  log.info(`[GLIA] active on: ${platform}`);
+  log.info(`[GLIA] v1.4.7-final active on: ${platform}`);
 
   const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
   if (activeData?.activeSession) {
     sessionId = activeData.activeSession._id as string;
-    log.info(`[GLIA] session: ${activeData.activeSession.projectName}`);
-  } else {
-    const stored = await getStoredSession();
-    if (stored) {
-      sessionId = stored.sessionId as string;
-      log.info(`[GLIA] session (stored): ${stored.projectName}`);
-    }
   }
 
   const pauseData = await sendMessage({ type: "GET_PAUSE_STATE" });
@@ -102,29 +131,20 @@ async function init() {
   injectSidebarUI();
   updateBadge(!isPaused && !!sessionId);
 
+  // Watch for SPA URL changes
   if (urlWatcherInterval !== null) clearInterval(urlWatcherInterval);
   let lastHref = window.location.href;
   urlWatcherInterval = setInterval(() => {
     if (window.location.href !== lastHref) {
       lastHref = window.location.href;
-      handlePlatformChange();
+      handleUrlChange();
     }
   }, 1000);
-  window.addEventListener("popstate", handlePlatformChange);
+  window.addEventListener("popstate", handleUrlChange);
 }
 
-function handlePlatformChange() {
-  const newPlatform = detectPlatform();
-  if (newPlatform === platform) return;
-  log.info(`[GLIA] platform changed: ${platform} → ${newPlatform}`);
-  detachPromptInterceptor();
-  platform = newPlatform;
-  config = getPlatformConfig(newPlatform);
-  if (!isPaused && sessionId && config) {
-    attachPromptInterceptor();
-    log.info(`[GLIA] re-attached interceptor on ${newPlatform}`);
-  }
-}
+// Kick off
+init();
 
 // ── Chat save ─────────────────────────────────────────────────────
 async function saveCurrentChat(projectName: string, providedSessionId?: string): Promise<{
@@ -357,16 +377,31 @@ async function processPromptWithRAG(promptText: string, input: HTMLElement) {
         showToast("No matching context — sending normally");
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("[GLIA] RAG error:", err);
-    await injectAndSend(input, promptText);
+    const isInvalidated = err?.message?.includes("Extension context invalidated") ||
+      err?.message?.includes("context invalidated");
+    if (isInvalidated) {
+      showToast("GLIA disconnected — refresh page to reconnect");
+      // Don't try to injectAndSend — the extension context is gone,
+      // the page will send the prompt on its own when the user retries.
+    } else {
+      showToast("GLIA error — sending normally");
+      await injectAndSend(input, promptText);
+    }
   } finally {
     isProcessingPrompt = false;
   }
 }
 
 function buildRAGPrompt(contextBlock: string, userPrompt: string): string {
-  return `[GLIA: Relevant context from your previous session]\n${contextBlock}\n[END GLIA CONTEXT]\n\n${userPrompt}`;
+  return `[MEMORY ACCESS: PREVIOUS SESSION DATA ACQUIRED]
+The following information is retrieved from your memory of a past conversation with this user. Treat this as VERIFIED FACTUAL CONTEXT for the current conversation.
+
+${contextBlock}
+[END MEMORY ACCESS]
+
+User Prompt: ${userPrompt}`;
 }
 
 // ── Injection (Fixed) ────────────────────────────────────────────

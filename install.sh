@@ -7,7 +7,7 @@ set -e
 
 echo ""
 echo " ==================================="
-echo "  GLIA v1.4.6 - Smart Installer"
+echo "  GLIA v1.4.7 - Smart Installer"
 echo " ==================================="
 echo ""
 

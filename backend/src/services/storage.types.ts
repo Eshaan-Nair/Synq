@@ -8,6 +8,7 @@ export interface Session {
   tripleCount: number;
   hasFullChat: boolean;
   topicCount: number;
+  externalChatId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,10 +53,11 @@ export interface RetrievedChunk {
 
 export interface ISessionStore {
   // Session
-  createSession(projectName: string, platform: string): Promise<Session>;
+  createSession(projectName: string, platform: string, externalChatId?: string): Promise<Session>;
   getSessions(): Promise<Session[]>;
   getSession(id: string): Promise<Session | null>;
-  getSessionByName(projectName: string, platform: string): Promise<Session | null>;
+  getSessionByName(projectName: string): Promise<Session | null>;
+  getSessionByExternalId(externalChatId: string): Promise<Session | null>;
   updateSession(id: string, update: Partial<Session>): Promise<void>;
   deleteSession(id: string): Promise<void>;
   
@@ -88,7 +90,7 @@ export interface IGraphStore {
 
 export interface IVectorStore {
   storeChunks(chunks: WindowChunk[]): Promise<void>;
-  retrieveRelevantChunks(query: string, sessionId: string, topN?: number): Promise<RetrievedChunk[]>;
-  retrieveGlobalChunks(query: string, topN?: number): Promise<RetrievedChunk[]>;
+  retrieveRelevantChunks(query: string, sessionId: string, topN?: number, keywords?: string[]): Promise<RetrievedChunk[]>;
+  retrieveGlobalChunks(query: string, topN?: number, keywords?: string[]): Promise<RetrievedChunk[]>;
   deleteChunksBySession(sessionId: string): Promise<void>;
 }

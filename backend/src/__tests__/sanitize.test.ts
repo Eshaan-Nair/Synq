@@ -16,15 +16,15 @@ describe("Sanitize Middleware", () => {
     expect(result[3].content).toContain("[Content redacted");
   });
 
-  test("wrapInContextBlock should format XML correctly", () => {
+  test("wrapInContextBlock should format the context block correctly", () => {
     const safeChunks = [mockChunks[0], mockChunks[2]];
     const result = wrapInContextBlock(safeChunks);
-    expect(result).toContain("<glia_retrieved_context>");
-    expect(result).toContain('<chunk index="1" relevance="90%">');
-    expect(result).toContain('<chunk index="2" relevance="70%">');
+    expect(result).toContain("=== GLIA RETRIEVED CONTEXT ===");
+    expect(result).toContain("[1] (Relevance: 90%)");
+    expect(result).toContain("[2] (Relevance: 70%)");
     expect(result).toContain("This is a safe chunk about React.");
     expect(result).toContain("The user decided to use MongoDB.");
-    expect(result).toContain("</glia_retrieved_context>");
+    expect(result).not.toContain("<glia_retrieved_context>");
   });
 
   test("wrapInContextBlock should return empty string for empty chunks", () => {

@@ -5,7 +5,7 @@ import { ISessionStore, Session, FullChat, Job } from "./storage.types";
 export class SqliteSessionStore implements ISessionStore {
   private db = getSqlite();
 
-  async createSession(projectName: string, platform: string): Promise<Session> {
+  async createSession(projectName: string, platform: string, externalChatId?: string): Promise<Session> {
     const id = uuidv4();
     const now = new Date().toISOString();
     const session: Session = {
@@ -20,9 +20,9 @@ export class SqliteSessionStore implements ISessionStore {
     };
 
     this.db.prepare(`
-      INSERT INTO sessions (id, projectName, platform, tripleCount, topicCount, hasFullChat, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, projectName, platform, 0, 0, 0, now, now);
+      INSERT INTO sessions (id, projectName, platform, tripleCount, topicCount, hasFullChat, createdAt, updatedAt, externalChatId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, projectName, platform, 0, 0, 0, now, now, externalChatId || null);
 
     return session;
   }
@@ -37,8 +37,13 @@ export class SqliteSessionStore implements ISessionStore {
     return row ? this.mapRowToSession(row) : null;
   }
 
-  async getSessionByName(projectName: string, platform: string): Promise<Session | null> {
-    const row = this.db.prepare("SELECT * FROM sessions WHERE projectName = ? AND platform = ?").get(projectName, platform);
+  async getSessionByExternalId(externalChatId: string): Promise<Session | null> {
+    const row = this.db.prepare("SELECT * FROM sessions WHERE externalChatId = ?").get(externalChatId);
+    return row ? this.mapRowToSession(row) : null;
+  }
+
+  async getSessionByName(projectName: string): Promise<Session | null> {
+    const row = this.db.prepare("SELECT * FROM sessions WHERE projectName = ?").get(projectName);
     return row ? this.mapRowToSession(row) : null;
   }
 
@@ -209,6 +214,7 @@ export class SqliteSessionStore implements ISessionStore {
       tripleCount: row.tripleCount,
       topicCount: row.topicCount,
       hasFullChat: row.hasFullChat === 1,
+      externalChatId: row.externalChatId,
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt)
     };

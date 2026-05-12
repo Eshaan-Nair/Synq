@@ -56,9 +56,9 @@ const PORT = process.env.PORT || 3001;
 // Body parser — MUST be before routes. Raised limit for large chat saves.
 app.use(express.json({ limit: "5mb" }));
 // Issue #3 Fix: Restrict CORS to trusted origins only
-// v1.4.6: Added localhost:3001 — dashboard is now served from the same port as the API
+// v1.4.7: Added localhost:3001 — dashboard is now served from the same port as the API
 const ALLOWED_ORIGINS = [
-  `http://localhost:${PORT}`, // Dashboard (production build — v1.4.6)
+  `http://localhost:${PORT}`, // Dashboard (production build — v1.4.7)
   "http://localhost:3001",   // Default port fallback
   "http://localhost:5173",   // Vite dashboard (dev)
   "http://localhost:5174",   // Vite dashboard (dev alt)

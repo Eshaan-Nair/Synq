@@ -57,11 +57,7 @@ router.post("/ingest", async (req: Request, res: Response) => {
 
 // POST /api/context/session
 router.post("/session", async (req: Request, res: Response) => {
-  const { projectName, platform, sessionId } = req.body;
-  if (!projectName) {
-    res.status(400).json({ error: "projectName is required" });
-    return;
-  }
+  const { projectName, platform, sessionId, externalChatId } = req.body;
 
   if (platform && !VALID_PLATFORMS.includes(platform)) {
     res.status(400).json({ error: `platform must be one of: ${VALID_PLATFORMS.join(", ")}` });
@@ -74,35 +70,59 @@ router.post("/session", async (req: Request, res: Response) => {
   }
 
   try {
-    if (sessionId) {
-      if (!isValidObjectId(sessionId)) {
-        res.status(400).json({ error: "Invalid sessionId format" });
-        return;
+    // ── STEP 1: Identify the Session ─────────────────────────────────
+    let targetSession: any = null;
+
+    // A. Priority: Platform-specific Chat ID (Robust identity)
+    if (externalChatId) {
+      targetSession = await sessionStore.getSessionByExternalId(externalChatId);
+      
+      // CRITICAL FIX: If we have a Chat ID but it's NOT in our DB, 
+      // we must treat this as a NEW chat. We ignore the sessionId 
+      // because the popup might be sending a stale ID from a previous tab.
+      if (!targetSession) {
+        logger.info(`[GLIA] New Chat ID detected (${externalChatId}). Ignoring provided sessionId to prevent hijacking.`);
       }
-      await sessionStore.updateSession(sessionId, {
-        projectName: projectName.trim(),
-        platform
-      });
-      const updated = await sessionStore.getSession(sessionId);
-      if (!updated) {
-        res.status(404).json({ error: "Session not found" });
-        return;
-      }
-      res.json({ sessionId: updated._id, projectName: updated.projectName });
-    } else {
-      // SMART REUSE: Check if a session with this name already exists for this platform
-      const existing = await sessionStore.getSessionByName(projectName.trim(), platform || "unknown");
-      if (existing) {
-        logger.info(`Reusing existing session found by name: ${projectName} (${existing._id})`);
-        res.json({ sessionId: existing._id, projectName: existing.projectName });
+    }
+
+    // B. Fallback: Specific Glia Session ID (Only if we don't have a newer identity)
+    if (!targetSession && sessionId && isValidObjectId(sessionId)) {
+      targetSession = await sessionStore.getSession(sessionId);
+    }
+
+    // ── STEP 2: Handle Update vs Create ──────────────────────────────
+    if (targetSession) {
+      // It's an UPDATE. 
+      // Check if the name they want to use is taken by ANOTHER session.
+      const nameConflict = await sessionStore.getSessionByName(projectName.trim());
+      if (nameConflict && nameConflict._id !== targetSession._id) {
+        res.status(409).json({ error: `The name "${projectName}" is already taken by another project. Please choose a unique name.` });
         return;
       }
 
-      const session = await sessionStore.createSession(projectName.trim(), platform || "unknown");
+      await sessionStore.updateSession(targetSession._id, {
+        projectName: projectName.trim(),
+        platform: platform || targetSession.platform,
+        externalChatId: externalChatId || targetSession.externalChatId
+      });
+
+      const updated = await sessionStore.getSession(targetSession._id);
+      res.json({ sessionId: updated?._id, projectName: updated?.projectName });
+    } else {
+      // It's a NEW SAVE.
+      // Check if the name is already taken globally.
+      const nameConflict = await sessionStore.getSessionByName(projectName.trim());
+      if (nameConflict) {
+        res.status(409).json({ error: `A project named "${projectName}" already exists. Please choose a different name for this new chat.` });
+        return;
+      }
+
+      const session = await sessionStore.createSession(projectName.trim(), platform || "unknown", externalChatId);
       res.json({ sessionId: session._id, projectName });
     }
   } catch (err) {
-    res.status(500).json({ error: "Failed to create/update session" });
+    logger.error("Session operation failed:", err);
+    res.status(500).json({ error: err instanceof Error ? err.message : "Failed to create/update session" });
   }
 });
 

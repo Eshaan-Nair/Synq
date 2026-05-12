@@ -24,6 +24,7 @@ class DockerSessionStore implements ISessionStore {
       tripleCount: obj.tripleCount || 0,
       hasFullChat: obj.hasFullChat || false,
       topicCount: obj.topicCount || 0,
+      externalChatId: obj.externalChatId,
       createdAt: obj.createdAt,
       updatedAt: obj.updatedAt
     };
@@ -44,8 +45,8 @@ class DockerSessionStore implements ISessionStore {
   }
 
   // Bridge to existing mongo.ts exports
-  async createSession(projectName: string, platform: string) {
-    const s = new mongoService.Session({ projectName, platform });
+  async createSession(projectName: string, platform: string, externalChatId?: string) {
+    const s = new mongoService.Session({ projectName, platform, externalChatId });
     await s.save();
     return this.mapMongoSession(s);
   }
@@ -57,8 +58,12 @@ class DockerSessionStore implements ISessionStore {
     const s = await mongoService.Session.findById(id);
     return this.mapMongoSession(s);
   }
-  async getSessionByName(projectName: string, platform: string) {
-    const s = await mongoService.Session.findOne({ projectName, platform } as any);
+  async getSessionByName(projectName: string) {
+    const s = await mongoService.Session.findOne({ projectName } as any);
+    return this.mapMongoSession(s);
+  }
+  async getSessionByExternalId(externalChatId: string) {
+    const s = await mongoService.Session.findOne({ externalChatId } as any);
     return this.mapMongoSession(s);
   }
   async updateSession(id: string, update: any) {

@@ -1,5 +1,5 @@
 /**
- * background.ts — v1.4.6
+ * background.ts — v1.4.7
  */
 
 import { GliaMessage } from "./types/messages";
@@ -183,7 +183,7 @@ async function handleGetActiveSession() {
   }
 }
 
-async function handleCreateSession(payload: { projectName: string; platform: string; sessionId?: string }) {
+async function handleCreateSession(payload: { projectName: string; platform: string; sessionId?: string; externalChatId?: string }) {
   try {
     log.info(`[GLIA bg] creating/updating session: ${payload.projectName} on ${payload.platform} (ID: ${payload.sessionId || "new"})`);
     const res = await gliaFetch("/api/context/session", {
@@ -193,7 +193,7 @@ async function handleCreateSession(payload: { projectName: string; platform: str
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       const errMsg = (body as any).error || `Server error ${res.status}`;
-      log.error(`Create session failed: ${errMsg}`);
+      log.info(`[GLIA bg] Session setup note: ${errMsg}`); // Use info instead of error to keep extensions dashboard clean
       return { error: errMsg };
     }
     const data = await res.json();

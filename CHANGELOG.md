@@ -4,6 +4,30 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.4.7] — 2026-05-12 — Strict Identity & Precision RAG
+
+### Identity & Anti-Hijacking
+- **Strict Identity Architecture** — Sessions are now permanently anchored to platform-specific Chat URLs (`externalChatId`). 
+- **SPA-Aware Navigation** — Added URL watchers to the Extension (Content Script & Popup) that detect "New Chat" clicks in Single Page Apps (ChatGPT/Claude/Gemini) without needing a page reload.
+- **Identity Verification** — The backend now validates incoming Save requests against the URL; stale Session IDs from the extension are automatically ignored to prevent project overwrites.
+- **Popup UX** — The Project Name field now remains empty for new chats, ensuring a "clean slate" workflow.
+
+### RAG Precision & Token Efficiency
+- **Hybrid Retrieval** — Implemented keyword boosting for search queries and corrected L2 distance scoring to prioritize exact conceptual matches.
+- **Lean Context Injection** — Replaced heavy XML tags with a professional, token-efficient text header (`=== GLIA RETRIEVED CONTEXT ===`).
+- **Context Suppression** — Glia now automatically suppresses the context block if no relevant memories are found, saving tokens.
+
+### Stability & Infrastructure
+- **Resilient Database** — Implemented a robust SQLite migration for the `externalChatId` column and added `busy_timeout` to handle simultaneous dashboard polling.
+- **Graph "Silent Sync"** — The Knowledge Graph now persists node coordinates and topology. The simulation only re-heats if the data structure changes, eliminating the "2-second pop" reset loop.
+- **Console Cleanup** — User-facing errors (like duplicate project names) are now handled quietly in the background script to prevent "Red Error" badges in Chrome.
+
+### Quality Assurance
+- **Unit Tests** — Updated the full backend suite to align with the new Lean Header format.
+- **Bug Fixes** — Resolved `ReferenceError: smartKey` and TypeScript indexing issues in the popup.
+
+---
+
 ## [1.4.6] — 2026-05-11 — The Glia-AI Rebrand
 
 ### Rebranding & Identity
