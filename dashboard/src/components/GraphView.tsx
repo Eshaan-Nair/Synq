@@ -97,7 +97,6 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
   const [settingNodeSize, setSettingNodeSize] = useState<"normal" | "large">("normal");
   const [settingNodeLabels, setSettingNodeLabels] = useState<"always" | "hover">("hover");
   const [settingEdgeLabels, setSettingEdgeLabels] = useState<"always" | "hover">("hover");
-  const [settingTension, setSettingTension] = useState<"loose" | "tight">("loose");
 
   // Pre-process nodes with degree and coordinate persistence
   const processedData = useMemo(() => {
@@ -164,7 +163,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         .force("link", d3.forceLink<Node, Link>(processedData.links)
           .id(d => d.id)
           .distance(d => {
-            const baseDist = settingTension === "loose" ? 280 : 180;
+            const baseDist = 200;
             const s = d.source as Node;
             const t = d.target as Node;
             return baseDist + getNodeRadius(s.degree || 0) + getNodeRadius(t.degree || 0);
@@ -202,7 +201,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     return () => {
       simulationRef.current?.stop();
     };
-  }, [processedData, settingTension, settingNodeSize]);
+  }, [processedData]);
 
   // ── Drawing & Interactions ─────────────────────────────────────
   useEffect(() => {
@@ -497,7 +496,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("click", handleClick);
     };
-  }, [processedData, settingNodeSize, settingTension, hoveredNodeId, selectedNodeId, settingNodeLabels, settingEdgeLabels, filterType]);
+  }, [processedData, settingNodeSize, hoveredNodeId, selectedNodeId, settingNodeLabels, settingEdgeLabels, filterType]);
 
   // Legend data
   const hoveredNode = useMemo(() => nodes.find(n => n.id === hoveredNodeId), [nodes, hoveredNodeId]);
@@ -554,13 +553,6 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
             <select value={settingEdgeLabels} onChange={e => setSettingEdgeLabels(e.target.value as any)} className="settings-select">
               <option value="hover">On Hover</option>
               <option value="always">Always Show</option>
-            </select>
-          </div>
-          <div className="settings-row">
-            <span className="settings-label">Physics Tension</span>
-            <select value={settingTension} onChange={e => setSettingTension(e.target.value as any)} className="settings-select">
-              <option value="tight">Tight</option>
-              <option value="loose">Loose</option>
             </select>
           </div>
         </div>
