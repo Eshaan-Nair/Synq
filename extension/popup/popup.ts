@@ -139,7 +139,21 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
   // Load both session and pause state, then update UI once both resolve
   const sessionPromise = new Promise<void>((resolve) => {
     chrome.runtime.sendMessage({ type: "GET_ACTIVE_SESSION" }, async (response) => {
+      // Get current tab URL for smartKey mapping
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabUrl = activeTab?.url || "";
+      const smartKey = getSmartUrlKey(tabUrl);
+
       if (response?.activeSession) {
+        currentSessionId = response.activeSession._id as string;
+        
+        // Only pre-fill projectNameInput if the session matches the current URL.
+        const res = await chrome.storage.local.get("glia_url_map");
+        const urlMap = (res.glia_url_map || {}) as Record<string, string>;
+        if (urlMap[smartKey] === currentSessionId) {
+          projectNameInput.value = response.activeSession.projectName;
+        }
+
         showSession({
           sessionId: response.activeSession._id as string,
           projectName: response.activeSession.projectName as string,
@@ -158,16 +172,14 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
           const mappedId = urlMap[smartKey];
 
           if (mappedId) {
-            // If this tab is mapped to a session, we should probably fetch it
-            // For now, let's just see if our "last known" session matches the ID
             const lastSession = result.glia_session as SessionData;
             if (lastSession && lastSession.sessionId === mappedId) {
               showSession(lastSession);
-            } else {
-              // Future improvement: fetch the specific session by ID from backend
             }
           } else if (result.glia_session) {
+            // Show last active session info at bottom, but keep input name empty for NEW chats
             showSession(result.glia_session as SessionData);
+            projectNameInput.value = ""; 
           }
           resolve();
         });
