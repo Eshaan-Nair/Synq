@@ -334,8 +334,8 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
           ctx.fill();
         }
 
-        // Edge labels only when hovered
-        if (settingEdgeLabels === "always" || (settingEdgeLabels === "hover" && isHovered)) {
+        // Edge labels only when part of a selected neighborhood
+        if (settingEdgeLabels === "always" || (settingEdgeLabels === "hover" && isSelected)) {
           ctx.globalAlpha = 1;
           const lx = (s.x + t.x) / 2;
           const ly = (s.y + t.y) / 2;
@@ -407,8 +407,8 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
           ctx.fillText(typeAbbrev(n.type), n.x, n.y);
         }
 
-        // Name label
-        if (settingNodeLabels === "always" || isHovered || isSelected) {
+        // Name label (Show when selected, or for neighbors of a selected node)
+        if (settingNodeLabels === "always" || isSelected || selectedNeighbors.has(n.id)) {
           ctx.globalAlpha = 1;
           const labelOffset = r + 14;
           const displayName = n.id.length > 22 ? n.id.slice(0, 20) + "…" : n.id;

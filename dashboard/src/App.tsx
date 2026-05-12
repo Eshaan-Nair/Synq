@@ -65,9 +65,15 @@ export default function App() {
   }, []);
 
   const loadSession = useCallback(async (session: Session) => {
+    // If selecting a NEW session, show loading. If just refreshing current, stay silent.
+    const isNewSession = activeSession?._id !== session._id;
+    
+    if (isNewSession) {
+      setLoadingSession(true);
+      setChatData(null);
+    }
+    
     setActiveSession(session);
-    setLoadingSession(true);
-    setChatData(null);
     isLoadingSessionRef.current = true;
     try {
       const graphUrl = `/api/graph/session/${session._id}`;
@@ -77,8 +83,19 @@ export default function App() {
         fetchFullChat(session._id),
       ]);
       const graphData = graphRes.data;
-      setNodes(graphData.nodes);
-      setLinks(graphData.links);
+      
+      // STABILITY FIX: Only update nodes/links if data has actually changed
+      // This prevents the D3 simulation from restarting every time we poll.
+      setNodes(prev => {
+        if (prev.length === graphData.nodes.length && !isNewSession) return prev;
+        return graphData.nodes;
+      });
+      
+      setLinks(prev => {
+        if (prev.length === graphData.links.length && !isNewSession) return prev;
+        return graphData.links;
+      });
+
       setTriples(contextData.triples || []);
       if (chatResult.found) {
         setChatData({
@@ -90,12 +107,14 @@ export default function App() {
     } catch (err) {
       console.error(`Failed to load session: ${extractErrorMessage(err)}`);
     } finally {
-      setSelectedNodeId(null);
-      setGraphTypeFilter(null);
+      if (isNewSession) {
+        setSelectedNodeId(null);
+        setGraphTypeFilter(null);
+      }
       setLoadingSession(false);
       isLoadingSessionRef.current = false;
     }
-  }, []);
+  }, [activeSession, nodes.length, links.length]);
 
   const handleDelete = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
@@ -150,11 +169,13 @@ export default function App() {
     if (isLoadingSessionRef.current) return;
     if (activeSession) {
       const stillExists = sessions.find(s => s._id === activeSession._id);
-      if (!stillExists) loadSession(sessions[0]);
+      if (!stillExists) {
+        loadSession(sessions[0]);
+      }
     } else {
       loadSession(sessions[0]);
     }
-  }, [sessions, loadSession, activeSession]); // activeSession added to deps
+  }, [sessions.length, loadSession, activeSession?._id]); // Only run if count or active ID changes
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
