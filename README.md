@@ -11,6 +11,7 @@ Every time you open a new chat, your AI starts from zero. GLIA gives your AI per
 [![Stars](https://img.shields.io/github/stars/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/Glia-AI/stargazers)
 [![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/Glia-AI/forks)
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/issues)
+[![Downloads](https://img.shields.io/npm/dt/glia-ai-setup?style=for-the-badge&logo=npm&labelColor=0B0E14&color=CB3837)](https://www.npmjs.com/package/glia-ai-setup)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Glia-AI/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.4.7-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
