@@ -14,9 +14,13 @@ import { logger } from "../utils/logger";
 /**
  * Add a new job to the queue.
  */
+let _wakeWorker: (() => void) | null = null;
+
 export async function enqueueJob(type: "triple_extraction", payload: any) {
   const job = await sessionStore.createJob(type, payload);
   logger.info(`[Job Queue] Enqueued ${type} job: ${job._id}`);
+  // Wake the worker immediately instead of waiting for the next poll tick
+  _wakeWorker?.();
   return job._id;
 }
 
@@ -59,6 +63,7 @@ export async function startWorker() {
   let pollInterval = 5000;
   const MIN_POLL = 1000;
   const MAX_POLL = 30000;
+  let currentTimer: ReturnType<typeof setTimeout> | null = null;
 
   async function workerLoop() {
     try {
@@ -69,8 +74,15 @@ export async function startWorker() {
       logger.error("[Job Queue] Worker loop error:", err);
       pollInterval = Math.min(pollInterval * 2, MAX_POLL);
     }
-    setTimeout(workerLoop, pollInterval);
+    currentTimer = setTimeout(workerLoop, pollInterval);
   }
+
+  // Expose a wake function so enqueueJob can bypass the current sleep
+  _wakeWorker = () => {
+    if (currentTimer) clearTimeout(currentTimer);
+    pollInterval = MIN_POLL;
+    workerLoop();
+  };
 
   workerLoop();
 }

@@ -139,7 +139,7 @@ if (fs.existsSync(dashboardDist)) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const sirv = require("sirv");
     app.use("/", sirv(dashboardDist, { single: true, dev: false }));
-    logger.success(`[GLIA] Dashboard served from production build → http://localhost:${PORT}`);
+    logger.success(`[GLIA] Dashboard served from production build: http://localhost:${PORT}`);
   } catch {
     logger.warn("[GLIA] sirv not installed — run: cd backend && npm install sirv");
   }

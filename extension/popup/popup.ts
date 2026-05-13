@@ -146,10 +146,7 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
 
       if (response?.activeSession) {
         currentSessionId = response.activeSession._id as string;
-        
-        if (response.activeSession.projectName) {
-          projectNameInput.value = response.activeSession.projectName;
-        }
+
 
         showSession({
           sessionId: response.activeSession._id as string,
@@ -172,13 +169,10 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
             const lastSession = result.glia_session as SessionData;
             if (lastSession && lastSession.sessionId === mappedId) {
               showSession(lastSession);
-              if (lastSession.projectName) projectNameInput.value = lastSession.projectName;
             }
           } else if (result.glia_session) {
             // Show last active session info at bottom
             showSession(result.glia_session as SessionData);
-            const lastSession = result.glia_session as SessionData;
-            if (lastSession.projectName) projectNameInput.value = lastSession.projectName;
           }
           resolve();
         });
@@ -205,20 +199,20 @@ saveBtn.addEventListener("click", async () => {
   if (!projectName) { setStatus("⚠ Enter a session name first", "error"); return; }
 
   const tabId = await getTabId();
-  if (!tabId) { setStatus("❌ No active tab", "error"); return; }
+  if (!tabId) { setStatus("⚠ No active tab", "error"); return; }
 
   const platform = await detectPlatformFromTab();
-  if (platform === "unknown") { setStatus("❌ Open Claude, ChatGPT, Gemini, or DeepSeek first", "error"); return; }
+  if (platform === "unknown") { setStatus("⚠ Open Claude, ChatGPT, Gemini, or DeepSeek first", "error"); return; }
 
   saveBtn.disabled = true;
-  saveBtn.textContent = "⏳ Saving...";
+  saveBtn.textContent = "Saving...";
   setStatus("Checking content script...");
 
   const ready = await ensureContentScript(tabId);
   if (!ready) {
     saveBtn.disabled = false;
-    saveBtn.textContent = "💾 Save Chat";
-    setStatus("❌ Could not load content script. Try refreshing the page.", "error");
+    saveBtn.textContent = "Save Chat";
+    setStatus("⚠ Could not load content script. Try refreshing the page.", "error");
     return;
   }
 
@@ -255,14 +249,14 @@ saveBtn.addEventListener("click", async () => {
 
   const sessionResult = await new Promise<any>((resolve) => {
     chrome.runtime.sendMessage(
-      { 
-        type: "CREATE_SESSION", 
-        payload: { 
-          projectName, 
-          platform, 
+      {
+        type: "CREATE_SESSION",
+        payload: {
+          projectName,
+          platform,
           sessionId: sessionIdToUse,
-          externalChatId: smartKey 
-        } 
+          externalChatId: smartKey
+        }
       },
       (response) => {
         if (chrome.runtime.lastError) {
@@ -300,17 +294,17 @@ saveBtn.addEventListener("click", async () => {
 
       if (!retryResult?.sessionId) {
         saveBtn.disabled = false;
-        saveBtn.textContent = "💾 Save Chat";
-        setStatus(`❌ ${retryResult?.error || "Failed to create session"}`, "error");
+        saveBtn.textContent = "Save Chat";
+        setStatus(`⚠ ${retryResult?.error || "Failed to create session"}`, "error");
         return;
       }
 
       sessionResult.sessionId = retryResult.sessionId;
     } else {
       saveBtn.disabled = false;
-      saveBtn.textContent = "💾 Save Chat";
-      setStatus(`❌ ${sessionResult?.error || "Failed to create session. Is the backend running?"}`, "error");
-      
+      saveBtn.textContent = "Save Chat";
+      setStatus(`⚠ ${sessionResult?.error || "Failed to create session. Is the backend running?"}`, "error");
+
       // Trigger shake animation on input
       projectNameInput.classList.add("shake");
       setTimeout(() => projectNameInput.classList.remove("shake"), 500);
@@ -325,13 +319,13 @@ saveBtn.addEventListener("click", async () => {
     { type: "SAVE_CHAT_FROM_POPUP", payload: { projectName, platform, sessionId: sessionResult.sessionId } },
     (response) => {
       saveBtn.disabled = false;
-      saveBtn.textContent = "💾 Save Chat";
+      saveBtn.textContent = "Save Chat";
 
       if (chrome.runtime.lastError || !response) {
-        setStatus("❌ Lost connection to content script. Refresh and try again.", "error");
+        setStatus("⚠ Lost connection to content script. Refresh and try again.", "error");
         return;
       }
-      if (response.error) { setStatus(`❌ ${response.error as string}`, "error"); return; }
+      if (response.error) { setStatus(`⚠ ${response.error as string}`, "error"); return; }
 
       if (response.success) {
         currentSessionId = sessionResult.sessionId as string;
@@ -357,7 +351,7 @@ saveBtn.addEventListener("click", async () => {
         showSession(sessionData);
         const chunks = response.topicsExtracted as number;
         const facts = response.triplesExtracted as number;
-        setStatus(`✅ Saved! ${chunks} chunks stored, ${facts} facts extracted. GLIA auto-connected.`);
+        setStatus(`Saved! ${chunks} chunks stored, ${facts} facts extracted. GLIA auto-connected.`);
 
         // ── Success State Glow ───────────────────────────────────────
         document.body.classList.add("success-glow");
@@ -384,7 +378,7 @@ pauseToggleBtn.addEventListener("click", async () => {
     chrome.tabs.sendMessage(tabId, { type: isPaused ? "PAUSE_GLIA" : "RESUME_GLIA" }, () => { });
   }
 
-  setStatus(isPaused ? "⏸ GLIA paused" : "▶️ GLIA resumed");
+  setStatus(isPaused ? "⏸ GLIA paused" : "▶ GLIA resumed");
 });
 
 // ── Unload Session ───────────────────────────────────────────────
@@ -392,7 +386,7 @@ unloadBtn.addEventListener("click", async () => {
   if (!currentSessionId) return;
 
   unloadBtn.disabled = true;
-  unloadBtn.textContent = "⏳ Unloading...";
+  unloadBtn.textContent = "Unloading...";
 
   chrome.runtime.sendMessage({ type: "UNLOAD_SESSION" }, (response) => {
     unloadBtn.disabled = false;
@@ -404,9 +398,9 @@ unloadBtn.addEventListener("click", async () => {
       sessionInfo.style.display = "none";
       projectNameInput.value = ""; // Clear input on unload
       updatePauseUI();
-      setStatus("🔌 Session unloaded");
+      setStatus("Session unloaded");
     } else {
-      setStatus("❌ Failed to unload session", "error");
+      setStatus("⚠ Failed to unload session", "error");
     }
   });
 });
@@ -433,18 +427,18 @@ chrome.runtime.onMessage.addListener((message) => {
 // ── Inject Context (one-time) ─────────────────────────────────────
 injectBtn.addEventListener("click", async () => {
   const tabId = await getTabId();
-  if (!tabId) { setStatus("❌ No active tab", "error"); return; }
+  if (!tabId) { setStatus("⚠ No active tab", "error"); return; }
 
   const platform = await detectPlatformFromTab();
-  if (platform === "unknown") { setStatus("❌ Open Claude, ChatGPT, Gemini, or DeepSeek first", "error"); return; }
+  if (platform === "unknown") { setStatus("⚠ Open Claude, ChatGPT, Gemini, or DeepSeek first", "error"); return; }
 
   const ready = await ensureContentScript(tabId);
-  if (!ready) { setStatus("❌ Could not reach page. Refresh and try again.", "error"); return; }
+  if (!ready) { setStatus("⚠ Could not reach page. Refresh and try again.", "error"); return; }
 
   setStatus("Injecting context...");
   chrome.tabs.sendMessage(tabId, { type: "INJECT_NOW" }, (response) => {
     if (chrome.runtime.lastError || !response) {
-      setStatus("❌ Injection failed. Click the chat input first, then retry.", "error");
+      setStatus("⚠ Injection failed. Click the chat input first, then retry.", "error");
     }
   });
 });
@@ -456,10 +450,6 @@ function showSession(data: SessionData) {
   tripleCountEl.textContent = String(data.tripleCount ?? "—");
   topicCountEl.textContent = String(data.topicCount ?? "—");
 
-  if (projectNameInput && data.projectName) {
-    projectNameInput.value = data.projectName;
-  }
-
   if (data.sessionId) {
     currentSessionId = data.sessionId;
     unloadBtn.disabled = false;
@@ -468,7 +458,7 @@ function showSession(data: SessionData) {
 
 function updatePauseUI() {
   if (isPaused) {
-    pauseToggleBtn.textContent = "▶️ Resume GLIA";
+    pauseToggleBtn.textContent = "▶ Resume GLIA";
     pauseToggleBtn.classList.add("paused");
     gliaStatusBadge.textContent = "⏸ Paused";
     gliaStatusBadge.className = "glia-status paused";
