@@ -83,11 +83,6 @@ if "!USE_SQLITE!"=="0" (
 )
 echo.
 
-REM 6. Security Check
-findstr /C:"GLIA_SECRET=" backend\.env >nul
-if errorlevel 1 (
-    echo  WARN GLIA_SECRET not found in .env. API will be unauthorized.
-)
 
 REM 7. Build components (Ensure UI is always up-to-date)
 echo  Building Dashboard...
@@ -104,15 +99,13 @@ popd
 
 REM 7. Start backend
 echo.
-echo  Starting backend...
-cd backend
-start "GLIA Backend" cmd /k "npm run dev"
-cd ..
-
-echo.
 echo  ===================================
 echo   GLIA is running!
 echo  ===================================
-echo   Dashboard: http://localhost:3001
 echo.
-pause
+for /f "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
+echo   Dashboard ^-^> !ESC![1;96mhttp://localhost:3001!ESC![0m
+echo   Press Ctrl+C to stop.
+echo.
+cd backend
+npm run dev

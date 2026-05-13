@@ -399,7 +399,10 @@ export async function generateProjectSummary(
 ): Promise<string> {
   if (triples.length === 0) return "";
 
-  const tripleText = triples
+  // Cap triples to prevent payload-too-large (413) errors on massive sessions
+  const cappedTriples = triples.slice(0, 100);
+
+  const tripleText = cappedTriples
     .map(t => `${t.subject} (${t.subjectType}) ${t.relation} ${t.object} (${t.objectType})`)
     .join("\n");
 

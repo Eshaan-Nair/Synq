@@ -90,13 +90,10 @@ echo " Building extension..."
 
 # 7. Start Backend
 echo ""
-echo " Starting backend..."
-(cd backend && npm run dev) &
-
-echo ""
 echo " ==================================="
 echo "  GLIA is running!"
 echo " ==================================="
-echo "  Dashboard: http://localhost:3001"
+echo "  Dashboard -> \033[1;96mhttp://localhost:3001\033[0m"
+echo "  Press Ctrl+C to stop."
 echo ""
-wait
+(cd backend && npm run dev)

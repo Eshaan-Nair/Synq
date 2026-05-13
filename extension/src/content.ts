@@ -90,7 +90,11 @@ function handleUrlChange() {
     detachPromptInterceptor();
     platform = newPlatform;
     config = getPlatformConfig(newPlatform);
-    if (!isPaused && sessionId && config) attachPromptInterceptor();
+    if (platform !== "unknown" && config) {
+      if (!gliaShadow) injectSidebarUI();
+      if (!isPaused && sessionId) attachPromptInterceptor();
+      updateBadge(!isPaused && !!sessionId);
+    }
   }
 
   if (newSmartKey !== lastSmartKey) {
@@ -128,8 +132,10 @@ async function init() {
     log.info(`[GLIA] auto-connected for session ${sessionId}`);
   }
 
-  injectSidebarUI();
-  updateBadge(!isPaused && !!sessionId);
+  if (platform !== "unknown" && config) {
+    injectSidebarUI();
+    updateBadge(!isPaused && !!sessionId);
+  }
 
   // Watch for SPA URL changes
   if (urlWatcherInterval !== null) clearInterval(urlWatcherInterval);

@@ -96,11 +96,31 @@ export class SqliteSessionStore implements ISessionStore {
   async saveFullChat(sessionId: string, rawText: string, messageCount: number, platform: string): Promise<void> {
     const now = new Date().toISOString();
     this.db.prepare(`
-      INSERT OR REPLACE INTO full_chats (sessionId, rawText, messageCount, platform, createdAt)
+      INSERT INTO full_chats (sessionId, rawText, messageCount, platform, createdAt)
       VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(sessionId) DO UPDATE SET
+        rawText = excluded.rawText,
+        messageCount = excluded.messageCount,
+        platform = excluded.platform
     `).run(sessionId, rawText, messageCount, platform, now);
     
     await this.updateSession(sessionId, { hasFullChat: true });
+  }
+
+  async updateFullChat(sessionId: string, update: Partial<FullChat>): Promise<void> {
+    const fields = Object.keys(update)
+      .filter(k => !["sessionId", "createdAt"].includes(k))
+      .map(k => `${k} = ?`);
+    
+    if (fields.length === 0) return;
+
+    const values = Object.keys(update)
+      .filter(k => !["sessionId", "createdAt"].includes(k))
+      .map(k => (update as any)[k]);
+
+    values.push(sessionId);
+
+    this.db.prepare(`UPDATE full_chats SET ${fields.join(", ")} WHERE sessionId = ?`).run(...values);
   }
 
   async getFullChat(sessionId: string): Promise<FullChat | null> {
@@ -109,6 +129,7 @@ export class SqliteSessionStore implements ISessionStore {
     return {
       sessionId: row.sessionId,
       rawText: row.rawText,
+      processedText: row.processedText,
       messageCount: row.messageCount,
       platform: row.platform,
       createdAt: new Date(row.createdAt)

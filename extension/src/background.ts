@@ -213,6 +213,10 @@ async function handleCreateSession(payload: { projectName: string; platform: str
 // Notify all content scripts on AI platforms that the active session changed.
 // Without this, content scripts on other tabs keep using a stale sessionId.
 function broadcastSessionChanged(sessionId: string | null, projectName?: string) {
+  // 1. Internal broadcast (to Popup)
+  chrome.runtime.sendMessage({ type: "SESSION_CHANGED", payload: { sessionId, projectName } }).catch(() => { });
+
+  // 2. Tab broadcast (to Content Scripts)
   const AI_URLS = [
     "*://chatgpt.com/*",
     "*://claude.ai/*",
@@ -225,7 +229,7 @@ function broadcastSessionChanged(sessionId: string | null, projectName?: string)
         chrome.tabs.sendMessage(
           tab.id,
           { type: "SESSION_CHANGED", payload: { sessionId, projectName } },
-          () => { chrome.runtime.lastError; } // suppress "no receiver" errors
+          () => { chrome.runtime.lastError; }
         );
       }
     }

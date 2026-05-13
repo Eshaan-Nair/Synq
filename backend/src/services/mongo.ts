@@ -29,6 +29,7 @@ export const Session = mongoose.model("Session", sessionSchema);
 const fullChatSchema = new mongoose.Schema({
   sessionId: { type: String, required: true, index: true },
   rawText: { type: String, required: true },       // full chat verbatim
+  processedText: { type: String, default: "" },    // v1.4.7: Tracked extraction progress
   topics: [{
     name: { type: String },
     content: { type: String },

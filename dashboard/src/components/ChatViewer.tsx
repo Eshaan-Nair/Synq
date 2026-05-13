@@ -15,19 +15,19 @@ interface Props {
 }
 
 const C = {
-  indigo: "#818CF8",
-  cyan: "#6366F1",
+  indigo: "#4F46E5",
+  cyan: "#06B6D4",
   mint: "#10B981",
   cream: "#F1F5F9",
-  surface: "#1A1D27",
-  border: "rgba(255, 255, 255, 0.08)",
-  muted: "#CBD5E1",
-  dim: "#64748B",
-  bg: "#0B0E14",
-  userBg: "rgba(129, 140, 248, 0.18)",
-  userBorder: "rgba(129, 140, 248, 0.35)",
-  asstBg: "rgba(99, 102, 241, 0.14)",
-  asstBorder: "rgba(99, 102, 241, 0.25)",
+  surface: "rgba(22, 27, 34, 0.7)",
+  border: "rgba(255, 255, 255, 0.05)",
+  muted: "#8B949E",
+  dim: "#484F58",
+  bg: "#0D1117",
+  userBg: "rgba(79, 70, 229, 0.12)",
+  userBorder: "rgba(79, 70, 229, 0.25)",
+  asstBg: "rgba(6, 182, 212, 0.1)",
+  asstBorder: "rgba(6, 182, 212, 0.2)",
 };
 
 interface Turn {

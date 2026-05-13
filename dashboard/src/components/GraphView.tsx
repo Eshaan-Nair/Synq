@@ -264,12 +264,10 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         const t = l.target as Node;
         if (!s.x || !s.y || !t.x || !t.y) return;
 
-        const isHovered = hoveredNodeId && (s.id === hoveredNodeId || t.id === hoveredNodeId);
         const isInSelectionFocus = selectedNodeId && (selectedNeighbors.has(s.id) && selectedNeighbors.has(t.id));
         const isTypeFiltered = filterType && (s.type !== filterType && t.type !== filterType);
-        const isDimmed = (hoveredNodeId && !isHovered) ||
-                         (!hoveredNodeId && selectedNodeId && !isInSelectionFocus) ||
-                         (!hoveredNodeId && !selectedNodeId && isTypeFiltered);
+        const isDimmed = (selectedNodeId && !isInSelectionFocus) ||
+                         (!selectedNodeId && isTypeFiltered);
 
         if (!isDimmed) return; // skip — drawn in pass 2
 
@@ -290,9 +288,8 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         const isHovered = hoveredNodeId && (s.id === hoveredNodeId || t.id === hoveredNodeId);
         const isInSelectionFocus = selectedNodeId && (selectedNeighbors.has(s.id) && selectedNeighbors.has(t.id));
         const isTypeFiltered = filterType && (s.type !== filterType && t.type !== filterType);
-        const isDimmed = (hoveredNodeId && !isHovered) ||
-                         (!hoveredNodeId && selectedNodeId && !isInSelectionFocus) ||
-                         (!hoveredNodeId && !selectedNodeId && isTypeFiltered);
+        const isDimmed = (selectedNodeId && !isInSelectionFocus) ||
+                         (!selectedNodeId && isTypeFiltered);
         const isHighlighted = !selectedNodeId && filterType && (s.type === filterType || t.type === filterType);
         const isSelected = selectedNodeId && (s.id === selectedNodeId || t.id === selectedNodeId);
 
@@ -363,9 +360,8 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         const isHovered = hoveredNodeId === n.id || neighbors.has(n.id);
         const isInSelectionFocus = !selectedNodeId || selectedNeighbors.has(n.id);
         const isTypeMatch = !filterType || n.type === filterType;
-        const isDimmed = (hoveredNodeId && !isHovered) ||
-                         (!hoveredNodeId && selectedNodeId && !isInSelectionFocus) ||
-                         (!hoveredNodeId && !selectedNodeId && filterType && !isTypeMatch);
+        const isDimmed = (selectedNodeId && !isInSelectionFocus) ||
+                         (!selectedNodeId && filterType && !isTypeMatch);
         const isSelected = selectedNodeId === n.id;
         const color = TYPE_COLORS[n.type] || TYPE_COLORS.default;
         const isDirectlyFocused = isHovered || isSelected;
@@ -462,7 +458,11 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     const handleClick = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const node = findNodeAt(e.clientX - rect.left, e.clientY - rect.top);
-      onNodeClick?.(node?.id || null);
+      if (node && node.id === selectedNodeId) {
+        onNodeClick?.(null); // Deselect if already selected
+      } else {
+        onNodeClick?.(node?.id || null);
+      }
     };
 
     const drag = d3.drag<HTMLCanvasElement, unknown>()

@@ -51,7 +51,7 @@ router.get("/export/:id", async (req: Request, res: Response) => {
 
 // POST /api/session/import
 router.post("/import", async (req: Request, res: Response) => {
-  const { data } = req.body;
+  const data = req.body;
 
   if (!data || !data.session) {
     res.status(400).json({ error: "Invalid import data" });

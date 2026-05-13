@@ -1,4 +1,4 @@
-import { ISessionStore, IGraphStore, IVectorStore } from "./storage.types";
+import { ISessionStore, IGraphStore, IVectorStore, FullChat } from "./storage.types";
 import { SqliteSessionStore } from "./sqlite-session";
 import { SqliteGraphStore } from "./sqlite-graph";
 import { SqliteVectorStore } from "./sqlite-vector";
@@ -81,10 +81,13 @@ class DockerSessionStore implements ISessionStore {
   async saveFullChat(sessionId: string, rawText: string, messageCount: number, platform: string) {
     await mongoService.FullChat.findOneAndUpdate(
       { sessionId },
-      { rawText, messageCount, platform },
+      { $set: { rawText, messageCount, platform } },
       { upsert: true }
     );
     await this.updateSession(sessionId, { hasFullChat: true });
+  }
+  async updateFullChat(sessionId: string, update: Partial<FullChat>) {
+    await mongoService.FullChat.findOneAndUpdate({ sessionId }, { $set: update });
   }
   async getFullChat(sessionId: string) {
     const c = await mongoService.FullChat.findOne({ sessionId });
@@ -93,6 +96,7 @@ class DockerSessionStore implements ISessionStore {
     return {
       sessionId: obj.sessionId,
       rawText: obj.rawText,
+      processedText: obj.processedText,
       messageCount: obj.messageCount || 0,
       platform: obj.platform || "unknown",
       createdAt: obj.createdAt

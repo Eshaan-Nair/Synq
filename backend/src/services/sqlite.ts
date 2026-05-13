@@ -72,12 +72,24 @@ function createTables() {
     CREATE TABLE IF NOT EXISTS full_chats (
       sessionId TEXT PRIMARY KEY,
       rawText TEXT NOT NULL,
+      processedText TEXT,
       messageCount INTEGER DEFAULT 0,
       platform TEXT,
       createdAt TEXT,
       FOREIGN KEY(sessionId) REFERENCES sessions(id) ON DELETE CASCADE
     )
   `);
+
+  // Migration: Add processedText to full_chats if missing (v1.4.7)
+  try {
+    const tableInfo = db.prepare("PRAGMA table_info(full_chats)").all() as any[];
+    if (!tableInfo.some(col => col.name === "processedText")) {
+      db.exec("ALTER TABLE full_chats ADD COLUMN processedText TEXT");
+      logger.info("Database migration: Added processedText to full_chats");
+    }
+  } catch (e) {
+    logger.warn(`FullChat migration warning: ${e instanceof Error ? e.message : String(e)}`);
+  }
 
   // Active Session
   db.exec(`

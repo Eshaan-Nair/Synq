@@ -1,26 +1,29 @@
 :root {
-  --bg: #0B0E14;
-  --bg-gradient: radial-gradient(circle at 15% 50%, #1a0f2e, #0B0E14 60%);
-  --surface: rgba(21, 24, 34, 0.75);
+  --bg-deep: #05070A;
+  --bg-main: #0D1117;
+  --bg-gradient: radial-gradient(circle at top left, #121A2F 0%, var(--bg-deep) 100%);
+  --surface: rgba(22, 27, 34, 0.7);
   --surface-blur: blur(20px);
-  --border: rgba(255, 255, 255, 0.08);
-  --text-main: #F1F5F9;
-  --text-muted: #94A3B8;
-  --text-dim: #475569;
+  --border: rgba(255, 255, 255, 0.1);
+  --text-main: #F0F6FC;
+  --text-muted: #8B949E;
+  --text-dim: #484F58;
   
-  --accent: #818CF8;
+  --accent: #4F46E5;
   --accent-hover: #6366F1;
-  --accent-dim: rgba(129, 140, 248, 0.15);
+  --accent-dim: rgba(79, 70, 229, 0.15);
+  --primary-glow: rgba(79, 70, 229, 0.15);
   
-  --danger: #F43F5E;
-  --success: #10B981;
+  --secondary: #06B6D4;
+  --danger: #F85149;
+  --success: #238636;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   width: 320px;
-  background: #0B0E14 var(--bg-gradient);
+  background: var(--bg-deep) var(--bg-gradient);
   color: var(--text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -44,6 +47,7 @@ body.success-glow {
 }
 
 .header-title { 
+  font-family: 'Outfit', sans-serif;
   font-size: 20px; 
   font-weight: 800; 
   letter-spacing: 0.05em; 
@@ -51,15 +55,18 @@ body.success-glow {
 }
 
 .header-sub { 
+  font-family: 'Inter', sans-serif;
   font-size: 10px; 
-  color: var(--text-muted); 
+  color: var(--secondary); 
   text-transform: uppercase; 
   letter-spacing: 0.1em; 
-  margin-top: 4px; 
+  margin-top: 2px; 
+  font-weight: 600;
 }
 
 /* Status badge */
 .glia-status {
+  font-family: 'Outfit', sans-serif;
   font-size: 10px;
   font-weight: 700;
   padding: 4px 10px;
@@ -68,7 +75,7 @@ body.success-glow {
   text-transform: uppercase;
 }
 
-.glia-status.active { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.glia-status.active { background: var(--primary-glow); color: var(--text-main); border: 1px solid var(--accent); box-shadow: 0 0 10px var(--primary-glow); }
 .glia-status.paused { background: rgba(100,116,139,0.1); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.2); }
 .glia-status.idle   { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
 
@@ -116,8 +123,8 @@ body.success-glow {
 
 #unload-btn {
   margin-top: 12px;
-  background: rgba(244, 63, 94, 0.05);
-  border: 1px solid rgba(244, 63, 94, 0.2);
+  background: transparent;
+  border: 1px solid rgba(248, 81, 73, 0.3);
   color: var(--danger);
   font-size: 11px;
   padding: 8px;
@@ -125,7 +132,7 @@ body.success-glow {
 }
 
 #unload-btn:hover:not(:disabled) {
-  background: rgba(244, 63, 94, 0.15);
+  background: rgba(248, 81, 73, 0.1);
   border-color: var(--danger);
 }
 
@@ -151,7 +158,7 @@ label {
 input {
   width: 100%; 
   padding: 10px 12px;
-  background: var(--surface); 
+  background: var(--bg-deep); 
   border: 1px solid var(--border);
   border-radius: 6px; 
   color: var(--text-main);
@@ -164,7 +171,7 @@ input {
 
 input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-dim);
+  box-shadow: 0 0 0 2px var(--primary-glow);
 }
 
 .hint {
@@ -183,12 +190,12 @@ button {
   width: 100%; 
   padding: 10px; 
   border: none; 
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: 'Inter', system-ui, sans-serif; 
   font-size: 13px; 
   font-weight: 600;
   cursor: pointer; 
-  margin-bottom: 6px; 
+  margin-bottom: 8px; 
   transition: all 0.2s;
   display: flex; 
   align-items: center; 
@@ -200,13 +207,13 @@ button {
 #save-btn { 
   background: var(--accent); 
   color: #fff;
-  box-shadow: 0 4px 12px rgba(129, 140, 248, 0.25);
+  box-shadow: 0 0 15px var(--primary-glow);
 }
 
 #save-btn:hover:not(:disabled) { 
   background: var(--accent-hover); 
   transform: translateY(-1px); 
-  box-shadow: 0 6px 16px rgba(129, 140, 248, 0.35);
+  box-shadow: 0 0 20px var(--primary-glow);
 }
 
 #save-btn:active:not(:disabled) {
@@ -214,7 +221,8 @@ button {
 }
 
 #save-btn:disabled { 
-  background: var(--border); 
+  background: var(--surface); 
+  border: 1px solid var(--border);
   color: var(--text-dim); 
   cursor: not-allowed; 
   box-shadow: none;
@@ -222,24 +230,27 @@ button {
 
 /* Pause toggle */
 #pause-toggle-btn {
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-muted);
 }
 
 #pause-toggle-btn:hover:not(:disabled) {
-  border-color: var(--text-main);
+  border-color: var(--accent);
   color: var(--text-main);
+  box-shadow: 0 0 10px var(--primary-glow);
 }
 
 #pause-toggle-btn.paused {
   border-color: var(--success);
   color: var(--success);
+  background: rgba(35, 134, 54, 0.1);
 }
 
 #pause-toggle-btn:disabled { 
   opacity: 0.35; 
   cursor: not-allowed; 
+  background: transparent;
 }
 
 .divider { 
@@ -252,6 +263,7 @@ button {
 .settings-drawer {
   margin: 0 16px 12px;
   background: var(--surface);
+  backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
@@ -259,7 +271,8 @@ button {
 }
 
 .settings-drawer:hover {
-  border-color: rgba(129, 140, 248, 0.3);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--primary-glow);
 }
 
 .settings-drawer summary {
@@ -330,14 +343,15 @@ button {
 #inject-btn {
   background: var(--surface); 
   border: 1px solid var(--border);
-  color: var(--text-muted); 
+  color: var(--text-main); 
   width: calc(100% - 32px); 
   margin: 0 16px 12px;
 }
 
 #inject-btn:hover { 
-  border-color: var(--accent); 
-  color: var(--text-main); 
+  border-color: var(--secondary); 
+  color: var(--secondary); 
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
 }
 
 /* Status */
