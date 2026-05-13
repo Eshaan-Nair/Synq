@@ -279,7 +279,7 @@ const App: React.FC = () => {
             <div className="legend-sidebar-list">
               <div className="legend-items" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "16px" }}>
                 {[...new Set(nodes.map(n => n.type))].map(type => (
-                  <div key={type} className={`filter-pill ${graphTypeFilter === type ? "active" : ""}`} onClick={() => setGraphTypeFilter(graphTypeFilter === type ? null : type)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", padding: "10px 16px" }}>
+                  <div key={type} className={`filter-pill ${graphTypeFilter === type ? "active" : ""}`} onClick={() => setGraphTypeFilter(graphTypeFilter === type ? null : type)} style={{ width: "100%" }}>
                     <div className="legend-dot" style={{ width: "8px", height: "8px", borderRadius: "50%", background: (window as any).TYPE_COLORS?.[type] || "#4F46E5", marginRight: "12px", flexShrink: 0 }} />
                     {type}
                   </div>
@@ -302,6 +302,13 @@ const App: React.FC = () => {
               {selectedNodeId && (
                 <div onClick={() => setSelectedNodeId(null)} style={{ marginLeft: "16px", padding: "4px 10px", background: "var(--primary-glow)", border: "1px solid var(--border-glow)", borderRadius: "6px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }} title="Clear Selection">
                   <span style={{ fontSize: "12px", color: "var(--text-primary)", fontWeight: "600", pointerEvents: "none" }}>Focus: {selectedNodeId}</span>
+                  <button style={{ background: "transparent", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "16px", padding: "0 2px", lineHeight: "1", pointerEvents: "none" }}>×</button>
+                </div>
+              )}
+              {graphTypeFilter && (
+                <div onClick={() => setGraphTypeFilter(null)} style={{ marginLeft: "8px", padding: "4px 10px", background: "var(--surface-elevated)", border: "1px solid var(--primary)", borderRadius: "6px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }} title="Clear Filter">
+                  <div className="legend-dot" style={{ width: "6px", height: "6px", borderRadius: "50%", background: (window as any).TYPE_COLORS?.[graphTypeFilter] || "var(--primary)" }} />
+                  <span style={{ fontSize: "12px", color: "var(--text-primary)", fontWeight: "600", pointerEvents: "none" }}>Type: {graphTypeFilter}</span>
                   <button style={{ background: "transparent", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "16px", padding: "0 2px", lineHeight: "1", pointerEvents: "none" }}>×</button>
                 </div>
               )}
