@@ -139,17 +139,7 @@ const ALLOWED_ORIGINS = [
 ];
 ```
 
-Enable request authentication for production:
-
-```env
-# backend/.env
-GLIA_SECRET=your-random-secret-here
-```
-
-The extension and all API clients must then include the header:
-```
-// Authentication is now managed at the network/proxy level if needed.
-```
+Enable request authentication at the proxy level (e.g. Basic Auth in nginx) if exposing the dashboard to the public internet. GLIA is designed for local-first usage and does not include built-in user authentication.
 
 ---
 

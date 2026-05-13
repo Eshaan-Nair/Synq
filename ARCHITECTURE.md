@@ -43,7 +43,7 @@ User types → keydown/send button intercepted (debounced 300ms)
   → ChromaDB cosine query, filtered by sessionId
   → threshold: score = 1 − cosine_distance >= 0.30
   → sanitizeChunks() — injection patterns redacted
-  → wrapInContextBlock() — XML context delimiters
+  → wrapInContextBlock() — Lean Text Header injection
   → Top-3 chunks prepended to prompt → sent
 ```
 
@@ -81,7 +81,7 @@ AI tool (Cursor/Claude Code/etc.) → MCP stdio call
 | Body limit | 5 MB cap on express.json |
 | Security headers | helmet on every response |
 | PII scrubbing | `src/utils/privacy.ts` — runs before any transmission |
-| Prompt injection | `src/middleware/sanitize.ts` — 10 pattern scan + XML context delimiters |
+| Prompt injection | `src/middleware/sanitize.ts` — 10 pattern scan + Lean Header delimiters |
 | Shared secret | Removed in v1.4.7 (Optimized for local-first usage) |
 
 ---
@@ -210,6 +210,5 @@ All configured in `backend/.env`:
 | `OLLAMA_URL` | No | `http://localhost:11434` | Ollama base URL |
 | `OLLAMA_MODEL` | No | `llama3.1:8b` | Model for graph extraction |
 | `CHROMA_URL` | No | `http://localhost:8000` | ChromaDB base URL |
-| `GLIA_SECRET` | No | — | Shared secret for request auth |
 | `GLIA_PROFILE` | No | auto-detect | `full` or `lite` — overrides RAM detection |
 | `PORT` | No | `3001` | Backend server port |

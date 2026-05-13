@@ -4,6 +4,21 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.5.0] — 2026-05-13 — Documentation & Alignment
+
+### Versioning & Alignment
+- **Unified Versioning** — Synchronized version `1.5.0` across all modules: root setup, backend, dashboard, extension package, and manifest.
+- **Architectural Cleanup** — Removed legacy `GLIA_SECRET` requirement and updated all docstrings to reflect the current state of the platform.
+
+### Documentation Overhaul
+- **Standardized Context Format** — Updated all documentation to reflect the move from XML delimiters to the Lean Text Header (`=== GLIA RETRIEVED CONTEXT ===`).
+- **Npx-First Installation** — Refactored all "Getting Started" guides to prioritize `npx glia-ai-setup` over manual cloning.
+- **New ROADMAP.md** — Introduced a formal project roadmap for future milestones.
+- **New TROUBLESHOOTING.md** — Created a comprehensive guide for common installation and runtime issues.
+- **Architecture Sync** — Updated `ARCHITECTURE.md` and `RAG_PIPELINE.md` with accurate diagrams and thresholding logic.
+
+---
+
 ## [1.4.7] — 2026-05-12 — Strict Identity & Precision RAG
 
 ### Identity & Anti-Hijacking

@@ -14,7 +14,7 @@ Every time you open a new chat, your AI starts from zero. GLIA gives your AI per
 [![Downloads](https://img.shields.io/npm/dt/glia-ai-setup?style=for-the-badge&logo=npm&labelColor=0B0E14&color=CB3837)](https://www.npmjs.com/package/glia-ai-setup)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Glia-AI/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.7-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.0-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
@@ -52,7 +52,7 @@ GLIA captures your conversations, distills them into a semantic knowledge graph,
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v1.4.7](#whats-new-in-v147)
+- [Whats New in v1.5.0](#whats-new-in-v150)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -110,7 +110,7 @@ All launchers (`start.bat`, `start.sh`, `install.bat`, `install.sh`) auto-detect
 ```bash
 npx glia-ai-setup
 ```
-This script handles everything: cloning, dependency checks, and triggering the interactive installer.
+This script handles everything: clones the latest release (if needed), verifies dependencies, and triggers the interactive installer. This is the **strongly recommended** path for all users.
 
 **Option B: Manual Setup (Windows)** — double-click `install.bat`
 ```
@@ -122,14 +122,8 @@ detects RAM, starts Docker with the correct profile.
 Copy `backend/.env.example` to `backend/.env` and add your `GROQ_API_KEY` for faster extraction if Ollama is slow or unavailable.
 ```
 
-**macOS / Linux:**
-```bash
 # Recommended:
 npx glia-ai-setup
-
-# Or manual:
-git clone https://github.com/Eshaan-Nair/Glia-AI.git && cd Glia-AI && ./install.sh
-```
 
 ### Daily Use
 
@@ -321,13 +315,12 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## Whats New in v1.4.7
+## Whats New in v1.5.0
 
-- **One-Command Setup** — Introduced `npx glia-ai-setup` for a frictionless, zero-cloning installation experience.
-- **Improved Extension Workflow** — The installer now automatically opens the extension folder and the Chrome extensions page.
-- **Unified UI Layout** — Consolidated the Dashboard header for a cleaner, professional look.
-- **Smart URL Mapping** — Enhanced session persistence across different AI platform URL formats.
-- **Architectural Hardening** — Improved error handling for stalled jobs and better session cleanup logic.
+- **Unified Versioning** — Full alignment across all components (Backend, Dashboard, Extension).
+- **Standardized Context Header** — Switched to a leaner, token-efficient injection header.
+- **Enhanced Documentation** — New [ROADMAP.md](ROADMAP.md) and [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+- **Frictionless Setup** — Improved `npx glia-ai-setup` reliability.
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
