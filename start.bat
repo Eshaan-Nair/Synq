@@ -102,7 +102,9 @@ echo.
 echo  ===================================
 echo   GLIA is running!
 echo  ===================================
-echo   Dashboard ^-^> http://localhost:3001
+echo.
+for /f "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
+echo   Dashboard ^-^> !ESC![1;96mhttp://localhost:3001!ESC![0m
 echo   Press Ctrl+C to stop.
 echo.
 cd backend

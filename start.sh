@@ -93,7 +93,7 @@ echo ""
 echo " ==================================="
 echo "  GLIA is running!"
 echo " ==================================="
-echo "  Dashboard -> http://localhost:3001"
+echo "  Dashboard -> \033[1;96mhttp://localhost:3001\033[0m"
 echo "  Press Ctrl+C to stop."
 echo ""
 (cd backend && npm run dev)

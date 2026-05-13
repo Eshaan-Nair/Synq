@@ -16,6 +16,7 @@ export interface Session {
 export interface FullChat {
   sessionId: string;
   rawText: string;
+  processedText?: string; // v1.4.7: Track what has already been extracted for triples
   messageCount: number;
   platform: string;
   createdAt: Date;
@@ -60,15 +61,16 @@ export interface ISessionStore {
   getSessionByExternalId(externalChatId: string): Promise<Session | null>;
   updateSession(id: string, update: Partial<Session>): Promise<void>;
   deleteSession(id: string): Promise<void>;
-  
+
   // Active Session
   getActiveSessionId(): Promise<string | null>;
   setActiveSessionId(sessionId: string | null): Promise<void>;
-  
+
   // Full Chat
   saveFullChat(sessionId: string, rawText: string, messageCount: number, platform: string): Promise<void>;
+  updateFullChat(sessionId: string, update: Partial<FullChat>): Promise<void>;
   getFullChat(sessionId: string): Promise<FullChat | null>;
-  
+
   // Jobs
   createJob(type: string, payload: any): Promise<Job>;
   getNextJob(): Promise<Job | null>;

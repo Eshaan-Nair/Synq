@@ -157,9 +157,26 @@ async function handleTripleExtraction(jobId: any, payload: {
 
   // ── Step 2: Chunk-by-Chunk Triple Extraction ─────────────────────
   const chunks = chunkText(text);
-  logger.info(`[Job Queue] Resuming extraction for session ${sessionId} at chunk ${currentIndex + 1}/${chunks.length}`);
 
-  for (let i = currentIndex; i < chunks.length; i++) {
+  // v1.4.7: Incremental Extraction — skip chunks that haven't changed
+  const chat = await sessionStore.getFullChat(sessionId);
+  const processedTextSoFar = chat?.processedText || "";
+  const oldChunks = chunkText(processedTextSoFar);
+
+  let skipCount = 0;
+  while (skipCount < oldChunks.length && skipCount < chunks.length && oldChunks[skipCount] === chunks[skipCount]) {
+    skipCount++;
+  }
+
+  if (skipCount > 0) {
+    logger.info(`[Job Queue] Session ${sessionId}: skipping ${skipCount}/${chunks.length} identical chunks`);
+  }
+
+  // Respect both skipCount and any previous checkpoint (lastProcessedIndex)
+  const startIndex = Math.max(skipCount, currentIndex);
+  logger.info(`[Job Queue] Resuming extraction for session ${sessionId} at chunk ${startIndex + 1}/${chunks.length}`);
+
+  for (let i = startIndex; i < chunks.length; i++) {
     logger.info(`[Job Queue]   chunk ${i + 1}/${chunks.length} — summarizing...`);
 
     try {
@@ -181,6 +198,10 @@ async function handleTripleExtraction(jobId: any, payload: {
       await sessionStore.updateSession(sessionId, {
         tripleCount: count
       });
+
+      // v1.4.7: Update processed text so future saves can skip this chunk
+      const processedUntilNow = chunks.slice(0, i + 1).join("\n\n");
+      await sessionStore.updateFullChat(sessionId, { processedText: processedUntilNow });
 
       // Delay to respect Groq rate limits
       if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 3000));

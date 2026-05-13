@@ -412,7 +412,6 @@ chrome.runtime.onMessage.addListener((message) => {
     if (sessionId) {
       currentSessionId = sessionId;
       if (projectName) {
-        projectNameInput.value = projectName;
         showSession({ sessionId, projectName });
       }
     } else {
@@ -452,6 +451,7 @@ function showSession(data: SessionData) {
 
   if (data.sessionId) {
     currentSessionId = data.sessionId;
+    projectNameInput.value = ""; // Clear input to keep UI clean
     unloadBtn.disabled = false;
   }
 }
