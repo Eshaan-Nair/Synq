@@ -1,10 +1,9 @@
 <div align="center">
 
-# GLIA
+# GLIA — The Memory Layer for AI
 
 ### Your AI forgets. GLIA makes it remember.
-
-Every time you open a new chat, your AI starts from zero. GLIA gives your AI persistent, cross-session memory.
+**Turn transient chats into a persistent, searchable knowledge base. Works locally, privately, and automatically.**
 
 <br/>
 
@@ -18,7 +17,9 @@ Every time you open a new chat, your AI starts from zero. GLIA gives your AI per
 
 <br/>
 
-**Works with Claude · ChatGPT · Gemini · DeepSeek — and Claude Code · Cursor · Windsurf via MCP.**
+**Works with:**
+**Claude, ChatGPT, Gemini, DeepSeek**
+**— and Claude Code · Cursor · Windsurf via MCP.**
 
 https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
@@ -35,9 +36,9 @@ npx glia-ai-setup
 
 ## The Problem
 
-You're deep into a complex project. You've had 12 conversations with Claude about your architecture, your auth flow, your database schema. Then you open a new chat — **it's all gone.**
+You're deep into a complex project. You've had dozens of conversations with Claude about your architecture, auth flow, and database schema. Then you open a new chat — **it's all gone.** You spend the next 10 minutes re-explaining context you've already covered.
 
-GLIA captures your conversations, distills them into a semantic knowledge graph, and **automatically injects the most relevant context into every new prompt**.
+GLIA stops the cycle. It captures your conversations, distills them into a semantic knowledge graph, and **automatically injects the most relevant context into every new prompt**.
 
 ---
 
@@ -67,7 +68,7 @@ GLIA captures your conversations, distills them into a semantic knowledge graph,
 | **Auto-Connect** | Intercepts every prompt and injects relevant context automatically |
 | **100% Local** | Ollama runs embeddings and extraction on your machine — nothing leaves your network |
 | **Zero Data Loss** | Sliding window chunker preserves every word — no filtering, no minimum length |
-| **Prompt Injection Defence** | Chunks scanned for injection patterns; context wrapped in XML delimiters |
+| **Injection Defence** | Chunks scanned for injection patterns; context wrapped in professional headers |
 | **Knowledge Graph** | 22 entity types, 20+ relation types — captures technical and personal context |
 | **D3.js Dashboard** | Force-directed graph with degree-scaled nodes, hover tooltips, zoom controls |
 | **MCP Evolution** | Smart project detection + Hybrid recall in Claude Code, Cursor, Windsurf |
@@ -149,14 +150,15 @@ The dashboard is a production build served by the backend — no separate window
 
 ## MCP Server
 
-> **v1.4.7** — GLIA now works in any MCP-compatible AI tool.
+> **Unified Memory Layer** — GLIA acts as a bridge between your browser conversations and your local development environment.
 
 Build the backend first:
 ```bash
 cd backend && npm run build
 ```
 
-Add to your AI tool's config:
+### Quick Integration
+Add to your AI tool's config to give it access to your entire conversation history:
 
 **Claude Desktop** (`~/.claude/claude_desktop_config.json`):
 ```json
@@ -170,7 +172,7 @@ Add to your AI tool's config:
 }
 ```
 
-**Cursor / Windsurf** (`.cursor/mcp.json` in project root):
+**Cursor / Windsurf** (`.cursor/mcp.json`):
 ```json
 {
   "mcpServers": {
@@ -179,7 +181,12 @@ Add to your AI tool's config:
 }
 ```
 
-Available tools: `recall_context` · `store_memory` · `search_memory` · `list_projects` · `get_project_summary`
+**Available Tools:**
+- `recall_context` — Semantic search across the active project.
+- `store_memory` — Manually save notes or code snippets.
+- `search_memory` — Cross-project global search.
+- `list_projects` — Manage your knowledge silos.
+- `get_project_summary` — View the knowledge graph as structured data.
 
 Full guide: [MCP_SETUP.md](MCP_SETUP.md)
 
@@ -297,17 +304,15 @@ Glia-AI/
 
 ## Privacy and Security
 
-All data lives in local Docker volumes. Nothing syncs externally.
-
-Ollama is the **primary** extraction backend — fully local. Groq is an automatic fallback only if Ollama is unavailable, with a console warning.
+**GLIA was built with a local-first philosophy. Your conversations are your own.**
 
 | Control | Detail |
 |:---|:---|
-| Prompt injection defence | Chunks scanned + XML context delimiters |
-| PII auto-redaction | API keys, JWTs, emails, connection strings |
-| Rate limiting | 200 req/min global · 10 req/min on `/api/chat/save` |
-| CORS | `localhost:3001`, `localhost:5173`, `chrome-extension://` only |
-| Input validation | sessionId as ObjectId, platform as enum, text length enforced |
+| **Local-First** | All data lives in local Docker volumes. Nothing syncs to a cloud service. |
+| **Local LLM** | Ollama is the primary backend. Your data stays on your silicon. |
+| **PII Redaction** | Automated scrubbing of API keys, JWTs, and emails happens client-side. |
+| **Sanitization** | RAG chunks are scanned for prompt injection patterns before injection. |
+| **CORS Locked** | Backend only accepts requests from the dashboard and extension. |
 | Security headers | helmet on every response |
 | Shared secret | Removed in v1.4.7 |
 
