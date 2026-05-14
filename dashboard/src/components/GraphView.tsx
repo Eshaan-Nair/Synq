@@ -40,12 +40,6 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
   const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(null);
 
-  // Settings
-  const [showSettings, setShowSettings] = useState(false);
-  const [settingNodeSize, setSettingNodeSize] = useState<"normal" | "large">("normal");
-  const [settingNodeLabels, setSettingNodeLabels] = useState<"always" | "hover">("hover");
-  const [settingEdgeLabels, setSettingEdgeLabels] = useState<"always" | "hover">("hover");
-
   const processedData = useMemo(() => {
     const degreeMap = new Map<string, number>();
     const posMap = new Map<string, { x?: number, y?: number, vx?: number, vy?: number }>();
@@ -82,10 +76,12 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
   }, [nodes, links]);
 
   const getNodeRadius = useCallback((degree: number) => {
-    const base = settingNodeSize === "large" ? 14 : 8;
-    const mult = settingNodeSize === "large" ? 10 : 7;
+    const base = 8;
+    const mult = 7;
     return Math.max(base, Math.min(60, base + (degree || 0) * mult));
-  }, [settingNodeSize]);
+  }, []);
+
+
 
   // ── Simulation Lifecycle ──────────────────────────────────────
   useEffect(() => {
@@ -121,7 +117,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         .force("y", d3.forceY(height / 2).strength(d => (d as any).degree === 0 ? 0.25 : 0.12))
         .force("collision", d3.forceCollide<Node>(d => getNodeRadius(d.degree || 0) + (nodes.length > 500 ? 10 : 35)))
         .force("wander", wanderForce)
-        .alphaDecay(0.02)
+        .alphaDecay(0.05)
         .alphaMin(0.001)
         .alphaTarget(0.002)
         .velocityDecay(0.45);
@@ -268,7 +264,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
           ctx.fill();
         }
 
-        if (settingEdgeLabels === "always" || (settingEdgeLabels === "hover" && isSelected)) {
+        if (isSelected) {
           ctx.globalAlpha = 1;
           const lx = (s.x + t.x) / 2;
           const ly = (s.y + t.y) / 2;
@@ -321,7 +317,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
 
         if (isDirectlyFocused) ctx.shadowBlur = 0;
 
-        if (r > 15 && (settingNodeLabels === "always" || isHovered)) {
+        if (r > 15 && isHovered) {
           ctx.fillStyle = isDimmed ? "rgba(255,255,255,0.3)" : "#FFFFFF";
           ctx.font = `bold ${r >= 35 ? "10px" : r >= 20 ? "8px" : "6px"} system-ui`;
           ctx.textAlign = "center";
@@ -330,7 +326,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
           ctx.fillText(getAbbreviation(node.type), node.x, node.y);
         }
 
-        if (settingNodeLabels === "always" || isSelected || selectedNeighbors.has(node.id)) {
+        if (isSelected || selectedNeighbors.has(node.id)) {
           ctx.globalAlpha = 1;
           const labelOffset = r + 14;
           const displayName = node.id.length > 22 ? node.id.slice(0, 20) + "…" : node.id;
@@ -417,7 +413,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("click", handleClick);
     };
-  }, [processedData, getNodeRadius, hoveredNodeId, selectedNodeId, settingNodeLabels, settingEdgeLabels, filterType]);
+  }, [processedData, getNodeRadius, hoveredNodeId, selectedNodeId, filterType]);
 
   const hoveredNode = useMemo(() => nodes.find(n => n.id === hoveredNodeId), [nodes, hoveredNodeId]);
 
@@ -440,43 +436,8 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
           const canvas = canvasRef.current;
           if (!canvas || !zoomRef.current) return;
           d3.select(canvas).transition().duration(400).call(zoomRef.current.transform, d3.zoomIdentity);
-        }} className="graph-btn">⊙</button>
-        <button
-          title="Graph Settings"
-          onClick={() => setShowSettings(!showSettings)}
-          className={`graph-btn ${showSettings ? "active" : ""}`}
-          style={{ marginTop: "8px" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </button>
+        }} className="graph-btn">⟲</button>
       </div>
-
-      {showSettings && (
-        <div className="graph-settings-panel">
-          <div className="settings-title">Graph Settings</div>
-          <div className="settings-row">
-            <span className="settings-label">Node Size</span>
-            <select value={settingNodeSize} onChange={e => setSettingNodeSize(e.target.value as any)} className="settings-select">
-              <option value="normal">Normal</option>
-              <option value="large">Large</option>
-            </select>
-          </div>
-          <div className="settings-row">
-            <span className="settings-label">Node Labels</span>
-            <select value={settingNodeLabels} onChange={e => setSettingNodeLabels(e.target.value as any)} className="settings-select">
-              <option value="hover">On Hover</option>
-              <option value="always">Always Show</option>
-            </select>
-          </div>
-          <div className="settings-row">
-            <span className="settings-label">Edge Facts</span>
-            <select value={settingEdgeLabels} onChange={e => setSettingEdgeLabels(e.target.value as any)} className="settings-select">
-              <option value="hover">On Hover</option>
-              <option value="always">Always Show</option>
-            </select>
-          </div>
-        </div>
-      )}
 
       {hoveredNode && (
         <div className="graph-tooltip" style={{ border: `1px solid ${TYPE_COLORS[hoveredNode.type]}`, boxShadow: `0 4px 20px ${TYPE_COLORS[hoveredNode.type]}33` }}>

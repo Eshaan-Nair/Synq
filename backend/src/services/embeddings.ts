@@ -6,9 +6,16 @@ import { logger } from "../utils/logger";
 
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 
-export async function generateEmbedding(text: string): Promise<number[]> {
+export async function generateEmbedding(text: string, task: "query" | "document" = "query"): Promise<number[]> {
   const EMBED_MODEL = process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text";
   const MAX_RETRIES = 3;
+
+  // nomic-embed-text requires specific prefixes for optimal performance
+  const prefix = EMBED_MODEL.includes("nomic-embed-text") 
+    ? (task === "query" ? "search_query: " : "search_document: ") 
+    : "";
+  
+  const prompt = `${prefix}${text}`;
   
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -19,7 +26,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
       const response = await axios.post(`${OLLAMA_URL}/api/embeddings`, {
         model: EMBED_MODEL,
-        prompt: text,
+        prompt: prompt,
       }, { timeout: 60000 });
       
       return response.data.embedding as number[];
@@ -48,7 +55,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
  * Previously, 100 chunks = 100 concurrent HTTP calls (timed out).
  * Now we process in chunks of 5 with a tiny rest between batches.
  */
-export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
+export async function generateEmbeddings(texts: string[], task: "query" | "document" = "document"): Promise<number[][]> {
   const BATCH_SIZE = 3; // Reduced batch size for low-end PCs
   const results: number[][] = [];
   
@@ -58,7 +65,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     
     try {
       // Process this batch in parallel
-      const batchResults = await Promise.all(batch.map(text => generateEmbedding(text)));
+      const batchResults = await Promise.all(batch.map(text => generateEmbedding(text, task)));
       results.push(...batchResults);
     } catch (err: any) {
       logger.error(`[GLIA] Batch embedding failed at index ${i}: ${err.message}`);

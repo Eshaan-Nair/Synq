@@ -219,7 +219,10 @@ export class SqliteSessionStore implements ISessionStore {
   }
 
   async resetGhostJobs(): Promise<void> {
-    this.db.prepare("UPDATE jobs SET status = 'PENDING' WHERE status = 'PROCESSING'").run();
+    // Only resume jobs that haven't failed repeatedly
+    this.db.prepare("UPDATE jobs SET status = 'PENDING' WHERE status = 'PROCESSING' AND attempts < 2").run();
+    // Mark heavily failing ghost jobs as FAILED instead of looping forever
+    this.db.prepare("UPDATE jobs SET status = 'FAILED', error = 'Abandoned after multiple crash/resume cycles' WHERE status = 'PROCESSING' AND attempts >= 2").run();
   }
 
   async clearJobs(): Promise<void> {

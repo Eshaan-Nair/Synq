@@ -5,9 +5,9 @@
   /* Deep Space Palette */
   --bg-deep: #05070A;
   --bg-main: #0D1117;
-  --surface: rgba(22, 27, 34, 0.7);
-  --surface-elevated: rgba(33, 38, 45, 0.85);
-  --surface-blur: blur(20px);
+  --surface: rgba(13, 17, 23, 0.85);
+  --surface-elevated: rgba(33, 38, 45, 0.95);
+  --surface-blur: blur(16px);
   
   /* Borders */
   --border-dim: rgba(255, 255, 255, 0.05);
@@ -444,7 +444,7 @@ body {
 .graph-controls {
   position: absolute;
   bottom: 24px;
-  left: 24px;
+  left: 304px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -456,15 +456,16 @@ body {
   backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border-main);
   color: var(--text-primary);
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  font-size: 14px;
 }
 
 .graph-btn:hover, .graph-btn.active {
@@ -681,4 +682,92 @@ body {
   border-radius: 12px 12px 12px 2px;
   background: rgba(6, 182, 212, 0.1);
   border-color: rgba(6, 182, 212, 0.2);
+}
+
+/* Progress Status Bar - v1.5.0 Centered */
+.centered-progress {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  min-width: 240px;
+  background: rgba(13, 17, 23, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--secondary);
+  box-shadow: 0 0 40px rgba(0, 242, 255, 0.15);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: fadeInCenter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+@keyframes fadeInCenter {
+  from { transform: translate(-50%, -40%) scale(0.95); opacity: 0; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.processing-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  border-radius: 50%;
+  box-shadow: 0 0 15px var(--primary);
+  animation: pulse-glow 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.9); }
+}
+
+.status-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.status-error {
+  margin-top: 4px;
+  padding: 8px 12px;
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--danger);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.clear-btn:hover {
+  background: rgba(248, 81, 73, 0.1);
 }

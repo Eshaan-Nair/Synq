@@ -326,6 +326,45 @@ Entities:`;
 }
 
 // ── Step 2: extract triples from compressed summary ───────────────
+/**
+ * v1.5.0: Direct Triple Extraction from raw text (Saves 50% API calls)
+ */
+export async function extractTriplesFromText(text: string): Promise<Triple[]> {
+  const prompt = `You are a precision fact extractor. Extract subject-relation-object triplets from the conversation below.
+
+RULES:
+1. Return ONLY raw JSON.
+2. If no facts found, return [].
+3. Preserve specific technical terms.
+
+EXAMPLES:
+"I use React with Vite" → [{"subject":"User","subjectType":"Person","relation":"USES","object":"React","objectType":"Technology"},{"subject":"React","subjectType":"Technology","relation":"PAIRED_WITH","object":"Vite","objectType":"Technology"}]
+
+Conversation Text:
+"""
+${text}
+"""
+JSON:`;
+
+  const raw = await llm(prompt, 1500);
+
+  try {
+    const start = raw.indexOf("[");
+    const end = raw.lastIndexOf("]");
+    if (start !== -1 && end !== -1) {
+      let clean = raw.slice(start, end + 1).trim();
+      clean = clean.replace(/,\s*\]/g, "]").replace(/,\s*\}/g, "}");
+      clean = clean.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
+      clean = clean.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "");
+      return JSON.parse(clean) as Triple[];
+    }
+    return [];
+  } catch (err) {
+    logger.warn(`[Extractor] Direct parse failed, falling back to empty list.`);
+    return [];
+  }
+}
+
 export async function extractTriplesFromSummary(summary: string): Promise<Triple[]> {
   const prompt = `Extract semantic triples from these facts.
 Return ONLY a valid JSON array, no explanation, no markdown, no code fences.
@@ -360,35 +399,57 @@ STRICT CLASSIFICATION RULES — read carefully:
 8. Programming languages, frameworks, libraries, tools, APIs → ALWAYS "Technology".
 9. Extract ALL relationships. If in doubt, include it.
 
-EXAMPLES (abbreviated — follow the same pattern for all conversation types):
-"User is a student at KIIT" → STUDIES_AT (NOT WORKS_AT)
-"User is in 8th semester" → IN_SEMESTER, objectType "Education"
-"User works at Google" → WORKS_AT, objectType "Organization"
-"Project uses React, has CORS bug" → USES (Technology), STRUGGLING_WITH (Bug)
-"User chose PostgreSQL over MongoDB" → DECIDED_TO + STORES_IN (Database)
+EXAMPLES:
+"User is a student at KIIT" → [{"subject":"User","subjectType":"Person","relation":"STUDIES_AT","object":"KIIT","objectType":"Organization"}]
+
+Return ONLY raw JSON. No conversational filler. If no facts found, return [].
 
 Facts:
 """
 ${summary}
 """
-
-Return ONLY: [{"subject":"...","subjectType":"...","relation":"...","object":"...","objectType":"..."}]`;
+JSON:`;
 
   const raw = await llm(prompt, 1500);
 
-  // More robust JSON extraction: find the first '[' and last ']'
-  const start = raw.indexOf("[");
-  const end = raw.lastIndexOf("]");
-
-  if (start === -1 || end === -1) {
-    throw new Error("Bad formatting: No JSON array found in model output");
-  }
-
-  const clean = raw.slice(start, end + 1).trim();
   try {
-    return JSON.parse(clean) as Triple[];
+    // 1. Precise extraction: find the first '[' and last ']'
+    const start = raw.indexOf("[");
+    const end = raw.lastIndexOf("]");
+
+    if (start !== -1 && end !== -1) {
+      let clean = raw.slice(start, end + 1).trim();
+      
+      // 1.1 Fix "Smart Quotes" and other non-standard punctuation
+      clean = clean.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
+      
+      // 1.2 Remove trailing commas in arrays/objects
+      clean = clean.replace(/,\s*\]/g, "]").replace(/,\s*\}/g, "}");
+      
+      // 1.3 Remove truly dangerous control characters (but KEEP newlines/tabs)
+      // This regex removes null, bell, backspace, etc. but keeps \n, \r, \t
+      clean = clean.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "");
+
+      try {
+        return JSON.parse(clean) as Triple[];
+      } catch (e: any) {
+        logger.warn(`[Extractor] JSON Parse Error: ${e.message}`);
+        logger.warn(`[Extractor] Cleaned content snippet: ${clean.slice(0, 100)}...`);
+        throw e;
+      }
+    }
+
+    // 2. Fallback: If no brackets but model says "none" or is empty
+    const rawLower = raw.toLowerCase();
+    if (rawLower.includes("none") || rawLower.includes("no facts") || raw.trim().length < 5) {
+      return [];
+    }
+
+    // 3. Fallback: Try parsing the whole thing (maybe it returned just the array)
+    return JSON.parse(raw.trim()) as Triple[];
   } catch (jsonErr) {
-    throw new Error(`Bad formatting: JSON parse error - ${clean.slice(0, 50)}`);
+    logger.warn(`[Extractor] JSON Parse failed. Model output: ${raw.slice(0, 100)}...`);
+    throw new Error(`Bad formatting: No valid JSON array found in model output`);
   }
 }
 

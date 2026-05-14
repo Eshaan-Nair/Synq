@@ -69,6 +69,7 @@ const App: React.FC = () => {
       setSelectedNodeId(null);
       setGraphTypeFilter(null);
       setFactsPage(0);
+      setJobStatus({ pending: 0, processing: 0, deadLettered: 0 });
     }
   }, [activeSession, loadSessionData]);
 
@@ -115,16 +116,20 @@ const App: React.FC = () => {
   // Polling for processing graph
   useEffect(() => {
     let timer: any;
-    if (activeSession?.isProcessingGraph) {
+    if (activeSession) {
       const poll = async () => {
         try {
           const { data: status } = await apiClient.get(`/api/jobs/status/${activeSession._id}`);
           setJobStatus(status);
-          if (status.pending === 0 && status.processing === 0) {
+          
+          // If it just finished, refresh the session list to get the final tripleCount
+          if (activeSession.isProcessingGraph && status.pending === 0 && status.processing === 0) {
             loadSessions();
-            if (activeSession) handleLoadSession(activeSession);
+            handleLoadSession(activeSession);
           }
-        } catch (err) { console.error("Job poll failed"); }
+        } catch (err) { 
+          // Silently fail polling
+        }
       };
       poll();
       timer = setInterval(poll, 3000);
@@ -186,20 +191,26 @@ const App: React.FC = () => {
           selectedNodeId={selectedNodeId}
           filterType={graphTypeFilter}
         />
-        {activeSession?.isProcessingGraph && (
-          <div className="job-status-bar" style={{ position: "absolute", top: "88px", left: "304px", background: "var(--surface)", backdropFilter: "blur(10px)", border: "1px solid var(--primary)", display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px", borderRadius: "10px" }}>
-            <div className="processing-dot" style={{ width: "8px", height: "8px", background: "var(--primary)", borderRadius: "50%", boxShadow: "0 0 10px var(--primary)" }} />
-            <span style={{ fontSize: "12px", fontWeight: "600" }}>
-              {jobStatus.processing > 0 ? "Extracting Memories..." : "Queued..."}
-            </span>
-            {jobStatus.deadLettered > 0 && (
-              <span style={{ fontSize: "11px", color: "var(--danger)", marginLeft: "8px" }}>
-                ({jobStatus.deadLettered} failed)
-                <button onClick={handleClearJobs} style={{ background: "transparent", border: "none", color: "var(--text-secondary)", marginLeft: "4px", cursor: "pointer", fontSize: "14px" }}>×</button>
+        {(activeSession?.isProcessingGraph || jobStatus.pending > 0 || jobStatus.processing > 0) && (
+          <div className="job-status-bar centered-progress">
+            <div className="status-header">
+              <div className="processing-dot" />
+              <span className="status-title">
+                {jobStatus.processing > 0 ? "Extracting Memories..." : "Queued in Brain..."}
               </span>
+            </div>
+            <div className="status-meta">
+              {(Number(jobStatus?.pending) || 0) + (Number(jobStatus?.processing) || 0)} chunks remaining
+            </div>
+            {jobStatus.deadLettered > 0 && (
+              <div className="status-error">
+                <span> {jobStatus.deadLettered} facts failed</span>
+                <button onClick={handleClearJobs} className="clear-btn">Clear</button>
+              </div>
             )}
           </div>
         )}
+
       </main>
 
       <FloatingPanel
