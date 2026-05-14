@@ -82,16 +82,21 @@ echo  Ollama selected. Backend will use Local-first RAG.
 set /p GROQ_API_KEY="Enter your Groq API Key for fallback (optional, press Enter to skip): "
 echo.
 echo  Select Ollama Model for your !VRAM_GB!GB VRAM:
-echo  [1] Llama 3.1 8b   - 8GB VRAM (Best Accuracy)
-echo  [2] Mistral 7b     - 6GB VRAM (Balanced)
-echo  [3] Phi-3.5 Mini   - 4GB VRAM (Lightweight)
-echo  [4] Qwen 2.5 1.5b  - 2GB VRAM (Ultra Fast)
+echo  [1] Qwen 2.5 1.5b  - 2GB VRAM (Ultra Fast)
+echo  [2] Phi-3.5 Mini   - 4GB VRAM (Lightweight)
+echo  [3] Mistral 7b     - 6GB VRAM (Reliable Mid-Level)
+echo  [4] Llama 3.1 8b   - 8GB VRAM (Standard / Balanced)
+echo  [5] Qwen 2.5 32b   - 20GB VRAM (Mid-High Excellence)
+echo  [6] Llama 3.3 70b  - 40GB VRAM (High-End Powerhouse)
 echo.
-set /p MODEL_CHOICE="Enter choice [1-4] (default 1): "
+set /p MODEL_CHOICE="Enter choice [1-6] (default 4): "
 set "SELECTED_MODEL=llama3.1:8b"
-if "!MODEL_CHOICE!"=="2" set "SELECTED_MODEL=mistral:7b"
-if "!MODEL_CHOICE!"=="3" set "SELECTED_MODEL=phi3.5:3.8b"
-if "!MODEL_CHOICE!"=="4" set "SELECTED_MODEL=qwen2.5:1.5b"
+if "!MODEL_CHOICE!"=="1" set "SELECTED_MODEL=qwen2.5:1.5b"
+if "!MODEL_CHOICE!"=="2" set "SELECTED_MODEL=phi3.5:3.8b"
+if "!MODEL_CHOICE!"=="3" set "SELECTED_MODEL=mistral:7b"
+if "!MODEL_CHOICE!"=="4" set "SELECTED_MODEL=llama3.1:8b"
+if "!MODEL_CHOICE!"=="5" set "SELECTED_MODEL=qwen2.5:32b"
+if "!MODEL_CHOICE!"=="6" set "SELECTED_MODEL=llama3.3:70b"
 
 set OLLAMA_CMD=ollama
 where ollama >nul 2>&1

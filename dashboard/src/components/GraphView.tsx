@@ -1,37 +1,14 @@
 /**
- * GraphView.tsx — v1.4.7
+ * GraphView.tsx — v1.5.0
  * 
- * Performance Upgrade: Switched from SVG to HTML5 Canvas for rendering.
- * 
- * Why?
- * SVG creates thousands of DOM elements (1500 nodes + 3000 links = 4500+ elements).
- * Canvas uses a single draw call to render everything, allowing buttery smooth 
- * 60FPS even with massive graphs on low-end hardware.
- * 
- * Preserved Aesthetics:
- * - Quadratic Bezier curved edges.
- * - Degree-based node sizing.
- * - Technical-dark theme palette.
- * - Smooth hover/selection dimming.
+ * Performance Upgrade: HTML5 Canvas for rendering.
+ * Optimized draw loop and interaction handlers.
  */
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
-
-interface Node extends d3.SimulationNodeDatum {
-  id: string;
-  type: string;
-  community?: number;
-  firstSeen?: string;
-  degree?: number;
-}
-
-interface Link extends d3.SimulationLinkDatum<Node> {
-  source: string | Node;
-  target: string | Node;
-  relation: string;
-  timestamp?: string;
-}
+import type { Node, Link } from "../types";
+import { TYPE_COLORS } from "../constants";
 
 interface Props {
   nodes: Node[];
@@ -41,48 +18,19 @@ interface Props {
   filterType?: string | null;
 }
 
-// ── Design System ───────────────────────────────────────────────
-const STATIC_TYPE_COLORS: Record<string, string> = {
-  Person: "#F472B6", Pet: "#FB923C", Goal: "#34D399", Problem: "#F87171",
-  Preference: "#818CF8", Habit: "#FCD34D", Location: "#2DD4BF",
-  Organization: "#6366F1", Education: "#A78BFA", Project: "#94A3B8",
-  Technology: "#8B5CF6", Feature: "#EC4899", Bug: "#EF4444",
-  Decision: "#F59E0B", Auth: "#10B981", Database: "#06B6D4",
-  Library: "#3B82F6", API: "#6366F1", Concept: "#D946EF",
-  Framework: "#7C3AED", Architecture: "#EAB308", Tool: "#4ADE80",
-  Pattern: "#2DD4BF", Algorithm: "#14B8A6", default: "#475569",
+const ABBREVIATIONS: Record<string, string> = {
+  Person: "PER", Pet: "PET", Goal: "GOAL", Problem: "PROB",
+  Preference: "PREF", Habit: "HABIT", Location: "LOC",
+  Organization: "ORG", Project: "PROJ", Technology: "TECH",
+  Feature: "FEAT", Bug: "BUG", Decision: "DEC", Auth: "AUTH",
+  Database: "DB", Library: "LIB", API: "API", Concept: "CON",
+  Framework: "FW", Architecture: "ARCH", Tool: "TOOL",
+  Pattern: "PAT", Algorithm: "ALGO",
 };
 
-function getDynamicColor(type: string): string {
-  if (!type) return STATIC_TYPE_COLORS.default;
-  if (STATIC_TYPE_COLORS[type]) return STATIC_TYPE_COLORS[type];
-  let hash = 0;
-  for (let i = 0; i < type.length; i++) hash = type.charCodeAt(i) + ((hash << 5) - hash);
-  const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-  return "#" + "00000".substring(0, 6 - c.length) + c;
-}
-
-export const TYPE_COLORS = new Proxy(STATIC_TYPE_COLORS, {
-  get: (target, prop) => (typeof prop !== "string" ? target["default"] : (target[prop] || getDynamicColor(prop)))
-});
-
-// Attach to window for the sidebar legend to access
-if (typeof window !== "undefined") {
-  (window as any).TYPE_COLORS = TYPE_COLORS;
-}
-
-function typeAbbrev(type: string | null | undefined): string {
+function getAbbreviation(type: string | null | undefined): string {
   if (!type) return "";
-  const abbrevs: Record<string, string> = {
-    Person: "PER", Pet: "PET", Goal: "GOAL", Problem: "PROB",
-    Preference: "PREF", Habit: "HABIT", Location: "LOC",
-    Organization: "ORG", Project: "PROJ", Technology: "TECH",
-    Feature: "FEAT", Bug: "BUG", Decision: "DEC", Auth: "AUTH",
-    Database: "DB", Library: "LIB", API: "API", Concept: "CON",
-    Framework: "FW", Architecture: "ARCH", Tool: "TOOL",
-    Pattern: "PAT", Algorithm: "ALGO",
-  };
-  return abbrevs[type] || type.slice(0, 4).toUpperCase();
+  return ABBREVIATIONS[type] || type.slice(0, 4).toUpperCase();
 }
 
 export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, filterType }: Props) {
@@ -98,48 +46,46 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
   const [settingNodeLabels, setSettingNodeLabels] = useState<"always" | "hover">("hover");
   const [settingEdgeLabels, setSettingEdgeLabels] = useState<"always" | "hover">("hover");
 
-  // Pre-process nodes with degree and coordinate persistence
   const processedData = useMemo(() => {
-    const dMap = new Map<string, number>();
+    const degreeMap = new Map<string, number>();
     const posMap = new Map<string, { x?: number, y?: number, vx?: number, vy?: number }>();
     
-    // Capture existing positions from the active simulation to prevent resetting on prop updates
     if (simulationRef.current) {
-      simulationRef.current.nodes().forEach(n => {
-        posMap.set(n.id, { x: n.x, y: n.y, vx: n.vx, vy: n.vy });
+      simulationRef.current.nodes().forEach(node => {
+        posMap.set(node.id, { x: node.x, y: node.y, vx: node.vx, vy: node.vy });
       });
     }
 
-    nodes.forEach(n => dMap.set(n.id, 0));
-    links.forEach(l => {
-      const s = typeof l.source === "string" ? l.source : (l.source as any).id;
-      const t = typeof l.target === "string" ? l.target : (l.target as any).id;
-      dMap.set(s, (dMap.get(s) || 0) + 1);
-      dMap.set(t, (dMap.get(t) || 0) + 1);
+    nodes.forEach(node => degreeMap.set(node.id, 0));
+    links.forEach(link => {
+      const sourceId = typeof link.source === "string" ? link.source : (link.source as any).id;
+      const targetId = typeof link.target === "string" ? link.target : (link.target as any).id;
+      degreeMap.set(sourceId, (degreeMap.get(sourceId) || 0) + 1);
+      degreeMap.set(targetId, (degreeMap.get(targetId) || 0) + 1);
     });
 
     return {
-      nodes: nodes.map(n => {
-        const pos = posMap.get(n.id);
+      nodes: nodes.map(node => {
+        const pos = posMap.get(node.id);
         return { 
-          ...n, 
-          degree: dMap.get(n.id) || 0,
+          ...node, 
+          degree: degreeMap.get(node.id) || 0,
           x: pos?.x, 
           y: pos?.y, 
           vx: pos?.vx, 
           vy: pos?.vy 
         };
       }),
-      links: links.map(l => ({ ...l })),
-      degreeMap: dMap
+      links: links.map(link => ({ ...link })),
+      degreeMap
     };
   }, [nodes, links]);
 
-  const getNodeRadius = (degree: number) => {
+  const getNodeRadius = useCallback((degree: number) => {
     const base = settingNodeSize === "large" ? 14 : 8;
     const mult = settingNodeSize === "large" ? 10 : 7;
     return Math.max(base, Math.min(60, base + (degree || 0) * mult));
-  };
+  }, [settingNodeSize]);
 
   // ── Simulation Lifecycle ──────────────────────────────────────
   useEffect(() => {
@@ -148,13 +94,11 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // Custom wander force: nudges every node by a tiny random amount each tick
-    // This keeps the graph "alive" without disrupting the layout
     const wanderStrength = 0.08;
     const wanderForce = () => {
-      processedData.nodes.forEach((n: any) => {
-        n.vx = (n.vx || 0) + (Math.random() - 0.5) * wanderStrength;
-        n.vy = (n.vy || 0) + (Math.random() - 0.5) * wanderStrength;
+      processedData.nodes.forEach((node: any) => {
+        node.vx = (node.vx || 0) + (Math.random() - 0.5) * wanderStrength;
+        node.vy = (node.vy || 0) + (Math.random() - 0.5) * wanderStrength;
       });
     };
 
@@ -162,10 +106,10 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
       simulationRef.current = d3.forceSimulation<Node>(processedData.nodes)
         .force("link", d3.forceLink<Node, Link>(processedData.links)
           .id(d => d.id)
-          .distance(d => {
+          .distance(link => {
             const baseDist = 200;
-            const s = d.source as Node;
-            const t = d.target as Node;
+            const s = link.source as Node;
+            const t = link.target as Node;
             return baseDist + getNodeRadius(s.degree || 0) + getNodeRadius(t.degree || 0);
           })
           .strength(0.4)
@@ -178,9 +122,9 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         .force("collision", d3.forceCollide<Node>(d => getNodeRadius(d.degree || 0) + (nodes.length > 500 ? 10 : 35)))
         .force("wander", wanderForce)
         .alphaDecay(0.02)
-        .alphaMin(0.001)     // Never fully freeze
-        .alphaTarget(0.002)  // Keep a tiny constant energy level
-        .velocityDecay(0.45); // Lower damping = faster, more fluid movement
+        .alphaMin(0.001)
+        .alphaTarget(0.002)
+        .velocityDecay(0.45);
     } else {
       const prevNodes = simulationRef.current.nodes();
       const hasChanged = prevNodes.length !== processedData.nodes.length || 
@@ -194,14 +138,14 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
       simulationRef.current.force("wander", wanderForce);
       
       if (hasChanged) {
-        simulationRef.current.alpha(0.2).restart(); // Gentle nudge for new data
+        simulationRef.current.alpha(0.2).restart();
       }
     }
 
     return () => {
       simulationRef.current?.stop();
     };
-  }, [processedData]);
+  }, [processedData, getNodeRadius, nodes.length]);
 
   // ── Drawing & Interactions ─────────────────────────────────────
   useEffect(() => {
@@ -213,19 +157,17 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // Handle High DPI
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Build neighbor sets for hover AND selection highlighting
     const neighbors = new Set<string>();
     if (hoveredNodeId) {
       neighbors.add(hoveredNodeId);
-      processedData.links.forEach(l => {
-        const s = typeof l.source === "string" ? l.source : (l.source as any).id;
-        const t = typeof l.target === "string" ? l.target : (l.target as any).id;
+      processedData.links.forEach(link => {
+        const s = typeof link.source === "string" ? link.source : (link.source as any).id;
+        const t = typeof link.target === "string" ? link.target : (link.target as any).id;
         if (s === hoveredNodeId) neighbors.add(t);
         if (t === hoveredNodeId) neighbors.add(s);
       });
@@ -234,20 +176,18 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     const selectedNeighbors = new Set<string>();
     if (selectedNodeId) {
       selectedNeighbors.add(selectedNodeId);
-      processedData.links.forEach(l => {
-        const s = typeof l.source === "string" ? l.source : (l.source as any).id;
-        const t = typeof l.target === "string" ? l.target : (l.target as any).id;
+      processedData.links.forEach(link => {
+        const s = typeof link.source === "string" ? link.source : (link.source as any).id;
+        const t = typeof link.target === "string" ? link.target : (link.target as any).id;
         if (s === selectedNodeId) selectedNeighbors.add(t);
         if (t === selectedNodeId) selectedNeighbors.add(s);
       });
     }
 
-    // Throttle ambient redraws to ~24fps (wander is imperceptibly slow, 60fps is wasted)
     let frameCount = 0;
 
     const draw = () => {
       frameCount++;
-      // Only redraw if there's interaction OR every 2nd frame for wander
       if (!hoveredNodeId && !selectedNodeId && !filterType && frameCount % 2 !== 0) return;
 
       ctx.save();
@@ -255,55 +195,50 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
       ctx.translate(transformRef.current.x, transformRef.current.y);
       ctx.scale(transformRef.current.k, transformRef.current.k);
 
-
-      // ── Draw Links (two passes: dimmed first, then bright) ──────
-      // Pass 1: Dimmed links in one batch (minimises state changes)
+      // Links Pass 1: Dimmed
       ctx.lineWidth = 1;
-      processedData.links.forEach(l => {
-        const s = l.source as Node;
-        const t = l.target as Node;
+      processedData.links.forEach(link => {
+        const s = link.source as Node;
+        const t = link.target as Node;
         if (!s.x || !s.y || !t.x || !t.y) return;
 
         const isInSelectionFocus = selectedNodeId && (selectedNeighbors.has(s.id) && selectedNeighbors.has(t.id));
         const isTypeFiltered = filterType && (s.type !== filterType && t.type !== filterType);
-        const isDimmed = (selectedNodeId && !isInSelectionFocus) ||
-                         (!selectedNodeId && isTypeFiltered);
+        const isDimmed = (selectedNodeId && !isInSelectionFocus) || (!selectedNodeId && isTypeFiltered);
 
-        if (!isDimmed) return; // skip — drawn in pass 2
+        if (!isDimmed) return;
 
         ctx.beginPath();
         ctx.moveTo(s.x, s.y);
-        ctx.lineTo(t.x, t.y); // Straight line for dimmed — much cheaper
-        ctx.strokeStyle = TYPE_COLORS[t.type] || TYPE_COLORS.default;
+        ctx.lineTo(t.x, t.y);
+        ctx.strokeStyle = TYPE_COLORS[t.type];
         ctx.globalAlpha = 0.03;
         ctx.stroke();
       });
 
-      // Pass 2: Bright / interactive links
-      processedData.links.forEach(l => {
-        const s = l.source as Node;
-        const t = l.target as Node;
+      // Links Pass 2: Bright
+      processedData.links.forEach(link => {
+        const s = link.source as Node;
+        const t = link.target as Node;
         if (!s.x || !s.y || !t.x || !t.y) return;
 
         const isHovered = hoveredNodeId && (s.id === hoveredNodeId || t.id === hoveredNodeId);
         const isInSelectionFocus = selectedNodeId && (selectedNeighbors.has(s.id) && selectedNeighbors.has(t.id));
         const isTypeFiltered = filterType && (s.type !== filterType && t.type !== filterType);
-        const isDimmed = (selectedNodeId && !isInSelectionFocus) ||
-                         (!selectedNodeId && isTypeFiltered);
+        const isDimmed = (selectedNodeId && !isInSelectionFocus) || (!selectedNodeId && isTypeFiltered);
         const isHighlighted = !selectedNodeId && filterType && (s.type === filterType || t.type === filterType);
         const isSelected = selectedNodeId && (s.id === selectedNodeId || t.id === selectedNodeId);
 
-        if (isDimmed) return; // already drawn in pass 1
+        if (isDimmed) return;
 
         const importance = ((s.degree || 0) + (t.degree || 0)) / 20;
         const alpha = isHovered ? 0.9 : isSelected ? 0.85 : isHighlighted ? 0.8 : Math.min(0.4, 0.15 + importance);
         ctx.globalAlpha = alpha;
-        ctx.strokeStyle = TYPE_COLORS[t.type] || TYPE_COLORS.default;
+        ctx.strokeStyle = TYPE_COLORS[t.type];
         ctx.lineWidth = isHovered ? 2 : isSelected ? 2 : 1.2;
 
         ctx.beginPath();
         if (isHovered || isSelected) {
-          // Curved only for interactive links — cheaper overall
           const mx = (s.x + t.x) / 2;
           const my = (s.y + t.y) / 2;
           const dx = t.x - s.x;
@@ -318,7 +253,6 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         }
         ctx.stroke();
 
-        // Arrowhead only on hovered/selected links
         if (isHovered || isSelected) {
           const tAngle = Math.atan2(t.y - s.y, t.x - s.x);
           const nr = getNodeRadius((t as any).degree || 0) + 3;
@@ -334,94 +268,83 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
           ctx.fill();
         }
 
-        // Edge labels only when part of a selected neighborhood
         if (settingEdgeLabels === "always" || (settingEdgeLabels === "hover" && isSelected)) {
           ctx.globalAlpha = 1;
           const lx = (s.x + t.x) / 2;
           const ly = (s.y + t.y) / 2;
           ctx.font = "9px system-ui";
-          const textWidth = ctx.measureText(l.relation).width;
+          const textWidth = ctx.measureText(link.relation).width;
           ctx.fillStyle = "rgba(13, 15, 23, 0.95)";
           ctx.fillRect(lx - textWidth/2 - 4, ly - 7, textWidth + 8, 14);
           ctx.fillStyle = "#94A3B8";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText(l.relation, lx, ly);
+          ctx.fillText(link.relation, lx, ly);
         }
       });
 
-      // ── Draw Nodes ──────────────────────────────────────────────
-      // Reset shadow — only apply to hovered/selected node
+      // Nodes
       ctx.shadowBlur = 0;
-
-      processedData.nodes.forEach(n => {
-        if (!n.x || !n.y) return;
-        const r = getNodeRadius(n.degree || 0);
-        const isHovered = hoveredNodeId === n.id || neighbors.has(n.id);
-        const isInSelectionFocus = !selectedNodeId || selectedNeighbors.has(n.id);
-        const isTypeMatch = !filterType || n.type === filterType;
-        const isDimmed = (selectedNodeId && !isInSelectionFocus) ||
-                         (!selectedNodeId && filterType && !isTypeMatch);
-        const isSelected = selectedNodeId === n.id;
-        const color = TYPE_COLORS[n.type] || TYPE_COLORS.default;
+      processedData.nodes.forEach(node => {
+        if (!node.x || !node.y) return;
+        const r = getNodeRadius(node.degree || 0);
+        const isHovered = hoveredNodeId === node.id || neighbors.has(node.id);
+        const isInSelectionFocus = !selectedNodeId || selectedNeighbors.has(node.id);
+        const isTypeMatch = !filterType || node.type === filterType;
+        const isDimmed = (selectedNodeId && !isInSelectionFocus) || (!selectedNodeId && filterType && !isTypeMatch);
+        const isSelected = selectedNodeId === node.id;
+        const color = TYPE_COLORS[node.type];
         const isDirectlyFocused = isHovered || isSelected;
 
         ctx.globalAlpha = isDimmed ? 0.08 : 1;
 
-        // Glow: ONLY on the single directly interacted node — prevents GPU overload
         if (isDirectlyFocused) {
           ctx.shadowBlur = isSelected ? 20 : 14;
           ctx.shadowColor = color;
         }
 
-        // Main Circle — single arc draw per node
         ctx.beginPath();
-        ctx.arc(n.x, n.y, r, 0, 2 * Math.PI);
+        ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
         ctx.fillStyle = color;
         ctx.fill();
 
-        // Thin border only for hovered/selected (cheap stroke on 1 node)
         if (isDirectlyFocused) {
           ctx.strokeStyle = "rgba(255,255,255,0.5)";
           ctx.lineWidth = 1.5;
           ctx.stroke();
-          // Inner core only on focused nodes (not 4500 times per frame)
           ctx.shadowBlur = 0;
           ctx.beginPath();
-          ctx.arc(n.x, n.y, r * 0.38, 0, 2 * Math.PI);
+          ctx.arc(node.x, node.y, r * 0.38, 0, 2 * Math.PI);
           ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
           ctx.fill();
         }
 
-        // Reset shadow after focused node
         if (isDirectlyFocused) ctx.shadowBlur = 0;
 
-        // Abbreviation label (only on large nodes or hover)
         if (r > 15 && (settingNodeLabels === "always" || isHovered)) {
           ctx.fillStyle = isDimmed ? "rgba(255,255,255,0.3)" : "#FFFFFF";
           ctx.font = `bold ${r >= 35 ? "10px" : r >= 20 ? "8px" : "6px"} system-ui`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.globalAlpha = isDimmed ? 0.1 : 0.9;
-          ctx.fillText(typeAbbrev(n.type), n.x, n.y);
+          ctx.fillText(getAbbreviation(node.type), node.x, node.y);
         }
 
-        // Name label (Show when selected, or for neighbors of a selected node)
-        if (settingNodeLabels === "always" || isSelected || selectedNeighbors.has(n.id)) {
+        if (settingNodeLabels === "always" || isSelected || selectedNeighbors.has(node.id)) {
           ctx.globalAlpha = 1;
           const labelOffset = r + 14;
-          const displayName = n.id.length > 22 ? n.id.slice(0, 20) + "…" : n.id;
-          const fontSize = n.id.length > 16 ? 10 : n.id.length > 10 ? 11 : 12;
+          const displayName = node.id.length > 22 ? node.id.slice(0, 20) + "…" : node.id;
+          const fontSize = node.id.length > 16 ? 10 : node.id.length > 10 ? 11 : 12;
           ctx.font = `600 ${fontSize}px system-ui`;
           const textWidth = ctx.measureText(displayName).width;
           ctx.fillStyle = "rgba(10, 12, 20, 0.85)";
           ctx.beginPath();
-          ctx.roundRect(n.x - textWidth/2 - 6, n.y + labelOffset - 9, textWidth + 12, 18, 4);
+          ctx.roundRect(node.x - textWidth/2 - 6, node.y + labelOffset - 9, textWidth + 12, 18, 4);
           ctx.fill();
           ctx.fillStyle = "#F8FAFC";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText(displayName, n.x, n.y + labelOffset);
+          ctx.fillText(displayName, node.x, node.y + labelOffset);
         }
       });
 
@@ -430,7 +353,6 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
 
     simulationRef.current?.on("tick", draw);
 
-    // ── Interaction Handlers ─────────────────────────────────────
     const zoom = d3.zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([0.15, 5])
       .on("zoom", (event) => {
@@ -459,7 +381,7 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
       const rect = canvas.getBoundingClientRect();
       const node = findNodeAt(e.clientX - rect.left, e.clientY - rect.top);
       if (node && node.id === selectedNodeId) {
-        onNodeClick?.(null); // Deselect if already selected
+        onNodeClick?.(null);
       } else {
         onNodeClick?.(node?.id || null);
       }
@@ -489,16 +411,14 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
     canvas.addEventListener("mousemove", handleMouseMove);
     canvas.addEventListener("click", handleClick);
 
-    // Force initial draw if simulation is already converged
     draw();
 
     return () => {
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("click", handleClick);
     };
-  }, [processedData, settingNodeSize, hoveredNodeId, selectedNodeId, settingNodeLabels, settingEdgeLabels, filterType]);
+  }, [processedData, getNodeRadius, hoveredNodeId, selectedNodeId, settingNodeLabels, settingEdgeLabels, filterType]);
 
-  // Legend data
   const hoveredNode = useMemo(() => nodes.find(n => n.id === hoveredNodeId), [nodes, hoveredNodeId]);
 
   return (
@@ -558,11 +478,10 @@ export default function GraphView({ nodes, links, onNodeClick, selectedNodeId, f
         </div>
       )}
 
-
       {hoveredNode && (
-        <div className="graph-tooltip" style={{ border: `1px solid ${TYPE_COLORS[hoveredNode.type] || TYPE_COLORS.default}`, boxShadow: `0 4px 20px ${TYPE_COLORS[hoveredNode.type] || TYPE_COLORS.default}33` }}>
+        <div className="graph-tooltip" style={{ border: `1px solid ${TYPE_COLORS[hoveredNode.type]}`, boxShadow: `0 4px 20px ${TYPE_COLORS[hoveredNode.type]}33` }}>
           <div className="graph-tooltip-title">{hoveredNode.id}</div>
-          <div className="graph-tooltip-type" style={{ color: TYPE_COLORS[hoveredNode.type] || TYPE_COLORS.default }}>{hoveredNode.type}</div>
+          <div className="graph-tooltip-type" style={{ color: TYPE_COLORS[hoveredNode.type] }}>{hoveredNode.type}</div>
           <div className="graph-tooltip-meta">{(hoveredNode as any).degree} connection{(hoveredNode as any).degree !== 1 ? "s" : ""}</div>
         </div>
       )}
