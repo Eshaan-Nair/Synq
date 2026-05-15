@@ -1,11 +1,10 @@
 /**
- * ChatViewer.tsx — v1.4.7
+ * ChatViewer.tsx — v1.5.0
  *
  * Displays the full saved conversation as a scrollable chat view.
- * Each [User] and [Assistant] turn is styled differently.
- * Replaces the old topic-list sidebar with a clean conversation flow.
  */
 
+import React, { useMemo } from "react";
 
 interface Props {
   rawText: string;
@@ -14,22 +13,6 @@ interface Props {
   platform?: string;
 }
 
-const C = {
-  indigo: "#4F46E5",
-  cyan: "#06B6D4",
-  mint: "#10B981",
-  cream: "#F1F5F9",
-  surface: "rgba(22, 27, 34, 0.7)",
-  border: "rgba(255, 255, 255, 0.05)",
-  muted: "#8B949E",
-  dim: "#484F58",
-  bg: "#0D1117",
-  userBg: "rgba(79, 70, 229, 0.12)",
-  userBorder: "rgba(79, 70, 229, 0.25)",
-  asstBg: "rgba(6, 182, 212, 0.1)",
-  asstBorder: "rgba(6, 182, 212, 0.2)",
-};
-
 interface Turn {
   role: "user" | "assistant";
   text: string;
@@ -37,11 +20,8 @@ interface Turn {
 
 function parseTurns(rawText: string): Turn[] {
   const turns: Turn[] = [];
-  // Split on [User]: or [Assistant]: markers
   const parts = rawText.split(/\n*\[(User|Assistant)\]:\s*/i);
 
-  // parts[0] is anything before the first marker (usually empty)
-  // parts[1] = "User" or "Assistant", parts[2] = content, etc.
   for (let i = 1; i < parts.length; i += 2) {
     const role = parts[i].toLowerCase() === "user" ? "user" : "assistant";
     const text = (parts[i + 1] || "").trim();
@@ -50,7 +30,6 @@ function parseTurns(rawText: string): Turn[] {
     }
   }
 
-  // Fallback: if no markers found, show as single block
   if (turns.length === 0 && rawText.trim().length > 0) {
     turns.push({ role: "assistant", text: rawText.trim() });
   }
@@ -58,88 +37,34 @@ function parseTurns(rawText: string): Turn[] {
   return turns;
 }
 
-export default function ChatViewer({ rawText, messageCount, createdAt, platform }: Props) {
-  const turns = parseTurns(rawText);
+const ChatViewer: React.FC<Props> = ({ rawText, messageCount, createdAt, platform }) => {
+  const turns = useMemo(() => parseTurns(rawText), [rawText]);
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
+    <div className="chat-container">
       {/* Header bar */}
-      <div style={{
-        padding: "10px 16px",
-        borderBottom: `1px solid ${C.border}`,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexShrink: 0,
-        background: "rgba(0,0,0,0.1)",
-      }}>
-        <div style={{ fontSize: "12px", color: C.muted, fontWeight: 500 }}>
+      <div className="chat-header">
+        <div className="chat-header-meta">
           {turns.length} turn{turns.length !== 1 ? "s" : ""} · {messageCount} messages · saved {new Date(createdAt).toLocaleDateString()}
         </div>
-        <div style={{
-          fontSize: "10px",
-          color: "#CBD5E1",
-          fontWeight: 700,
-          background: `rgba(255,255,255,0.05)`,
-          padding: "3px 8px",
-          borderRadius: 4,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-        }}>
+        <div className="chat-header-label">
           RAW CONVERSATION
         </div>
       </div>
 
       {/* Scrollable chat */}
-      <div style={{
-        flex: 1,
-        overflowY: "auto",
-        padding: "16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-      }}>
+      <div className="chat-scroll-area">
         {turns.map((turn, i) => {
           const isUser = turn.role === "user";
           return (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: isUser ? "flex-end" : "flex-start",
-              }}
-            >
+            <div key={i} className={`chat-turn ${isUser ? "user" : "assistant"}`}>
               {/* Role label */}
-              <div style={{
-                fontSize: "11px",
-                fontWeight: 800,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: isUser ? C.indigo : C.cyan,
-                marginBottom: 4,
-                paddingLeft: isUser ? 0 : 4,
-                paddingRight: isUser ? 4 : 0,
-              }}>
+              <div className={`chat-role-label ${isUser ? "user" : "assistant"}`}>
                 {isUser ? "YOU" : (platform ? platform.toUpperCase() : "ASSISTANT")}
               </div>
 
               {/* Message bubble */}
-              <div style={{
-                maxWidth: "85%",
-                padding: "10px 14px",
-                borderRadius: isUser ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                background: isUser ? C.userBg : C.asstBg,
-                border: `1px solid ${isUser ? C.userBorder : C.asstBorder}`,
-                fontSize: "13px",
-                lineHeight: "1.5",
-                color: "#FFFFFF",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                fontFamily: "'Inter', system-ui, sans-serif",
-                fontWeight: 500,
-              }}>
+              <div className={`chat-bubble ${isUser ? "user" : "assistant"}`}>
                 {turn.text}
               </div>
             </div>
@@ -148,4 +73,6 @@ export default function ChatViewer({ rawText, messageCount, createdAt, platform 
       </div>
     </div>
   );
-}
+};
+
+export default ChatViewer;

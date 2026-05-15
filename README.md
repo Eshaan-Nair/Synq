@@ -250,12 +250,15 @@ Open **http://localhost:3001**:
 
 ```
 Glia-AI/
-├── backend/src/
-│   ├── mcp/           server.ts + tools/recall|store|search|projects|summary
-│   ├── middleware/    sanitize.ts
-│   ├── routes/        chat · context · graph · rag
-│   ├── services/      chroma · chunker · embeddings · extractor · mongo · neo4j
-│   └── utils/         logger · privacy
+├── backend/
+│   ├── scripts/       benchmarking · stress testing · maintenance
+│   ├── tests/         unit · integration · scratch
+│   └── src/           core server logic
+│       ├── mcp/       MCP server implementation
+│       ├── middleware/ sanitization · auth
+│       ├── routes/    api endpoints
+│       ├── services/  vector · graph · storage
+│       └── utils/     logging · privacy
 ├── dashboard/src/     React 19 + D3.js + Vite (built to dashboard/dist/)
 ├── extension/src/
 │   ├── platform/      resolver.ts (multi-strategy selector engine)

@@ -3,7 +3,7 @@
   "roots": ["<rootDir>/src", "<rootDir>/tests"],
   "moduleFileExtensions": ["ts", "js"],
   "transform": {
-    "^.+\\.ts$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
+    "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
   },
   "collectCoverageFrom": [
     "src/utils/**/*.ts",

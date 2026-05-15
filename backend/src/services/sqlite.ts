@@ -155,6 +155,34 @@ function createTables() {
     )
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_chunks_session ON chunk_metadata(sessionId)");
+
+  // High-precision Sentence Vectors (Small-to-Big Retrieval)
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS vec_sentences USING vec0(
+      sentence_id TEXT PRIMARY KEY,
+      embedding float[768]
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sentence_metadata (
+      sentence_id TEXT PRIMARY KEY,
+      chunk_id TEXT NOT NULL,
+      content TEXT NOT NULL,
+      FOREIGN KEY(chunk_id) REFERENCES chunk_metadata(chunk_id) ON DELETE CASCADE
+    )
+  `);
+
+  // Hybrid Search (FTS5)
+  // Indices text for fast keyword matching
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS fts_chunks USING fts5(
+      chunk_id UNINDEXED,
+      content,
+      tokenize='porter'
+    )
+  `);
+
   logger.success("All SQLite tables initialized successfully");
 }
 

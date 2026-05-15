@@ -13,11 +13,11 @@
  */
 
 // Helpers — import from actual service files
-import { storeWindowChunks, retrieveRelevantChunks } from "../src/services/chroma";
-import { slidingWindowChunks } from "../src/services/chunker";
-import { connectChroma } from "../src/services/chroma";
-import { connectMongo } from "../src/services/mongo";
-import { Session } from "../src/services/mongo";
+import { storeWindowChunks, retrieveRelevantChunks } from "../../src/services/chroma";
+import { slidingWindowChunks } from "../../src/services/chunker";
+import { connectChroma } from "../../src/services/chroma";
+import { connectMongo } from "../../src/services/mongo";
+import { Session } from "../../src/services/mongo";
 import mongoose from "mongoose";
 
 // Known fixture — deterministic test data

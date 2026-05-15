@@ -1,4 +1,4 @@
-import { scrubPII } from "../utils/privacy";
+import { scrubPII } from "../../src/utils/privacy";
 
 describe("scrubPII", () => {
   test("redacts JWT tokens", () => {

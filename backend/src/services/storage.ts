@@ -39,6 +39,9 @@ class DockerSessionStore implements ISessionStore {
       payload: obj.payload,
       status: obj.status,
       deadLettered: obj.deadLettered || false,
+      attempts: obj.attempts || 0,
+      error: obj.error,
+      failedAt: obj.failedAt,
       createdAt: obj.createdAt,
       updatedAt: obj.updatedAt
     };

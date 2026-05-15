@@ -111,7 +111,7 @@ jobs:
           curl -s http://localhost:11434/api/pull -d '{"name":"llama3.1:8b"}'
 
       - name: Run MCP Integration Tests
-        run: npx ts-node src/mcp/integration-test.ts
+        run: npx jest --config jest.config.json tests/integration/mcp.integration.test.ts --forceExit
         working-directory: backend
         env:
           GLIA_STORAGE_MODE: sqlite

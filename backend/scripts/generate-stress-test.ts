@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config(); // MUST BE FIRST
 
-import { sessionStore, graphStore, initStorage } from "../services/storage";
+import { sessionStore, graphStore, initStorage } from "../src/services/storage";
 
 const TYPES = [
   "Person", "Technology", "Framework", "Concept", "Architecture", 

@@ -42,64 +42,20 @@ router.post("/save", async (req: Request, res: Response) => {
 
     const cleanText = scrubPII(rawText);
 
-    // ── RAG: Sliding window chunks (no Groq — nothing lost) ────────
-    logger.info("Chunking with sliding window...");
-    const windowChunks = slidingWindowChunks(cleanText, sessionId);
-    logger.info(`Created ${windowChunks.length} window chunk(s)`);
-
-    // Save FullChat
-    await sessionStore.saveFullChat(sessionId, cleanText, messageCount || 0, platform || "unknown");
-
-    // ── RAG: Vector Storage (Hybrid Sync/Async) ───────────────────
-    const CHUNK_THRESHOLD = 10;
-    const isLargeChat = windowChunks.length > CHUNK_THRESHOLD;
-    let vectorsStored = false;
-    let vectorError = "";
-
-    if (!isLargeChat) {
-      try {
-        logger.info(`Storing ${windowChunks.length} chunks (sync)...`);
-        await vectorStore.storeChunks(windowChunks);
-        vectorsStored = true;
-      } catch (vecErr: any) {
-        vectorError = vecErr?.message || "Unknown error";
-        logger.warn(`Sync vector storage failed: ${vectorError}`);
-      }
-    } else {
-      logger.info(`Mega chat detected (${windowChunks.length} chunks) — offloading vector storage to background.`);
-    }
-
-    // ── Graph: Async Triple Extraction (v1.4.6+) ───────────────────
-    let jobId = null;
-    try {
-      jobId = await enqueueJob("triple_extraction", {
-        sessionId: sessionId.toString(),
-        text: cleanText,
-        windowChunks: isLargeChat ? windowChunks : undefined, // Pass chunks if we need to process them in background
-        processVectors: isLargeChat
-      });
-    } catch (jobErr: any) {
-      logger.error(`Failed to enqueue extraction job: ${jobErr.message}`);
-    }
-
-    await sessionStore.updateSession(sessionId, {
-      hasFullChat: true,
-      topicCount: windowChunks.length,
+    // ── Offload everything to background job ────────
+    const jobId = await enqueueJob("chat_ingestion", {
+      sessionId,
+      rawText: cleanText,
+      platform: platform || "unknown",
+      messageCount: messageCount || 0
     });
 
-    const warnings: string[] = [];
-    if (!vectorsStored) warnings.push(`RAG vectors not stored (${vectorError || "Ollama down"})`);
-    if (!jobId) warnings.push("Background extraction task failed to start");
-
-    logger.success(`Chat saved: ${windowChunks.length} chunks enqueued for graph extraction${warnings.length ? ` [${warnings.join(", ")}]` : ""}`);
+    logger.success(`Chat save initiated for ${sessionId}. Ingestion queued.`);
 
     res.json({
       success: true,
-      chunksStored: windowChunks.length,
-      triplesExtracted: 0, // Now 0 initially because it's async
-      topicsExtracted: windowChunks.length,
       jobId,
-      warnings: warnings.length > 0 ? warnings : undefined,
+      message: "Syncing to brain initiated..."
     });
   } catch (err) {
     logger.error("Chat save error:", err);

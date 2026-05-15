@@ -1,4 +1,4 @@
-import { extractEntitiesFromQuery, _resetBackendForTest } from "../services/extractor";
+import { extractEntitiesFromQuery, _resetBackendForTest } from "../../src/services/extractor";
 import axios from "axios";
 
 jest.mock("axios");

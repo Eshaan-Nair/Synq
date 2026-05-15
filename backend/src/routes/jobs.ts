@@ -5,10 +5,22 @@ import { clearAllJobs } from "../services/jobs";
 const router = Router();
 
 // GET /api/jobs/status
-// Returns the global job queue status (for dashboard progress bar)
+// Global queue status
 router.get("/status", async (_req: Request, res: Response) => {
   try {
     const status = await sessionStore.getJobStatus();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch job status" });
+  }
+});
+
+// GET /api/jobs/status/:sessionId
+// Session-specific status
+router.get("/status/:sessionId", async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.params.sessionId as string;
+    const status = await sessionStore.getJobStatusBySession(sessionId);
     res.json(status);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch job status" });

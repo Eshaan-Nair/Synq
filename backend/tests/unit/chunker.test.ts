@@ -8,7 +8,7 @@
  * appear in at least one chunk.
  */
 
-import { slidingWindowChunks } from "../services/chunker";
+import { slidingWindowChunks } from "../../src/services/chunker";
 
 const SESSION = "test-session-id";
 
