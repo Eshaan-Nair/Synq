@@ -14,6 +14,7 @@ describe("Job Queue Service", () => {
 
   beforeAll(async () => {
     await connectMongo();
+    await Job.deleteMany({}); // Clear any leftover jobs from previous tests
     const session = await Session.create({
       projectName: "Job Test Project",
       platform: "claude"

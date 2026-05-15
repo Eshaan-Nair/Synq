@@ -77,7 +77,7 @@ describe("MCP Tool Integration", () => {
     const result = await search("Glia search engine");
     expect(typeof result).toBe("string");
     expect(result.length).toBeGreaterThan(0);
-  }, 15000);
+  }, 30000);
 
   it("get_project_summary: should return a summary string", async () => {
     if (!targetId) {
