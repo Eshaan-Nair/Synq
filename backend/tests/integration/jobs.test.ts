@@ -5,8 +5,8 @@
  * and dead-lettering (DLQ).
  */
 
-import { connectMongo, Job, Session } from "../src/services/mongo";
-import { processNextJob } from "../src/services/jobs";
+import { connectMongo, Job, Session } from "../../src/services/mongo";
+import { processNextJob } from "../../src/services/jobs";
 import mongoose from "mongoose";
 
 describe("Job Queue Service", () => {

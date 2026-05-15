@@ -4,12 +4,12 @@ import path from "path";
 // Load .env from the backend root
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-import { vectorStore } from "../services/storage";
-import { logger } from "../utils/logger";
-import { slidingWindowChunks } from "../services/chunker";
-import { generateEmbeddings, generateEmbedding } from "../services/embeddings";
-import { splitIntoSentences } from "../services/sqlite-vector";
-import { getSqlite } from "../services/sqlite";
+import { vectorStore } from "../src/services/storage";
+import { logger } from "../src/utils/logger";
+import { slidingWindowChunks } from "../src/services/chunker";
+import { generateEmbeddings, generateEmbedding } from "../src/services/embeddings";
+import { splitIntoSentences } from "../src/services/sqlite-vector";
+import { getSqlite } from "../src/services/sqlite";
 
 async function runBenchmark() {
   logger.info("========================================");

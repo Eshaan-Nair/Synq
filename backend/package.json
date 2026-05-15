@@ -8,12 +8,12 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest --config jest.config.json",
-    "test:unit": "jest --config jest.config.json src/__tests__",
-    "test:integration": "jest --config jest.config.json tests/pipeline.integration.test.ts",
+    "test:unit": "jest --config jest.config.json tests/unit",
+    "test:integration": "jest --config jest.config.json tests/integration",
     "test:coverage": "jest --config jest.config.json --coverage",
     "mcp:config": "ts-node src/mcp/config-gen.ts",
-    "benchmark:rag": "ts-node src/scripts/benchmark-rag.ts",
-    "stress-test": "ts-node src/scripts/generate-stress-test.ts"
+    "benchmark:rag": "ts-node scripts/benchmark-rag.ts",
+    "stress-test": "ts-node scripts/generate-stress-test.ts"
   },
   "keywords": [],
   "author": "",

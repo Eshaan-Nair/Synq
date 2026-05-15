@@ -1,4 +1,4 @@
-import { isValidObjectId } from "../utils/validators";
+import { isValidObjectId } from "../../src/utils/validators";
 
 describe("Validators Utility", () => {
   test("should return true for valid 24-character hex string", () => {

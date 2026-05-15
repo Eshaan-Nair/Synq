@@ -1,4 +1,4 @@
-import { sanitizeChunks, wrapInContextBlock, Chunk } from "../middleware/sanitize";
+import { sanitizeChunks, wrapInContextBlock, Chunk } from "../../src/middleware/sanitize";
 
 describe("Sanitize Middleware", () => {
   const mockChunks: Chunk[] = [
