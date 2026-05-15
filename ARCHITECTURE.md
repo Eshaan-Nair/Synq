@@ -80,8 +80,8 @@ AI tool (Cursor/Claude Code/etc.) → MCP stdio call
 | Input validation | sessionId as valid MongoDB ObjectId; platform as enum; text length minimum |
 | Body limit | 5 MB cap on express.json |
 | Security headers | helmet on every response |
-| PII scrubbing | `src/utils/privacy.ts` — runs before any transmission |
-| Prompt injection | `src/middleware/sanitize.ts` — 10 pattern scan + Lean Header delimiters |
+| PII scrubbing | `backend/src/utils/privacy.ts` — runs before any transmission |
+| Prompt injection | `backend/src/middleware/sanitize.ts` — 10 pattern scan + Lean Header delimiters |
 | Shared secret | Removed in v1.4.7 (Optimized for local-first usage) |
 
 ---

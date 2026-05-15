@@ -14,13 +14,13 @@ process.env.SQLITE_DB_PATH = path.resolve(__dirname, "../../glia.db");
 dotenv.config();
 
 // Imports after env setup
-import { initStorage, sessionStore } from "../services/storage";
-import { identifyProject } from "./tools/detector";
-import { listProjects } from "./tools/projects";
-import { store } from "./tools/store";
-import { recall } from "./tools/recall";
-import { search } from "./tools/search";
-import { getSummary } from "./tools/summary";
+import { initStorage, sessionStore } from "../../src/services/storage";
+import { identifyProject } from "../../src/mcp/tools/detector";
+import { listProjects } from "../../src/mcp/tools/projects";
+import { store } from "../../src/mcp/tools/store";
+import { recall } from "../../src/mcp/tools/recall";
+import { search } from "../../src/mcp/tools/search";
+import { getSummary } from "../../src/mcp/tools/summary";
 
 async function runThoroughTest() {
   console.log("🚀 STARTING FULL MCP SYSTEM TEST\n");

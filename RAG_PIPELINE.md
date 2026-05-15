@@ -138,7 +138,7 @@ L2 (Euclidean) distance on `nomic-embed-text` 768-dim vectors produces values in
 
 ## Integration Test
 
-`backend/tests/pipeline.integration.test.ts` validates the complete pipeline against a real ChromaDB instance:
+`backend/tests/integration/pipeline.integration.test.ts` validates the complete pipeline against a real ChromaDB instance:
 
 **Fixture text:**
 ```
