@@ -28,22 +28,24 @@ describe("Job Queue Service", () => {
   });
 
   it("should dead-letter a job after 5 failed attempts", async () => {
-    // 1. Create a job that is already on its 4th attempt
+    // 1. Create a job already on its 5th attempt (attempts >= 5 triggers dead-letter)
+    //    jobs.ts checks: if (currentAttempts < 5) → retry, else → dead-letter
+    //    currentAttempts is read BEFORE the increment, so starting at 5 makes 5 < 5 = false
     const job = await Job.create({
       type: "triple_extraction",
-      payload: { sessionId: "invalid-id", text: "fail me" }, // Invalid sessionId will cause failure
+      payload: { sessionId: testSessionId, text: "fail me deliberately" },
       status: "PENDING",
-      attempts: 4,
+      attempts: 5,
       deadLettered: false
     });
 
-    // 2. Process it — this will be the 5th attempt
+    // 2. Process it — this will be the 6th attempt, triggering dead-letter
     await processNextJob();
 
     // 3. Verify it's now dead-lettered
     const updatedJob = await Job.findById(job._id);
     expect(updatedJob?.status).toBe("FAILED");
-    expect(updatedJob?.attempts).toBe(5);
+    expect(updatedJob?.attempts).toBe(6);
     expect(updatedJob?.deadLettered).toBe(true);
     expect(updatedJob?.failedAt).toBeDefined();
     expect(updatedJob?.error).toBeDefined();
