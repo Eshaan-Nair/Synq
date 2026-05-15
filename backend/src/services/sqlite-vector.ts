@@ -10,14 +10,14 @@ import { generateHyDEAnswer } from "./hyde";
 // With search_query prefixes, scores move up: distance=8 → 0.67, distance=12 → 0.55
 const l2ToScore = (distance: number) => Math.exp(-distance / 20);
 
-const SESSION_THRESHOLD = 0.45;
-const SENTENCE_THRESHOLD = 0.60; // Higher threshold for precision matches
-const GLOBAL_THRESHOLD = 0.45;
+const SESSION_THRESHOLD = 0.30;
+const SENTENCE_THRESHOLD = 0.30; // Lowered to ensure surgical RAG triggers on rephrased queries
+const GLOBAL_THRESHOLD = 0.30;
 
 /**
  * Splits text into sentences while preserving meaningful punctuation.
  */
-function splitIntoSentences(text: string): string[] {
+export function splitIntoSentences(text: string): string[] {
   // Relaxed to 5 chars to catch short code snippets or short facts
   return text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length >= 5);
 }

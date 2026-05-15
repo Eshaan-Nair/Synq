@@ -1,50 +1,99 @@
-import { extractRelevantSnippets } from "../services/extractor";
-import * as dotenv from "dotenv";
 
-dotenv.config();
+import * as dotenv from "dotenv";
+import path from "path";
+// Load .env from the backend root
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+
+import { vectorStore } from "../services/storage";
+import { logger } from "../utils/logger";
+import { slidingWindowChunks } from "../services/chunker";
+import { generateEmbeddings, generateEmbedding } from "../services/embeddings";
+import { splitIntoSentences } from "../services/sqlite-vector";
+import { getSqlite } from "../services/sqlite";
 
 async function runBenchmark() {
-  process.env.GRAPH_BACKEND = "groq";
-  if (!process.env.GROQ_API_KEY) {
-    console.error("GROQ_API_KEY is not set. Benchmark requires Groq to avoid lagging the local machine.");
-    process.exit(1);
+  logger.info("========================================");
+  logger.info(" GLIA-AI RAG BENCHMARK SUITE v1.5.0");
+  logger.info("========================================");
+
+  const db = getSqlite();
+  const sessionId = "BENCH_V3_" + Date.now();
+  
+  db.prepare("INSERT INTO sessions (id, projectName, platform, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?)").run(
+    sessionId, "RAG Audit", "CLI", new Date().toISOString(), new Date().toISOString()
+  );
+
+  const needle = "The secret password for the Glia system is 'ANTIGRAVITY_99'. It is stored in the vault at the 5th floor.";
+  const haystack = [
+    "The weather in Tokyo is currently cloudy with a chance of rain later this afternoon.",
+    "Quantum entanglement is a phenomenon where particles remain connected regardless of distance.",
+    needle,
+    "The Great Wall of China is a series of fortifications built across ancient borders."
+  ].join("\n\n");
+
+  logger.info(`[1/3] Ingesting Needle...`);
+  const chunks = slidingWindowChunks(haystack, sessionId, 150, 50);
+  
+  const insertVec = db.prepare("INSERT INTO vec_chunks (chunk_id, embedding) VALUES (?, ?)");
+  const insertMeta = db.prepare("INSERT INTO chunk_metadata (chunk_id, sessionId, chunkIndex, content) VALUES (?, ?, ?, ?)");
+  const insertFts = db.prepare("INSERT INTO fts_chunks (chunk_id, content) VALUES (?, ?)");
+  const insertSentVec = db.prepare("INSERT INTO vec_sentences (sentence_id, embedding) VALUES (?, ?)");
+  const insertSentMeta = db.prepare("INSERT INTO sentence_metadata (sentence_id, chunk_id, content) VALUES (?, ?, ?)");
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    const embedding = await generateEmbedding(chunk.content, "document");
+    const vector = Buffer.from(new Float32Array(embedding).buffer);
+    
+    db.transaction(() => {
+      insertVec.run(chunk.id, vector);
+      insertMeta.run(chunk.id, sessionId, chunk.chunkIndex, chunk.content);
+      insertFts.run(chunk.id, chunk.content);
+    })();
+
+    const sentences = splitIntoSentences(chunk.content);
+    for (let sIdx = 0; sIdx < sentences.length; sIdx++) {
+      const sId = `${chunk.id}-s-${sIdx}`;
+      const sEmbed = await generateEmbedding(sentences[sIdx], "document");
+      const sVec = Buffer.from(new Float32Array(sEmbed).buffer);
+      insertSentVec.run(sId, sVec);
+      insertSentMeta.run(sId, chunk.id, sentences[sIdx]);
+    }
   }
 
-  console.log("==========================================");
-  console.log("   GLIA RAG Benchmark - Snippet Extraction");
-  console.log("==========================================\n");
+  // --- DATABASE AUDIT ---
+  const audit = db.prepare("SELECT content FROM chunk_metadata WHERE sessionId = ?").all(sessionId) as any[];
+  logger.info(`AUDIT: Found ${audit.length} chunks in DB for this session.`);
+  audit.forEach((a, i) => logger.info(`  Chunk ${i}: ${a.content.substring(0, 50)}...`));
 
-  const prompt = "How does the caching layer work?";
+  logger.info("[2/3] Running Precision Retrieval...");
   
-  // Simulated retrieval chunks
-  const chunks = [
-    "The Glia architecture consists of a frontend dashboard and a Node.js backend. It uses SQLite for both relational and vector storage.",
-    "For performance, we implemented an LRU caching layer using an in-memory Map structure. The caching layer caches API responses and invalidates them after 5 minutes.",
-    "The Knowledge Graph is built by extracting semantic triples using a local LLM or Groq. The triples are stored in the 'facts' table."
+  const tests = [
+    { name: "Direct FTS5", query: "secret password" },
+    { name: "Thematic Vector", query: "What is the vault code?" }
   ];
 
-  const totalRawChars = chunks.join(" ").length;
-  console.log(`Test Prompt: "${prompt}"`);
-  console.log(`Raw Context Size: ${totalRawChars} chars (${chunks.length} chunks)`);
-  console.log("Extracting snippets using Groq...\n");
+  const results = await Promise.all(tests.map(async (t) => {
+    const start = Date.now();
+    const retrieved = await vectorStore.retrieveRelevantChunks(t.query, sessionId, 3);
+    const end = Date.now();
+    
+    const foundNeedle = retrieved.some(r => r.content.includes("ANTIGRAVITY_99"));
+    return {
+      "Test": t.name,
+      "Recall": foundNeedle ? "✅ FOUND" : "❌ MISSED",
+      "Latency": (end - start) + "ms",
+      "Retrieved": retrieved.length > 0 ? retrieved[0].content.substring(0, 60) + "..." : "EMPTY",
+      "Score": retrieved.length > 0 ? retrieved[0].score.toFixed(2) : "0.00"
+    };
+  }));
 
-  const startTime = Date.now();
-  const result = await extractRelevantSnippets(prompt, chunks);
-  const endTime = Date.now();
-
-  const totalSnippetChars = result.length;
-  const compressionRatio = ((1 - (totalSnippetChars / totalRawChars)) * 100).toFixed(1);
-
-  console.log("--- Extraction Result ---");
-  console.log(result || "[No relevance found]");
-  console.log("-------------------------");
-  
-  console.log("\n--- Metrics ---");
-  console.log(`Latency: ${endTime - startTime}ms`);
-  console.log(`Compressed Context: ${totalSnippetChars} chars`);
-  console.log(`Token Savings: ${compressionRatio}% reduction in injected context size!`);
-  
+  console.table(results);
+  logger.info("Benchmark Complete.");
   process.exit(0);
 }
 
-runBenchmark().catch(console.error);
+runBenchmark().catch(err => {
+  logger.error("Benchmark failed: " + err.message);
+  process.exit(1);
+});
