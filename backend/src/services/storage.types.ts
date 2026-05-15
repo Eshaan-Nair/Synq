@@ -49,6 +49,7 @@ export interface RetrievedChunk {
   chunkIndex: number;
   content: string;
   score: number;
+  engines?: string[];
   [key: string]: any;
 }
 

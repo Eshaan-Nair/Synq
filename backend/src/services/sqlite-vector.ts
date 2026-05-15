@@ -124,8 +124,16 @@ export class SqliteVectorStore implements IVectorStore {
     `).all(vector, sessionId) as any[];
 
     // 3. Keyword Search
-    const ftsQuery = query.replace(/[^\w\s]/g, " ").trim();
-    if (!ftsQuery) return []; // Avoid empty FTS match
+    // Split into words, remove very short words, and join with OR for better keyword snap
+    const ftsWords = query.toLowerCase()
+      .replace(/[^\w\s]/g, " ")
+      .split(/\s+/)
+      .filter(w => w.length >= 3);
+    
+    if (ftsWords.length === 0) return [];
+
+    // Use FTS5 prefix matching for each word to catch variations (e.g. "encrypt*" matches "encryption")
+    const ftsQuery = ftsWords.map(w => `${w}*`).join(" OR ");
 
     const ftsRows = this.db.prepare(`
       SELECT m.chunk_id, m.chunkIndex, m.content
@@ -137,17 +145,18 @@ export class SqliteVectorStore implements IVectorStore {
 
     // 4. Group & Filter
     // We group by chunk_id and only keep the sentences that matched.
-    const candidates = new Map<string, { chunkIndex: number, sentences: Set<string>, maxScore: number }>();
+    const candidates = new Map<string, { chunkIndex: number, sentences: Set<string>, maxScore: number, engines: Set<string> }>();
 
     sentRows.forEach(r => {
       const score = l2ToScore(r.distance);
       if (score < SENTENCE_THRESHOLD) return;
 
       if (!candidates.has(r.chunk_id)) {
-        candidates.set(r.chunk_id, { chunkIndex: 0, sentences: new Set(), maxScore: score });
+        candidates.set(r.chunk_id, { chunkIndex: 0, sentences: new Set(), maxScore: score, engines: new Set() });
       }
       candidates.get(r.chunk_id)!.sentences.add(r.content);
       candidates.get(r.chunk_id)!.maxScore = Math.max(candidates.get(r.chunk_id)!.maxScore, score);
+      candidates.get(r.chunk_id)!.engines.add("Sentence Vector");
     });
 
     // Backfill chunk metadata for sentence candidates
@@ -155,17 +164,20 @@ export class SqliteVectorStore implements IVectorStore {
       if (candidates.has(r.chunk_id)) {
         candidates.get(r.chunk_id)!.chunkIndex = r.chunkIndex;
         candidates.get(r.chunk_id)!.maxScore = Math.max(candidates.get(r.chunk_id)!.maxScore, l2ToScore(r.distance));
+        candidates.get(r.chunk_id)!.engines.add("Chunk Vector");
       } else {
         const score = l2ToScore(r.distance);
         if (score >= SESSION_THRESHOLD) {
-          candidates.set(r.chunk_id, { chunkIndex: r.chunkIndex, sentences: new Set(), maxScore: score });
+          candidates.set(r.chunk_id, { chunkIndex: r.chunkIndex, sentences: new Set(), maxScore: score, engines: new Set(["Chunk Vector"]) });
         }
       }
     });
 
     ftsRows.forEach(r => {
       if (!candidates.has(r.chunk_id)) {
-        candidates.set(r.chunk_id, { chunkIndex: r.chunkIndex, sentences: new Set(), maxScore: SESSION_THRESHOLD });
+        candidates.set(r.chunk_id, { chunkIndex: r.chunkIndex, sentences: new Set(), maxScore: SESSION_THRESHOLD, engines: new Set(["FTS Keyword"]) });
+      } else {
+        candidates.get(r.chunk_id)!.engines.add("FTS Keyword");
       }
     });
 
@@ -188,7 +200,8 @@ export class SqliteVectorStore implements IVectorStore {
         return {
           content: finalContent,
           chunkIndex: c.chunkIndex,
-          score: c.maxScore
+          score: c.maxScore,
+          engines: Array.from(c.engines)
         };
       })
       .filter(r => r.score >= SESSION_THRESHOLD && r.content.length > 0)

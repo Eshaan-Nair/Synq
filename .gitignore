@@ -16,3 +16,9 @@ extension/popup/popup.js
 
 # npm logs
 npm-debug.log*
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
