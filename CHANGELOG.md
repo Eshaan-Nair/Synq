@@ -4,6 +4,25 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.5.1] — 2026-05-17 — MCP Security & Retrieval Hardening
+
+### Multi-Tenant Isolation (MCP)
+- **Zero-Leakage Architecture** — Enforced 100% project isolation in the Model Context Protocol (MCP) server. Sessions are now permanently anchored to project names as unique IDs.
+- **Aggressive Cleanup** — Enhanced the stress test suite to purge "Zombie" sessions by both ID and Name, ensuring a clean slate for multi-project audits.
+- **Identity Predictability** — Standardized the `createSession` flow to support custom, human-readable IDs for reliable cross-tool lookups.
+
+### RAG & Indexing Reliability
+- **Unclogged Sentence Indexing** — Resolved a critical ID mismatch in the background indexing worker that caused sentence-level vectors to fail linkage.
+- **Precision Retrieval** — Adjusted sentence length filters to ensure short facts, codes, and snippets are correctly captured by the RAG engine.
+- **Virtual Table Resilience** — Migrated vector updates to a delete-then-insert pattern to prevent 'UNIQUE constraint' errors on SQLite virtual tables.
+
+### Stability & Observability
+- **WAL Mode Concurrency** — Enabled Write-Ahead Logging (WAL) by default in SQLite mode to support high-concurrency multi-process access.
+- **Hyper-Verbose Storage Logs** — Added detailed diagnostic logging to the storage layer to trace session identity and lookup performance.
+- **Audit Suite v1.5.1** — Synchronized versioning across all stress test reports and diagnostic tools.
+
+---
+
 ## [1.5.0] — 2026-05-13 — Documentation & Alignment
 
 ### Versioning & Alignment

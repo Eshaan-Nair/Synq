@@ -14,7 +14,7 @@ const REPO_URL = 'https://github.com/Eshaan-Nair/Glia-AI.git';
 
 console.log(`
  ===================================
-   GLIA v1.4.7 - Initializer
+   GLIA v1.5.1 - Initializer
  ===================================
 `);
 

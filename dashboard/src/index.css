@@ -719,7 +719,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-color: rgba(6, 182, 212, 0.2);
 }
 
-/* Progress Status Bar - v1.5.0 Centered */
+/* Progress Status Bar - v1.5.1 Centered */
 .centered-progress {
   position: absolute;
   top: 50%;

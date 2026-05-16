@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# GLIA v1.4.6 - Startup Script (Linux/macOS)
+# GLIA v1.5.1 - Startup Script (Linux/macOS)
 # ------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  GLIA v1.5.0 - Starting up"
+echo "  GLIA v1.5.1 - Starting up"
 echo " ==================================="
 echo ""
 

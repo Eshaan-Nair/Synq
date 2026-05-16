@@ -1,5 +1,5 @@
 
-# Web Dashboard Context Engine Benchmark (v1.5.0)
+# Web Dashboard Context Engine Benchmark (v1.5.1)
 **Scope:** Web Dashboard Context Injection | **Scale:** 1,000 Chunks (~300,000 words) | **Engine:** Hybrid (FTS5 + Vector + HyDE)
 *(Note: Benchmarking for the MCP Toolchain context pipelines will be conducted in a separate future audit).*
 
@@ -57,9 +57,9 @@ This aggressive trimming allows us to safely lower our semantic thresholds (from
 | ✅ | "How are search queries prefixed?" | 1 | 0.479 | Sentence Vector, Chunk Vector | Nomic-embed-text uses a 'query:' prefix for search... |
 | ✅ | "how are search queries prefixed?" | 1 | 0.493 | Sentence Vector, Chunk Vector | Nomic-embed-text uses a 'query:' prefix for search... |
 | ✅ | "Context on queries prefixed?" | 1 | 0.488 | Sentence Vector, Chunk Vector | Nomic-embed-text uses a 'query:' prefix for search... |
-| ✅ | "Where is the progress bar located?" | 1 | 0.503 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.0.... |
-| ✅ | "where is the progress bar located?" | 1 | 0.486 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.0.... |
-| ✅ | "Context on bar located?" | 1 | 0.407 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.0.... |
+| ✅ | "Where is the progress bar located?" | 1 | 0.503 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.1.... |
+| ✅ | "where is the progress bar located?" | 1 | 0.486 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.1.... |
+| ✅ | "Context on bar located?" | 1 | 0.407 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.1.... |
 | ✅ | "Which keyword engine is used?" | 1 | 0.434 | Sentence Vector, Chunk Vector | Glia-AI supports hybrid search with FTS5.... |
 | ✅ | "which keyword engine is used?" | 3 | 0.406 | Sentence Vector, Chunk Vector | Glia-AI supports hybrid search with FTS5.... |
 | ✅ | "Context on is used?" | 1 | 0.454 | Sentence Vector, Chunk Vector | Glia-AI supports hybrid search with FTS5.... |

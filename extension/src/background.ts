@@ -1,5 +1,5 @@
 /**
- * background.ts — v1.4.7
+ * background.ts — v1.5.1
  */
 
 import { GliaMessage } from "./types/messages";

@@ -13,7 +13,7 @@
 [![Downloads](https://img.shields.io/npm/dt/glia-ai-setup?style=for-the-badge&logo=npm&labelColor=0B0E14&color=CB3837)](https://www.npmjs.com/package/glia-ai-setup)
 [![CI](https://img.shields.io/github/actions/workflow/status/Eshaan-Nair/Glia-AI/integration-tests.yml?style=for-the-badge&label=CI&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.5.0-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.1-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 
 <br/>
 
@@ -54,7 +54,7 @@ GLIA stops the cycle. It captures your conversations, distills them into a seman
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Privacy and Security](#privacy-and-security)
-- [Whats New in v1.5.0](#whats-new-in-v150)
+- [Whats New in v1.5.1](#whats-new-in-v151)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -249,7 +249,7 @@ Open **http://localhost:3001**:
 
 ## Performance Benchmarks (Web Dashboard)
 
-GLIA v1.5.0 features an elite-precision retrieval engine. We stress-test every release using a rigorous "Needle-in-a-Haystack" audit.
+GLIA v1.5.1 features an elite-precision retrieval engine. We stress-test every release using a rigorous "Needle-in-a-Haystack" audit.
 
 **Audit Scale:** 1,000 Chunks (~300,000 words) | **Needles:** 20 unique facts hidden at random | **Queries:** 60 natural language variations
 
@@ -346,7 +346,7 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## Whats New in v1.5.0
+## Whats New in v1.5.1
 
 - **Unified Versioning** — Full alignment across all components (Backend, Dashboard, Extension).
 - **Standardized Context Header** — Switched to a leaner, token-efficient injection header.

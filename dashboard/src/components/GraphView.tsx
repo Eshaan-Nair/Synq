@@ -1,5 +1,5 @@
 /**
- * GraphView.tsx — v1.5.0
+ * GraphView.tsx — v1.5.1
  * 
  * Performance Upgrade: HTML5 Canvas for rendering.
  * Optimized draw loop and interaction handlers.

@@ -1,5 +1,5 @@
 /**
- * ChatViewer.tsx — v1.5.0
+ * ChatViewer.tsx — v1.5.1
  *
  * Displays the full saved conversation as a scrollable chat view.
  */

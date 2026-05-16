@@ -153,11 +153,11 @@ Once connected, your AI tool can use GLIA tools like this:
 
 ## Troubleshooting
 
-**"ChromaDB collection not found"**
-No memory has been saved yet, or ChromaDB is not running. Run `docker compose --profile full up -d`.
+**"ChromaDB / SQLite collection not found"**
+No memory has been saved yet. Ensure the backend is running in the correct mode (Docker or SQLite).
 
-**"MongoDB connection failed"**
-MongoDB is not running. Check: `docker ps | grep glia_mongo`.
+**"MongoDB / SQLite connection failed"**
+The database is unreachable. Check if Docker is running (Docker mode) or if `backend/glia.db` exists (SQLite mode).
 
 **"Ollama embedding failed"**
 Ollama is not running. Run `ollama serve` then `ollama pull nomic-embed-text`.
@@ -170,11 +170,9 @@ Make sure the path to `backend/dist/mcp/server.js` is an absolute path (not rela
 
 ---
 
-## How It Works
-
-The MCP server connects to the same Docker databases as the backend:
-- **ChromaDB** for vector search (`recall_context`, `search_memory`)
-- **MongoDB** for session metadata (`list_projects`, `store_memory`)
-- **Neo4j** for knowledge graph summaries (`get_project_summary`)
+The MCP server connects to the same databases (Docker or SQLite) as the backend:
+- **ChromaDB / SQLite-vec** for vector search (`recall_context`, `search_memory`)
+- **MongoDB / SQLite** for session metadata (`list_projects`, `store_memory`)
+- **Neo4j / SQLite** for knowledge graph summaries (`get_project_summary`)
 
 Memory saved via the Chrome extension is immediately available to MCP tools, and vice versa. They share the same data store.

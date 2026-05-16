@@ -1,5 +1,5 @@
 /**
- * GLIA content.ts — v1.4.7-final
+ * GLIA content.ts — v1.5.1
  *
  * Fix: History-aware sentence trimming + authoritative headers.
  * 
@@ -117,7 +117,7 @@ function handleUrlChange() {
 
 async function init() {
   seenMessageFingerprints.clear();
-  log.info(`[GLIA] v1.4.7-final active on: ${platform}`);
+  log.info(`[GLIA] v1.5.1 active on: ${platform}`);
 
   const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
   if (activeData?.activeSession) {
