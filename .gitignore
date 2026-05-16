@@ -22,3 +22,6 @@ npm-debug.log*
 *.db-shm
 *.db-wal
 *.db-journal
+
+# CI artifacts (generated at runtime, never committed)
+selector-failures.json

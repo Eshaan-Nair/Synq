@@ -118,3 +118,29 @@ jobs:
           SQLITE_DB_PATH: ./glia.db
           GRAPH_BACKEND: ollama
           OLLAMA_URL: http://localhost:11434
+
+  isolation-tests:
+    name: Cross-Tenant Memory Isolation Tests
+    runs-on: ubuntu-latest
+    # No service dependencies — uses deterministic dummy embeddings, no Ollama needed
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run Isolation Tests
+        run: npx jest --config jest.config.json tests/integration/isolation.integration.test.ts --forceExit
+        working-directory: backend
+        env:
+          GLIA_STORAGE_MODE: sqlite
+          SQLITE_DB_PATH: ./glia-isolation-test.db
