@@ -24,12 +24,15 @@ Extension DOM scrape (user + AI turns)
         │     slidingWindowChunks() — 300-word windows, 80-word overlap
         │     Pure function — zero API calls, zero data loss
         │     → generateEmbeddings() via Ollama nomic-embed-text (parallel)
-        │     → ChromaDB: deleteChunksBySession() then add() — clean re-save
+        │     → SQLite mode:  DELETE + INSERT into vec0 virtual table
+        │     → Docker mode:  ChromaDB deleteChunksBySession() then add()
+        │     → Background job queued: sentence-level embedding index
         │
         └── Graph Track (Knowledge Graph)
               Auto-detect: Ollama llama3.1:8b (primary) or Groq (fallback)
               summarizeChunk() → extractTriplesFromSummary()
-              → Graph Store: MERGE (s:Entity) ...
+              → SQLite mode:  INSERT into facts table
+              → Docker mode:  Neo4j MERGE (s:Entity) ...
               → Session Store: Update tripleCount, hasFullChat
 ```
 
@@ -39,12 +42,16 @@ Extension DOM scrape (user + AI turns)
 Session loaded → content.ts init() → interceptor auto-attaches
 User types → keydown/send button intercepted (debounced 300ms)
   → POST /api/rag/retrieve { prompt, sessionId, topN: 3 }
+  → HyDE: generate hypothetical answer → embed both query and answer
   → generateEmbedding(prompt) via Ollama → 768-dim vector
-  → ChromaDB cosine query, filtered by sessionId
-  → threshold: score = 1 − cosine_distance >= 0.30
+  → SQLite mode:  sqlite-vec vec0 query, filtered by sessionId (WHERE sessionId = ?)
+  → Docker mode:  ChromaDB cosine query, filtered by sessionId
+  → Hybrid fusion: Sentence Vector + Chunk Vector + FTS5 keyword results merged
+  → Surgical trim: only matching sentences returned, not full chunks
+  → threshold: similarity >= 0.30
   → sanitizeChunks() — injection patterns redacted
   → wrapInContextBlock() — Lean Text Header injection
-  → Top-3 chunks prepended to prompt → sent
+  → Top-N chunks prepended to prompt → sent
 ```
 
 ### Classic Inject (on demand)
@@ -52,7 +59,8 @@ User types → keydown/send button intercepted (debounced 300ms)
 ```
 Dashboard: "Load into Extension" → POST /api/context/active
 User: popup "Inject Context" → GET /api/context/retrieve/:sessionId
-  → getTriplesBySession() from Neo4j
+  → SQLite mode:  SELECT facts WHERE sessionId = ?
+  → Docker mode:  getTriplesBySession() from Neo4j
   → generateProjectSummary() via Ollama/Groq (cached in Session.summary)
   → Structured markdown → Selection API paste → user sends manually
 ```
@@ -77,7 +85,7 @@ AI tool (Cursor/Claude Code/etc.) → MCP stdio call
 |---|---|
 | CORS | `localhost:3001`, `localhost:5173`, `chrome-extension://` only |
 | Rate limiting | 200 req/min global; 10 req/min on `/api/chat/save` |
-| Input validation | sessionId as valid MongoDB ObjectId; platform as enum; text length minimum |
+| Input validation | sessionId as a plain string (custom ID in SQLite mode); platform as enum; text length minimum |
 | Body limit | 5 MB cap on express.json |
 | Security headers | helmet on every response |
 | PII scrubbing | `backend/src/utils/privacy.ts` — runs before any transmission |
@@ -197,18 +205,21 @@ These schemas apply to both **SQLite tables** and **MongoDB collections**.
 
 ## Environment Variables
 
-All configured in `backend/.env`:
+All configured in `backend/.env`. Copy `backend/.env.example` to `backend/.env` to get started.
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `NEO4J_URI` | Yes | `bolt://localhost:7687` | Neo4j Bolt connection |
-| `NEO4J_USER` | Yes | `neo4j` | Neo4j username |
-| `NEO4J_PASSWORD` | Yes | — | Neo4j password |
-| `MONGO_URI` | Yes | `mongodb://localhost:27017/gliadb` | MongoDB connection |
-| `GROQ_API_KEY` | No | — | Groq fallback key (only needed if Ollama unavailable) |
+| `GLIA_STORAGE_MODE` | No | `docker` | `sqlite` for Zero-Docker mode, `docker` for Chroma/Mongo/Neo4j |
+| `SQLITE_DB_PATH` | No | `./glia.db` | Path to the SQLite database file (SQLite mode only) |
+| `NEO4J_URI` | Docker only | `bolt://localhost:7687` | Neo4j Bolt connection |
+| `NEO4J_USER` | Docker only | `neo4j` | Neo4j username |
+| `NEO4J_PASSWORD` | Docker only | — | Neo4j password |
+| `MONGO_URI` | Docker only | `mongodb://localhost:27017/gliadb` | MongoDB connection |
+| `CHROMA_URL` | Docker only | `http://localhost:8000` | ChromaDB base URL |
+| `GROQ_API_KEY` | No | — | Groq fallback key for graph extraction (if Ollama unavailable) |
 | `GRAPH_BACKEND` | No | auto-detect | `ollama` or `groq` — overrides auto-detection |
 | `OLLAMA_URL` | No | `http://localhost:11434` | Ollama base URL |
-| `OLLAMA_MODEL` | No | `llama3.1:8b` | Model for graph extraction |
-| `CHROMA_URL` | No | `http://localhost:8000` | ChromaDB base URL |
-| `GLIA_PROFILE` | No | auto-detect | `full` or `lite` — overrides RAM detection |
+| `OLLAMA_MODEL` | No | `llama3.1:8b` | LLM model for graph extraction |
+| `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | Embedding model (must be 768-dim) |
+| `GLIA_PROFILE` | No | auto-detect | `full` or `lite` — overrides Docker RAM detection |
 | `PORT` | No | `3001` | Backend server port |

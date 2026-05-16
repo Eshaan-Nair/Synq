@@ -68,6 +68,25 @@ Override RAM auto-detection: `GLIA_PROFILE=full` or `GLIA_PROFILE=lite` before r
 
 ## Data Backup
 
+### SQLite Mode (Zero-Docker)
+
+All data is in a single file. Back it up with a simple copy:
+
+```bash
+# Stop the backend first, then:
+cp backend/glia.db backend/glia.db.backup
+
+# Or with a timestamp:
+cp backend/glia.db backend/glia_$(date +%Y%m%d).db.backup
+```
+
+Restore by copying the backup file back:
+```bash
+cp backend/glia_20260517.db.backup backend/glia.db
+```
+
+### Docker Mode
+
 All data lives in named Docker volumes:
 
 | Volume | Contains |
