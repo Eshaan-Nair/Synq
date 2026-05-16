@@ -168,4 +168,18 @@ export class SqliteGraphStore implements IGraphStore {
       timestamp: row.timestamp
     }));
   }
+
+  async deleteTriples(entities: string[], sessionId: string): Promise<number> {
+    if (entities.length === 0) return 0;
+    
+    const placeholders = entities.map(() => "?").join(",");
+    const query = `
+      DELETE FROM facts 
+      WHERE sessionId = ? 
+      AND (subject IN (${placeholders}) OR object IN (${placeholders}))
+    `;
+    
+    const result = this.db.prepare(query).run(sessionId, ...entities, ...entities);
+    return result.changes;
+  }
 }

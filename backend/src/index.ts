@@ -121,7 +121,7 @@ app.use("/api/jobs", jobsRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "GLIA backend running",
-    version: "1.4.7",
+    version: "1.5.1",
     services: {
       backend: "ok",
       port: PORT,
@@ -129,7 +129,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// ── v1.4.6: Serve production dashboard build via sirv ─────────────
+// ── v1.5.1: Serve production dashboard build via sirv ─────────────
 // Eliminates the separate Vite dev server process for self-hosters.
 // Falls back gracefully with a clear message if the build hasn't run yet.
 const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");

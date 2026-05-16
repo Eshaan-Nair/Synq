@@ -327,7 +327,7 @@ Entities:`;
 
 // ── Step 2: extract triples from compressed summary ───────────────
 /**
- * v1.5.0: Direct Triple Extraction from raw text (Saves 50% API calls)
+ * v1.5.1: Direct Triple Extraction from raw text (Saves 50% API calls)
  */
 export async function extractTriplesFromText(text: string): Promise<Triple[]> {
   const prompt = `You are a precision fact extractor. Extract subject-relation-object triplets from the conversation below.

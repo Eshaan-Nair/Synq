@@ -28,7 +28,7 @@ function generateProNoise(count: number): string {
 
 async function runProBenchmark() {
   logger.info("========================================");
-  logger.info(" GLIA-AI README BENCHMARK v1.5.0");
+  logger.info(" GLIA-AI README BENCHMARK v1.5.1");
   logger.info("========================================");
 
   if (!fs.existsSync(REPORTS_DIR)) {
@@ -50,7 +50,7 @@ async function runProBenchmark() {
     { fact: "The database uses WAL mode for high-concurrency writes.", query: "How does the DB handle multiple writes?" },
     { fact: "The extraction logic uses a 10-second pacing for Groq.", query: "What is the Groq API delay?" },
     { fact: "Nomic-embed-text uses a 'query:' prefix for search.", query: "How are search queries prefixed?" },
-    { fact: "The UI uses a centered progress bar in v1.5.0.", query: "Where is the progress bar located?" },
+    { fact: "The UI uses a centered progress bar in v1.5.1.", query: "Where is the progress bar located?" },
     { fact: "Glia-AI supports hybrid search with FTS5.", query: "Which keyword engine is used?" },
     { fact: "The sentence trimmer ignores fragments under 5 chars.", query: "What is the minimum sentence length?" },
     { fact: "Docker-compose networks use the 'glia_net' bridge network.", query: "What docker network does the app use?" },
@@ -169,7 +169,7 @@ async function runProBenchmark() {
 
   logger.info("[3/3] Finalizing Master Report...");
   const report = `
-# Web Dashboard Context Engine Benchmark (v1.5.0)
+# Web Dashboard Context Engine Benchmark (v1.5.1)
 **Scope:** Web Dashboard Context Injection | **Scale:** 1,000 Chunks (~300,000 words) | **Engine:** Hybrid (FTS5 + Vector + HyDE)
 *(Note: Benchmarking for the MCP Toolchain context pipelines will be conducted in a separate future audit).*
 
@@ -210,7 +210,7 @@ This aggressive trimming allows us to safely lower our semantic thresholds (from
 ${detailedResults.map(r => `| ${r.found ? "✅" : "❌"} | "${r.query}" | ${r.rank} | ${r.score} | ${r.engines} | ${r.snippet} |`).join("\n")}
 
 ---
-**Summary:** The Web Dashboard Context Engine v1.5.0 demonstrates elite precision at scale, achieving a **${finalSavings}% reduction in prompt noise** while maintaining near-perfect recall in high-density environments.
+**Summary:** The Web Dashboard Context Engine v1.5.1 demonstrates elite precision at scale, achieving a **${finalSavings}% reduction in prompt noise** while maintaining near-perfect recall in high-density environments.
 `;
 
   fs.writeFileSync(REPORT_PATH, report);

@@ -165,30 +165,34 @@ async function handleSentenceIndexing(jobId: string, payload: { chunks: any[] })
     return;
   }
 
-  const insertSentVec = sqliteStore.db.prepare("INSERT OR REPLACE INTO vec_sentences (sentence_id, embedding) VALUES (?, ?)");
-  const insertSentMeta = sqliteStore.db.prepare("INSERT OR REPLACE INTO sentence_metadata (sentence_id, chunk_id, content) VALUES (?, ?, ?)");
+    const deleteSentVec = sqliteStore.db.prepare("DELETE FROM vec_sentences WHERE sentence_id = ?");
+    const insertSentVec = sqliteStore.db.prepare("INSERT INTO vec_sentences (sentence_id, embedding) VALUES (?, ?)");
+    const insertSentMeta = sqliteStore.db.prepare("INSERT OR REPLACE INTO sentence_metadata (sentence_id, chunk_id, content) VALUES (?, ?, ?)");
 
-  for (const chunk of chunks) {
-    // ── Kill Switch Check ──────────────────────────────────────────
-    if (!jobExists(jobId)) {
-      logger.warn(`[Job Queue] Sentence indexing job ${jobId} cancelled. Stopping.`);
-      return;
-    }
-
-    const sentences = chunk.content.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim().length > 10);
-    if (sentences.length === 0) continue;
-
-    const sentEmbeddings = await generateEmbeddings(sentences, "document");
-    
-    sqliteStore.db.transaction(() => {
-      for (let j = 0; j < sentences.length; j++) {
-        const sId = `${chunk.id}_s${j}`;
-        const sVec = Buffer.from(new Float32Array(sentEmbeddings[j]).buffer);
-        insertSentVec.run(sId, sVec);
-        insertSentMeta.run(sId, chunk.id, sentences[j]);
+    for (const chunk of chunks) {
+      // ── Kill Switch Check ──────────────────────────────────────────
+      if (!jobExists(jobId)) {
+        logger.warn(`[Job Queue] Sentence indexing job ${jobId} cancelled. Stopping.`);
+        return;
       }
-    })();
-  }
+
+      const sentences = chunk.content.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim().length >= 5);
+      if (sentences.length === 0) continue;
+
+      const sentEmbeddings = await generateEmbeddings(sentences, "document");
+      
+      sqliteStore.db.transaction(() => {
+        for (let j = 0; j < sentences.length; j++) {
+          const cId = chunk.id || chunk.chunk_id;
+          const sId = `${cId}_s${j}`;
+          const sVec = Buffer.from(new Float32Array(sentEmbeddings[j]).buffer);
+          
+          deleteSentVec.run(sId);
+          insertSentVec.run(sId, sVec);
+          insertSentMeta.run(sId, cId, sentences[j]);
+        }
+      })();
+    }
 }
 
 /**
@@ -254,7 +258,7 @@ async function handleTripleExtraction(jobId: any, payload: {
     logger.info(`[Job Queue]   chunk ${i + 1}/${chunks.length} — extracting facts...`);
 
     try {
-      // v1.5.0: Direct extraction (One API call instead of two)
+      // v1.5.1: Direct extraction (One API call instead of two)
       const triples = await extractTriplesFromText(chunks[i]);
 
       // ── Kill Switch Check 2 (After Extraction) ───────────────────
@@ -283,7 +287,7 @@ async function handleTripleExtraction(jobId: any, payload: {
       const processedUntilNow = chunks.slice(0, i + 1).join("\n\n");
       await sessionStore.updateFullChat(sessionId, { processedText: processedUntilNow });
 
-      // Delay to respect Groq rate limits (v1.5.0: 10 seconds for extreme safety)
+      // Delay to respect Groq rate limits (v1.5.1: 10 seconds for extreme safety)
       if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 10000));
 
     } catch (err: any) {

@@ -1,13 +1,17 @@
 import { v4 as uuidv4 } from "uuid";
 import { getSqlite } from "./sqlite";
 import { ISessionStore, Session, FullChat, Job } from "./storage.types";
+import { logger } from "../utils/logger";
 
 export class SqliteSessionStore implements ISessionStore {
   private db = getSqlite();
 
-  async createSession(projectName: string, platform: string, externalChatId?: string): Promise<Session> {
-    const id = uuidv4();
+  async createSession(projectName: string, platform: string, externalChatId?: string, customId?: string): Promise<Session> {
+    const id = customId || uuidv4();
     const now = new Date().toISOString();
+    
+    logger.info(`[STORAGE] Creating session: "${projectName}" with ID: "${id}"`);
+
     const session: Session = {
       _id: id,
       projectName,
@@ -33,7 +37,9 @@ export class SqliteSessionStore implements ISessionStore {
   }
 
   async getSession(id: string): Promise<Session | null> {
+    logger.info(`[STORAGE] Looking up session ID: "${id}"`);
     const row = this.db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
+    if (!row) logger.warn(`[STORAGE] Session ID "${id}" NOT FOUND in database`);
     return row ? this.mapRowToSession(row) : null;
   }
 

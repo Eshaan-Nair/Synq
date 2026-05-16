@@ -19,7 +19,7 @@ const needles = [
   { fact: "The database uses WAL mode for high-concurrency writes.", query: "How does the DB handle multiple writes?", key: "WAL mode" },
   { fact: "The extraction logic uses a 10-second pacing for Groq.", query: "What is the Groq API delay?", key: "10-second" },
   { fact: "Nomic-embed-text uses a 'query:' prefix for search.", query: "How are search queries prefixed?", key: "query:" },
-  { fact: "The UI uses a centered progress bar in v1.5.0.", query: "Where is the progress bar located?", key: "centered progress" },
+  { fact: "The UI uses a centered progress bar in v1.5.1.", query: "Where is the progress bar located?", key: "centered progress" },
   { fact: "Glia-AI supports hybrid search with FTS5.", query: "Which keyword engine is used?", key: "FTS5" },
   { fact: "The sentence trimmer ignores fragments under 5 chars.", query: "What is the minimum sentence length?", key: "5 chars" }
 ];

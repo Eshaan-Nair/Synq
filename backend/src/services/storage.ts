@@ -5,7 +5,7 @@ import { SqliteVectorStore } from "./sqlite-vector";
 import { logger } from "../utils/logger";
 
 // We will keep the legacy imports as "Docker" implementations
-// These will be refactored into classes in the next step to match the interface perfectly
+// These are wrapped in classes to match the unified storage interface.
 import * as mongoService from "./mongo";
 import * as neo4jService from "./neo4j";
 import * as chromaService from "./chroma";
@@ -48,8 +48,13 @@ class DockerSessionStore implements ISessionStore {
   }
 
   // Bridge to existing mongo.ts exports
-  async createSession(projectName: string, platform: string, externalChatId?: string) {
-    const s = new mongoService.Session({ projectName, platform, externalChatId });
+  async createSession(projectName: string, platform: string, externalChatId?: string, customId?: string) {
+    const s = new mongoService.Session({ 
+      _id: customId || undefined, // MongoDB can use custom _id
+      projectName, 
+      platform, 
+      externalChatId 
+    });
     await s.save();
     return this.mapMongoSession(s);
   }
@@ -290,6 +295,10 @@ class DockerGraphStore implements IGraphStore {
       await session.close();
     }
   }
+
+  async deleteTriples(entities: string[], sessionId: string): Promise<number> {
+    return neo4jService.deleteTriples(entities, sessionId);
+  }
 }
 
 class DockerVectorStore implements IVectorStore {
@@ -302,8 +311,14 @@ class DockerVectorStore implements IVectorStore {
   async retrieveGlobalChunks(query: string, topN?: number) {
     return chromaService.retrieveGlobalChunks(query, topN);
   }
+  async hybridSearch(query: string, sessionId: string, topN?: number) {
+    return this.retrieveRelevantChunks(query, sessionId, topN);
+  }
   async deleteChunksBySession(sessionId: string) {
     await chromaService.deleteChunksBySession(sessionId);
+  }
+  async deleteChunksByQuery(query: string, sessionId: string): Promise<number> {
+    return chromaService.deleteChunksByQuery(query, sessionId);
   }
 }
 

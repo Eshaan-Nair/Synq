@@ -24,11 +24,12 @@ export async function store(
       
       if (!session) {
         logger.info(`[GLIA MCP] Auto-creating project: "${projectStr}"`);
-        session = await sessionStore.createSession(projectStr, "mcp");
+        session = await sessionStore.createSession(projectStr, "mcp", undefined, projectStr);
       }
     }
 
     const sessionId = session._id;
+    logger.info(`[GLIA MCP] Using Session ID: "${sessionId}" for project: "${projectStr}"`);
 
     // 1. Save Full Chat (for Dashboard visualization)
     await sessionStore.saveFullChat(sessionId, content, 1, "mcp");

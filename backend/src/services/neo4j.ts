@@ -102,3 +102,22 @@ export async function getTriplesBySession(sessionId: string) {
     await session.close();
   }
 }
+
+export async function deleteTriples(entities: string[], sessionId: string): Promise<number> {
+  const d = getDriver();
+  const session = d.session();
+  try {
+    const result = await session.run(
+      `
+      MATCH (s:Entity)-[r:RELATION {sessionId: $sessionId}]->(o:Entity)
+      WHERE s.name IN $entities OR o.name IN $entities
+      DELETE r
+      RETURN count(r) as count
+      `,
+      { sessionId, entities }
+    );
+    return result.records[0].get("count").toInt();
+  } finally {
+    await session.close();
+  }
+}

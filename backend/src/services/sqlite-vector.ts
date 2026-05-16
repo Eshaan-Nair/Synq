@@ -209,6 +209,10 @@ export class SqliteVectorStore implements IVectorStore {
       .slice(0, topN);
   }
 
+  async hybridSearch(query: string, sessionId: string, topN = 3): Promise<RetrievedChunk[]> {
+    return this.retrieveRelevantChunks(query, sessionId, topN);
+  }
+
   async retrieveGlobalChunks(query: string, topN = 3, keywords: string[] = []): Promise<RetrievedChunk[]> {
     const hydeAnswer = await generateHyDEAnswer(query);
     const augmentedQuery = `${query}\n${hydeAnswer}`;
@@ -250,5 +254,39 @@ export class SqliteVectorStore implements IVectorStore {
     this.db.prepare(`DELETE FROM fts_chunks WHERE chunk_id NOT IN (SELECT chunk_id FROM chunk_metadata)`).run();
     this.db.prepare(`DELETE FROM vec_sentences WHERE sentence_id NOT IN (SELECT sentence_id FROM sentence_metadata)`).run();
     this.db.prepare(`DELETE FROM sentence_metadata WHERE chunk_id NOT IN (SELECT chunk_id FROM chunk_metadata)`).run();
+  }
+
+  async deleteChunksByQuery(query: string, sessionId: string): Promise<number> {
+    // 1. Find candidates using standard retrieval logic (top 5 for deletion)
+    const candidates = await this.retrieveRelevantChunks(query, sessionId, 5);
+    if (candidates.length === 0) return 0;
+
+    // 2. Identify the specific chunk_ids that matched
+    // retrieveRelevantChunks doesn't return the raw ID, but we can look them up via content/sessionId
+    const deletedIds: string[] = [];
+    for (const c of candidates) {
+      const row = this.db.prepare(`
+        SELECT chunk_id FROM chunk_metadata 
+        WHERE sessionId = ? AND content LIKE ?
+        LIMIT 1
+      `).get(sessionId, `%${c.content.substring(0, 50)}%`) as { chunk_id: string } | undefined;
+      
+      if (row) deletedIds.push(row.chunk_id);
+    }
+
+    if (deletedIds.length === 0) return 0;
+
+    // 3. Delete them from all tables
+    const placeholders = deletedIds.map(() => "?").join(",");
+    this.db.transaction(() => {
+      this.db.prepare(`DELETE FROM chunk_metadata WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      this.db.prepare(`DELETE FROM vec_chunks WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      this.db.prepare(`DELETE FROM fts_chunks WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      this.db.prepare(`DELETE FROM sentence_metadata WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      // Clean up orphaned sentences
+      this.db.prepare(`DELETE FROM vec_sentences WHERE sentence_id NOT IN (SELECT sentence_id FROM sentence_metadata)`).run();
+    })();
+
+    return deletedIds.length;
   }
 }

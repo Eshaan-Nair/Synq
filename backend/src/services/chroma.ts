@@ -194,5 +194,33 @@ export async function deleteChunksBySession(sessionId: string): Promise<void> {
   }
 }
 
+export async function deleteChunksByQuery(query: string, sessionId: string): Promise<number> {
+  if (!collectionId) return 0;
+  try {
+    const queryEmbedding = await generateEmbedding(query);
+    const results = await axios.post(`${COLL_BASE}/${collectionId}/query`, {
+      query_embeddings: [queryEmbedding],
+      n_results: 5,
+      where: { sessionId },
+      include: ["distances"],
+    }, { timeout: 10000 });
+    
+    const ids: string[] = results.data.ids?.[0] || [];
+    const distances: number[] = results.data.distances?.[0] || [];
+    
+    const idsToDelete = ids.filter((_, i) => (1 - (distances[i] ?? 1)) >= SIMILARITY_THRESHOLD);
+    
+    if (idsToDelete.length > 0) {
+      await axios.post(`${COLL_BASE}/${collectionId}/delete`, { ids: idsToDelete }, { timeout: 10000 });
+      logger.info(`Semantically deleted ${idsToDelete.length} chunks from ChromaDB for query: "${query}"`);
+      return idsToDelete.length;
+    }
+    return 0;
+  } catch (err) {
+    logger.error("ChromaDB semantic delete failed:", err);
+    return 0;
+  }
+}
+
 // Keep backward-compat export name so any existing import of storeTopicChunks still compiles
 export { storeWindowChunks as storeTopicChunks };
