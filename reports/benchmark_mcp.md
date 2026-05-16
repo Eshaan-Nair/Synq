@@ -1,15 +1,15 @@
 
-# MCP Elite Context Benchmark (v1.6.3)
+# MCP Elite Context Benchmark (v1.5.1)
 **Scope:** Agentic Memory Performance | **Mode:** Source-Synchronized | **TopN:** 6
 
-## 📊 Summary Metrics
+## Summary Metrics
 | Metric | Result | Target | Status |
 | :--- | :--- | :--- | :--- |
 | **Total Recall** | **90%** | >90% | 🟢 PASS |
 | **Context Compression** | **81.3%** | >75% | 🟢 PASS |
 | **Hybrid Accuracy** | **Verified** | - | 🟢 SYNCED |
 
-## 🧬 Hybrid Engine Attribution
+## Hybrid Engine Attribution
 Confirmed hits via the MCP toolchain:
 | Engine Layer | Hits | Contribution |
 | :--- | :--- | :--- |
@@ -17,12 +17,12 @@ Confirmed hits via the MCP toolchain:
 | **Chunk Vector** | **9** | 34.6% |
 | **FTS Keyword** | **24** | 92.3% |
 
-## 💡 Token Savings Analysis
+## Token Savings Analysis
 By using **Surgical Trimming** (Comparison against 6 full chunks):
 - **Noise Redacted:** 131.7k characters.
 - **Context Efficiency:** Your agent receives **81.3% less noise** than standard RAG.
 
-## 📝 Detailed Scenario Log
+## Detailed Scenario Log
 | Status | Query Type | Result | Engines Used | Compression |
 | :--- | :--- | :--- | :--- | :--- |
 | ✅ | Standard | FOUND | Sentence Vector, Chunk Vector, FTS Keyword | 77% |
@@ -57,4 +57,4 @@ By using **Surgical Trimming** (Comparison against 6 full chunks):
 | ✅ | Semantic | FOUND | Sentence Vector, FTS Keyword | 79% |
 
 ---
-**Summary:** Glia-AI v1.6.3 demonstrates elite context delivery for AI agents. By surgically trimming 150-word chunks into precise sentences, we maintain high recall while significantly reducing token waste.
+**Summary:** Glia-AI v1.5.1 demonstrates elite context delivery for AI agents. By surgically trimming 150-word chunks into precise sentences, we maintain high recall while significantly reducing token waste.

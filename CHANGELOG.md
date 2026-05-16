@@ -21,6 +21,20 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 - **Hyper-Verbose Storage Logs** — Added detailed diagnostic logging to the storage layer to trace session identity and lookup performance.
 - **Audit Suite v1.5.1** — Synchronized versioning across all stress test reports and diagnostic tools.
 
+### Documentation & README
+- **Full README Rewrite** — Rebuilt the README from scratch with separate installation guides for the Web Extension and MCP Server, a "Running Both Together" section, and a Quality-of-Life details section explaining design decisions.
+- **All Four Benchmarks Published** — Added Web Context Engine, MCP Context Engine, MCP Project Isolation, and Knowledge Graph stress test results to the README with per-engine attribution breakdowns.
+- **Shared Memory Clarified** — Explicitly documented that memory saved via the browser extension is immediately available to MCP tools and vice versa, sharing the same database.
+- **MCP Setup Guide Updated** — `MCP_SETUP.md` troubleshooting and architecture sections updated to cover both Docker and Zero-Docker (SQLite) environments.
+- **Environment Template** — Added `GLIA_STORAGE_MODE` and `SQLITE_DB_PATH` to `backend/.env.example` for new user discoverability.
+
+### CI & Tooling
+- **Selector CI Expanded** — `scripts/check-selectors.js` now monitors all 7 supported platforms (added Grok, Copilot, Mistral alongside the original four).
+- **Actionable Failure Alerts** — Selector CI now writes a structured `selector-failures.json` report on failure. The auto-created GitHub Issue now names the exact failing platforms and failure reasons in both the title and body, instead of asking developers to dig through workflow logs.
+- **Interface Parity** — Added `hybridSearch` to the `IVectorStore` interface and implemented it in both Docker and SQLite backends.
+- **MCP Server Version Handshake** — Updated the MCP server version string to `1.5.1` so connected tools (Claude, Cursor, Windsurf) receive the correct capability declaration.
+- **Global Version Sync** — Synchronized `v1.5.1` across all package files, manifests, startup scripts, installer banners, source comments, and documentation files. Scrubbed all active `v1.4.x` references.
+
 ---
 
 ## [1.5.0] — 2026-05-13 — Documentation & Alignment

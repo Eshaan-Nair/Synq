@@ -2,7 +2,7 @@ name: Weekly Selector Staleness Check
 
 on:
   schedule:
-    - cron: "0 9 * * 1"   # Every Monday at 9:00 AM UTC
+    - cron: "0 9 * * 1"   # Every Monday at 09:00 UTC
   workflow_dispatch:       # Allow manual trigger from GitHub Actions UI
 
 jobs:
@@ -31,33 +31,62 @@ jobs:
         run: node scripts/check-selectors.js
         continue-on-error: true
 
-      - name: Create GitHub issue if selectors are stale
+      - name: Create GitHub issue with exact failure details
         if: steps.test.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
             const today = new Date().toISOString().split('T')[0];
+
+            // Read the structured failure report written by check-selectors.js
+            let failedPlatforms = [];
+            let failureDetails = {};
+            try {
+              const raw = fs.readFileSync('selector-failures.json', 'utf8');
+              const report = JSON.parse(raw);
+              failedPlatforms = report.failedPlatforms || [];
+              failureDetails = report.failureDetails || {};
+            } catch (e) {
+              failedPlatforms = ['Unknown — could not read selector-failures.json'];
+            }
+
+            const platformList = failedPlatforms.length > 0
+              ? failedPlatforms.map(p => `- **${p}**`).join('\n')
+              : '- Unknown';
+
+            const detailLines = Object.entries(failureDetails)
+              .map(([platform, errors]) =>
+                `**${platform}:**\n${errors.map(e => `  - ${e}`).join('\n')}`
+              ).join('\n\n');
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo:  context.repo.repo,
-              title: `[Selector Alert] Platform UI may have changed — ${today}`,
+              title: `[Selector Alert] DOM broken on ${failedPlatforms.join(', ')} — ${today}`,
               body: [
                 "## Selector Staleness Detected",
                 "",
-                "The weekly selector smoke test failed. One or more AI platforms may have",
-                "updated their UI, breaking GLIA's ability to find the input or response elements.",
+                `The weekly selector smoke test failed on **${today}**.`,
+                "One or more AI platforms has updated their UI, breaking GLIA's ability to resolve the input box or response container.",
                 "",
-                "**Platforms checked:** Claude.ai, ChatGPT, Gemini, Perplexity, DeepSeek",
+                "## Failed Platforms",
+                platformList,
                 "",
-                "**Action required:**",
-                "1. Open the failed workflow run (link below) to see which platform failed",
+                "## Failure Details",
+                detailLines || "_No detail available — check the workflow logs._",
+                "",
+                "## How to Fix",
+                "1. Open the failed workflow run (link below) to see the full Playwright output",
                 "2. Open DevTools on the affected platform and inspect the input element",
-                "3. Update `extension/src/platform/resolver.ts` — add the new selector to the front of the strategy array",
-                "4. Rebuild the extension and verify the fix",
+                "3. Update `extension/src/platform/resolver.ts` — add the new selector to the **front** of the strategy array for that platform",
+                "4. Update the matching entry in `scripts/check-selectors.js`",
+                "5. Run `node scripts/check-selectors.js` locally to confirm the fix",
+                "6. Rebuild the extension: `cd extension && npm run build`",
                 "",
-                "**Reference:** PLATFORM_SELECTORS.md",
+                "**Reference:** [PLATFORM_SELECTORS.md](PLATFORM_SELECTORS.md)",
                 "",
                 `**Workflow run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              ].join("\n"),
-              labels: ["bug", "selector-stale", "automated"],
+              ].join('\n'),
+              labels: ['bug', 'selector-stale', 'automated'],
             });

@@ -1,5 +1,5 @@
 
-# Knowledge Graph Stress Audit (v1.6.3)
+# Knowledge Graph Stress Audit (v1.5.1)
 **Scope:** Knowledge Graph Density | **Session:** GRAPH STRESS: 1200+ Nodes
 
 ## Summary Metrics

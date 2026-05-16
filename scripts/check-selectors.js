@@ -2,20 +2,20 @@
 /**
  * scripts/check-selectors.js
  *
- * Playwright smoke test that verifies CSS selectors still resolve on each
- * supported AI platform. Runs headlessly — no login needed to check that
- * the input box and response container exist on the page.
+ * Playwright smoke test — verifies CSS selectors still resolve on every
+ * supported AI platform. Runs headlessly; no login required.
  *
  * Called by .github/workflows/selector-check.yml every Monday at 09:00 UTC.
- * Exit 1 triggers the workflow to auto-create a GitHub issue.
+ * On failure, writes selector-failures.json to the repo root so the workflow
+ * can embed the exact failing platforms and reasons into the GitHub Issue body.
  *
  * Run manually:
  *   npx playwright install chromium --with-deps
  *   node scripts/check-selectors.js
  *
  * Exit codes:
- *   0 - all selectors found on all platforms
- *   1 - one or more selectors broken
+ *   0  all selectors resolved on all platforms
+ *   1  one or more selectors broken
  */
 
 const { chromium } = require("playwright");
@@ -90,6 +90,55 @@ const PLATFORMS = [
       '.prose',
     ],
   },
+  {
+    name: "Grok",
+    url: "https://x.com/i/grok",
+    fixture: "grok.html",
+    inputSelectors: [
+      'textarea[placeholder*="Ask"]',
+      'textarea[data-testid="tweetTextarea_0"]',
+      '[contenteditable="true"]',
+      'textarea',
+    ],
+    responseSelectors: [
+      '[data-testid="grok-response"]',
+      '.prose',
+      '[class*="message"]',
+    ],
+  },
+  {
+    name: "Copilot",
+    url: "https://copilot.microsoft.com",
+    fixture: "copilot.html",
+    inputSelectors: [
+      '#userInput',
+      'textarea[placeholder*="Message"]',
+      '[contenteditable="true"][aria-label*="chat"]',
+      'textarea',
+      '[contenteditable="true"]',
+    ],
+    responseSelectors: [
+      '[data-testid="response-message"]',
+      '.ac-textBlock',
+      '[class*="message-body"]',
+    ],
+  },
+  {
+    name: "Mistral",
+    url: "https://chat.mistral.ai",
+    fixture: "mistral.html",
+    inputSelectors: [
+      'textarea[placeholder*="message"]',
+      'textarea[placeholder*="Ask"]',
+      '[contenteditable="true"]',
+      'textarea',
+    ],
+    responseSelectors: [
+      '[class*="message"]',
+      '.prose',
+      '[class*="response"]',
+    ],
+  },
 ];
 
 async function checkPlatform(browser, platform, useFixtures = false) {
@@ -109,24 +158,24 @@ async function checkPlatform(browser, platform, useFixtures = false) {
       await page.goto(`file://${fixturePath}`);
     } else {
       await page.goto(platform.url, { waitUntil: "domcontentloaded", timeout: 20000 });
-      await page.waitForTimeout(4000); 
+      await page.waitForTimeout(4000);
     }
 
-    // Input Check
+    // Input check — try each strategy, stop at first match
     let inputFound = false;
     for (const sel of platform.inputSelectors) {
       const count = await page.locator(sel).count();
-      if (count > 0) { 
-        inputFound = true; 
+      if (count > 0) {
+        inputFound = true;
         results.passed.push(`  OK  input: resolved via "${sel}"`);
-        break; 
+        break;
       }
     }
     if (!inputFound) {
-      results.failed.push(`  FAIL input: no strategy matched`);
+      results.failed.push(`input selector: no strategy matched (tried ${platform.inputSelectors.length} selectors)`);
     }
 
-    // Response Check (verify it actually has text in fixture mode)
+    // Response check
     let responseFound = false;
     for (const sel of platform.responseSelectors) {
       const locator = page.locator(sel);
@@ -148,13 +197,14 @@ async function checkPlatform(browser, platform, useFixtures = false) {
     }
 
     if (!responseFound && useFixtures) {
-      results.failed.push(`  FAIL response: not found or empty in fixture`);
+      results.failed.push(`response selector: not found or empty in fixture`);
     } else if (!responseFound) {
+      // On a live empty page this is expected — not a failure
       results.passed.push(`  --  response: not found (expected on empty page)`);
     }
 
   } catch (err) {
-    results.failed.push(`  FAIL: ${err.message}`);
+    results.failed.push(`exception: ${err.message}`);
   } finally {
     await context.close();
   }
@@ -165,33 +215,49 @@ async function checkPlatform(browser, platform, useFixtures = false) {
 (async () => {
   const useFixtures = process.argv.includes("--fixtures");
   console.log(`\nGLIA Platform Selector Smoke Test ${useFixtures ? "(FIXTURE MODE)" : "(LIVE MODE)"}\n`);
-  
+  console.log(`Platforms checked: ${PLATFORMS.map(p => p.name).join(", ")}\n`);
+
   const browser = await chromium.launch({ headless: true });
   let totalFailed = 0;
+  const failedPlatforms = [];
+  const failureDetails = {};
 
   for (const platform of PLATFORMS) {
     process.stdout.write(`Checking ${platform.name}... `);
     const result = await checkPlatform(browser, platform, useFixtures);
-    
+
     if (result.failed.length === 0) {
-      console.log("✅");
+      console.log("OK");
     } else {
-      console.log("❌");
+      console.log("FAILED");
+      failedPlatforms.push(platform.name);
+      failureDetails[platform.name] = result.failed;
     }
-    
+
     result.passed.forEach((m) => console.log(m));
-    result.failed.forEach((m) => console.log(m));
+    result.failed.forEach((m) => console.log(`  FAIL  ${m}`));
     totalFailed += result.failed.length;
     console.log();
   }
 
   await browser.close();
 
-  if (totalFailed === 0) {
+  if (totalFailed > 0) {
+    // Write structured report so the CI workflow can embed exact details in the GitHub Issue
+    const report = {
+      failedPlatforms,
+      failureDetails,
+      totalFailed,
+      timestamp: new Date().toISOString(),
+    };
+    const reportPath = path.resolve(__dirname, "..", "selector-failures.json");
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    console.log(`${totalFailed} check(s) failed.`);
+    console.log(`Failed platforms: ${failedPlatforms.join(", ")}`);
+    console.log(`Failure report written to: selector-failures.json\n`);
+    process.exit(1);
+  } else {
     console.log("All checks passed\n");
     process.exit(0);
-  } else {
-    console.log(`${totalFailed} check(s) failed.\n`);
-    process.exit(1);
   }
 })();
