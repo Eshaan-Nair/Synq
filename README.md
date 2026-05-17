@@ -22,7 +22,7 @@
 
 **MCP (AI Coding Tools):** Claude Code · Cursor · Windsurf · Claude Desktop
 
-https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
+https://github.com/user-attachments/assets/49d8eb52-c266-449a-ae45-147ec755ec09
 
 <br/>
 
