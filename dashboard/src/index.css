@@ -488,7 +488,7 @@ body {
 .graph-settings-panel {
   position: absolute;
   bottom: 24px;
-  left: 72px;
+  left: 340px;
   background: var(--surface);
   backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border-main);

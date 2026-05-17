@@ -37,7 +37,7 @@ export class SqliteSessionStore implements ISessionStore {
   }
 
   async getSession(id: string): Promise<Session | null> {
-    logger.info(`[STORAGE] Looking up session ID: "${id}"`);
+    logger.debug(`[STORAGE] Looking up session ID: "${id}"`);
     const row = this.db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
     if (!row) logger.warn(`[STORAGE] Session ID "${id}" NOT FOUND in database`);
     return row ? this.mapRowToSession(row) : null;

@@ -127,8 +127,13 @@ const App: React.FC = () => {
           
           // If it just finished, refresh the session list to get the final tripleCount
           if (activeSession.isProcessingGraph && status.pending === 0 && status.processing === 0) {
-            loadSessions();
-            handleLoadSession(activeSession);
+            const freshSessions = await loadSessions();
+            const updatedSession = freshSessions?.find((s: any) => s._id === activeSession._id);
+            if (updatedSession) {
+              handleLoadSession(updatedSession);
+            } else {
+              handleLoadSession({ ...activeSession, isProcessingGraph: false });
+            }
           }
         } catch (err) { 
           // Silently fail polling
@@ -140,8 +145,27 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, [activeSession, loadSessions, handleLoadSession, setJobStatus]);
 
+  const degreeMap = useMemo(() => {
+    const map = new Map<string, number>();
+    nodes.forEach(node => map.set(node.id, 0));
+    links.forEach(link => {
+      const s = typeof link.source === "string" ? link.source : (link.source as any).id;
+      const t = typeof link.target === "string" ? link.target : (link.target as any).id;
+      map.set(s, (map.get(s) || 0) + 1);
+      map.set(t, (map.get(t) || 0) + 1);
+    });
+    return map;
+  }, [nodes, links]);
+
   const pagedTriples = useMemo(() => {
     let list = triples;
+    if (minDegree > 0) {
+      list = list.filter(t => {
+        const sDegree = degreeMap.get(t.subject) || 0;
+        const oDegree = degreeMap.get(t.object) || 0;
+        return sDegree >= minDegree && oDegree >= minDegree;
+      });
+    }
     if (selectedNodeId) {
       list = list.filter(t => t.subject === selectedNodeId || t.object === selectedNodeId);
     }
@@ -155,10 +179,17 @@ const App: React.FC = () => {
     }
     const start = factsPage * PAGE_SIZE;
     return list.slice(start, start + PAGE_SIZE);
-  }, [triples, selectedNodeId, factsPage, factSearch]);
+  }, [triples, selectedNodeId, factsPage, factSearch, minDegree, degreeMap]);
 
   const filteredTripleCount = useMemo(() => {
     let list = triples;
+    if (minDegree > 0) {
+      list = list.filter(t => {
+        const sDegree = degreeMap.get(t.subject) || 0;
+        const oDegree = degreeMap.get(t.object) || 0;
+        return sDegree >= minDegree && oDegree >= minDegree;
+      });
+    }
     if (selectedNodeId) {
       list = list.filter(t => t.subject === selectedNodeId || t.object === selectedNodeId);
     }
@@ -171,7 +202,7 @@ const App: React.FC = () => {
       );
     }
     return list.length;
-  }, [triples, selectedNodeId, factSearch]);
+  }, [triples, selectedNodeId, factSearch, minDegree, degreeMap]);
 
   const totalPages = Math.ceil(filteredTripleCount / PAGE_SIZE);
 

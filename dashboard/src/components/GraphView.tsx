@@ -179,9 +179,13 @@ export default function GraphView({
     const height = canvas.clientHeight;
 
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    const targetWidth = Math.floor(width * dpr);
+    const targetHeight = Math.floor(height * dpr);
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      ctx.scale(dpr, dpr);
+    }
 
     const neighbors = new Set<string>();
     if (hoveredNodeId) {
@@ -206,12 +210,7 @@ export default function GraphView({
       });
     }
 
-    let frameCount = 0;
-
     const draw = () => {
-      frameCount++;
-      if (!hoveredNodeId && !selectedNodeId && !filterType && frameCount % 2 !== 0) return;
-
       ctx.save();
       ctx.clearRect(0, 0, width, height);
       ctx.translate(transformRef.current.x, transformRef.current.y);

@@ -14,6 +14,7 @@ export const useSessions = (onSessionDeleted: (sessionId: string) => void) => {
       const data = await fetchSessions();
       setSessions(data.sessions);
       setError(null);
+      return data.sessions;
     } catch (err) {
       setError(`Backend unreachable: ${extractErrorMessage(err)}`);
     }

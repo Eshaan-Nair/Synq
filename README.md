@@ -26,11 +26,14 @@ https://github.com/user-attachments/assets/ab003d01-3e36-405c-a7a4-9eae417b77ca
 
 <br/>
 
+</div>
+
+## One Command Setup
+
 ```bash
 npx glia-ai-setup
 ```
 
-</div>
 
 ---
 
