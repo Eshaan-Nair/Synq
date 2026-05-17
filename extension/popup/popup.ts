@@ -351,7 +351,7 @@ saveBtn.addEventListener("click", async () => {
         showSession(sessionData);
         const chunks = response.topicsExtracted as number;
         const facts = response.triplesExtracted as number;
-        setStatus(`Saved! ${chunks} chunks stored, ${facts} facts extracted. GLIA auto-connected.`);
+        setStatus(`Saved! GLIA auto-connected.`);
 
         // ── Success State Glow ───────────────────────────────────────
         document.body.classList.add("success-glow");
