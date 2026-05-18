@@ -28,7 +28,7 @@ jobs:
 
       - name: Run selector smoke test
         id: test
-        run: node scripts/check-selectors.js
+        run: node scripts/check-selectors.js --fixtures
         continue-on-error: true
 
       - name: Create GitHub issue with exact failure details
