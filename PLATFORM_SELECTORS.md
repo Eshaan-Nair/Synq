@@ -45,6 +45,21 @@ export const INPUT_SELECTOR_STRATEGIES = {
     'div[contenteditable][role="textbox"]',
     'textarea',
   ],
+  grok: [
+    "textarea[placeholder*='Ask']",
+    "textarea[data-testid='grok-input']",
+    '[contenteditable="true"][aria-label*="message"]',
+    "textarea",
+  ],
+  copilot: [
+    'textarea[placeholder*="Message"]',
+    '#userInput',
+    '[contenteditable="true"]',
+  ],
+  mistral: [
+    'textarea[placeholder*="Ask"]',
+    '[contenteditable="true"]',
+  ],
 };
 ```
 
@@ -121,6 +136,55 @@ A `watchForInput()` function uses a MutationObserver — if the input is not yet
 - DeepSeek uses `<textarea id="chat-input">` — the stable ID makes injection reliable
 - `.ds-markdown` is prefixed with `ds-` (product namespace) — more durable than generic class names
 - `[data-message-author-role]` mirrors the ChatGPT attribute pattern; if it was adopted intentionally it should remain stable
+
+---
+
+## Grok (x.com)
+
+**Last verified:** May 2026 · **Stability:** Medium
+
+| Element | Selectors (in order) |
+|---|---|
+| User messages | `[data-testid="user-message"]`, `.user-message` |
+| AI responses | `[data-testid="grok-response"]`, `.grok-response`, `[class*='response']` |
+| Chat input | See resolver.ts — `textarea[placeholder*='Ask']` is most stable |
+| Send button | `button[aria-label*="Send"]`, `button[data-testid="send-button"]`, `button[type="submit"]` |
+
+**Notes:**
+- Grok is served directly on x.com — custom `data-testid` attributes are utilized to isolate grok responses from typical tweets.
+
+---
+
+## Microsoft Copilot (copilot.microsoft.com)
+
+**Last verified:** May 2026 · **Stability:** High
+
+| Element | Selectors (in order) |
+|---|---|
+| User messages | `[data-content="user"]`, `.user-turn` |
+| AI responses | `[data-content="assistant"]`, `.bot-turn` |
+| Chat input | See resolver.ts — `textarea[placeholder*="Message"]` or `#userInput` |
+| Send button | `button[aria-label*="Submit"]`, `button[aria-label*="Send"]` |
+
+**Notes:**
+- Copilot uses structured `data-content` markers to tag user and assistant dialog blocks, which is extremely robust.
+- Standard M365 Copilot runs on the same domain and benefits from this out-of-the-box configuration.
+
+---
+
+## Mistral (chat.mistral.ai)
+
+**Last verified:** May 2026 · **Stability:** High
+
+| Element | Selectors (in order) |
+|---|---|
+| User messages | `.user-message`, `[data-role="user"]` |
+| AI responses | `.assistant-message`, `[data-role="assistant"]` |
+| Chat input | See resolver.ts — `textarea[placeholder*="Ask"]` is most stable |
+| Send button | `button[type="submit"]`, `button[aria-label*="send" i]` |
+
+**Notes:**
+- Mistral uses simple and clean `.user-message` and `.assistant-message` styling classes, which have remained highly stable.
 
 ---
 

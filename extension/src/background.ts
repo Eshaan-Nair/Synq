@@ -32,6 +32,16 @@ const log = {
   error: (msg: string) => console.error(`[GLIA bg] ${msg}`),
 };
 
+const AI_URLS = [
+  "*://chatgpt.com/*",
+  "*://claude.ai/*",
+  "*://gemini.google.com/*",
+  "*://*.deepseek.com/*",
+  "*://x.com/*",
+  "*://copilot.microsoft.com/*",
+  "*://chat.mistral.ai/*"
+];
+
 chrome.runtime.onMessage.addListener((message: GliaMessage, _sender, sendResponse) => {
   log.info(`[GLIA bg] received: ${message.type}`);
 
@@ -217,12 +227,6 @@ function broadcastSessionChanged(sessionId: string | null, projectName?: string)
   chrome.runtime.sendMessage({ type: "SESSION_CHANGED", payload: { sessionId, projectName } }).catch(() => { });
 
   // 2. Tab broadcast (to Content Scripts)
-  const AI_URLS = [
-    "*://chatgpt.com/*",
-    "*://claude.ai/*",
-    "*://gemini.google.com/*",
-    "*://*.deepseek.com/*",
-  ];
   chrome.tabs.query({ url: AI_URLS }, (tabs) => {
     for (const tab of tabs) {
       if (tab.id) {
@@ -297,7 +301,6 @@ async function handleTogglePause() {
 
   // Broadcast to all tabs so they update their badge and detached state
   const type = newState ? "PAUSE_GLIA" : "RESUME_GLIA";
-  const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*", "*://*.deepseek.com/*"];
   chrome.tabs.query({ url: AI_URLS }, (tabs) => {
     for (const tab of tabs) {
       if (tab.id) {
@@ -321,7 +324,6 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   if (changes.glia_paused) {
     const isPaused = changes.glia_paused.newValue === true;
     const type = isPaused ? "PAUSE_GLIA" : "RESUME_GLIA";
-    const AI_URLS = ["*://chatgpt.com/*", "*://claude.ai/*", "*://gemini.google.com/*", "*://*.deepseek.com/*"];
     chrome.tabs.query({ url: AI_URLS }, (tabs) => {
       for (const tab of tabs) {
         if (tab.id) {

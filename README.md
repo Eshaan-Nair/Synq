@@ -78,7 +78,7 @@ GLIA has two complementary modes that share the same memory store. You can use o
 
 The extension lives inside Chrome and works on any AI chat website. When you save a conversation, it scrapes the page, scrubs PII, chunks and embeds the text locally, and sends it to the GLIA backend. On every subsequent prompt you type, the extension intercepts the input, queries the backend for relevant context, and prepends it to your message automatically — before the request hits the AI.
 
-Best for: ChatGPT, Claude.ai, Gemini, and DeepSeek web interfaces.
+Best for: Claude, ChatGPT, Gemini, DeepSeek, Grok, Microsoft Copilot, and Mistral web interfaces.
 
 ### Mode 2 — MCP Server (Coding Tools)
 
