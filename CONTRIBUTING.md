@@ -86,7 +86,10 @@ npm run build  # outputs to dashboard/dist/ — served by backend on port 3001
 ## Running Tests
 
 ```bash
-# Unit tests
+# Unit tests (safe for SQLite / local development)
+cd backend && npm run test:unit
+
+# Run all tests (runs unit + integration; requires MongoDB & ChromaDB)
 cd backend && npm test
 
 # MCP integration test (requires Ollama running, uses SQLite mode)
@@ -98,6 +101,9 @@ cd backend && npm test -- --testPathPattern=isolation.integration
 # Full pipeline test (requires Ollama + ChromaDB running — Docker mode)
 cd backend && npm test -- --testPathPattern=pipeline.integration
 ```
+
+> [!NOTE]
+> Running the full test suite via `npm test` or `npm run test:integration` requires MongoDB and ChromaDB to be running in the background. If you are developing locally in SQLite (Zero-Docker) mode, you should focus on the unit tests (`npm run test:unit`), the MCP integration tests (`mcp.integration`), and the isolation tests (`isolation.integration`) to avoid connection failures.
 
 ---
 
@@ -217,7 +223,7 @@ Add a section for the new platform with selectors and stability notes.
 
 - [ ] Branch from `main`, not from another feature branch
 - [ ] `npx tsc --noEmit` in `backend/` passes with 0 errors
-- [ ] Existing tests pass: `cd backend && npm test`
+- [ ] Existing tests pass (e.g. `npm run test:unit` for local changes)
 - [ ] PR description explains what changed and why
 - [ ] `PLATFORM_SELECTORS.md` updated if you changed selectors
 - [ ] `CHANGELOG.md` entry added under `[Unreleased]`
