@@ -6,10 +6,14 @@ export const copilot = {
   userSelectors: [
     '[data-content="user"]',
     '.user-turn',
+    '[class*="user-message"]',
   ],
   responseSelectors: [
     '[data-content="assistant"]',
     '.bot-turn',
+    '[data-testid="response-message"]',
+    '.ac-textBlock',
+    '[class*="message-body"]',
   ],
   inputSelectors: INPUT_SELECTOR_STRATEGIES.copilot,
   sendButtonSelectors: [

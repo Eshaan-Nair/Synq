@@ -50,16 +50,21 @@ export const INPUT_SELECTOR_STRATEGIES: Record<Platform, string[]> = {
   grok: [
     "textarea[placeholder*='Ask']",
     "textarea[data-testid='grok-input']",
+    "textarea[data-testid='tweetTextarea_0']",
     '[contenteditable="true"][aria-label*="message"]',
     "textarea",
   ],
   copilot: [
+    'textarea#userInput',
+    'textarea[data-testid="composer-input"]',
     'textarea[placeholder*="Message"]',
     '#userInput',
     '[contenteditable="true"]',
   ],
   mistral: [
+    'div.ProseMirror',
     'textarea[placeholder*="Ask"]',
+    'textarea[placeholder*="message"]',
     '[contenteditable="true"]',
   ],
 };

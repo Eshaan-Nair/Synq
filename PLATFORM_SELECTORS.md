@@ -48,16 +48,21 @@ export const INPUT_SELECTOR_STRATEGIES = {
   grok: [
     "textarea[placeholder*='Ask']",
     "textarea[data-testid='grok-input']",
+    "textarea[data-testid='tweetTextarea_0']",
     '[contenteditable="true"][aria-label*="message"]',
     "textarea",
   ],
   copilot: [
+    'textarea#userInput',
+    'textarea[data-testid="composer-input"]',
     'textarea[placeholder*="Message"]',
     '#userInput',
     '[contenteditable="true"]',
   ],
   mistral: [
+    'div.ProseMirror',
     'textarea[placeholder*="Ask"]',
+    'textarea[placeholder*="message"]',
     '[contenteditable="true"]',
   ],
 };
@@ -147,7 +152,7 @@ A `watchForInput()` function uses a MutationObserver — if the input is not yet
 |---|---|
 | User messages | `[data-testid="user-message"]`, `.user-message` |
 | AI responses | `[data-testid="grok-response"]`, `.grok-response`, `[class*='response']` |
-| Chat input | See resolver.ts — `textarea[placeholder*='Ask']` is most stable |
+| Chat input | See resolver.ts — `textarea[placeholder*='Ask']` → `textarea[data-testid='grok-input']` → `textarea[data-testid='tweetTextarea_0']` |
 | Send button | `button[aria-label*="Send"]`, `button[data-testid="send-button"]`, `button[type="submit"]` |
 
 **Notes:**
@@ -161,9 +166,9 @@ A `watchForInput()` function uses a MutationObserver — if the input is not yet
 
 | Element | Selectors (in order) |
 |---|---|
-| User messages | `[data-content="user"]`, `.user-turn` |
-| AI responses | `[data-content="assistant"]`, `.bot-turn` |
-| Chat input | See resolver.ts — `textarea[placeholder*="Message"]` or `#userInput` |
+| User messages | `[data-content="user"]`, `.user-turn`, `[class*="user-message"]` |
+| AI responses | `[data-content="assistant"]`, `.bot-turn`, `[data-testid="response-message"]`, `.ac-textBlock` |
+| Chat input | See resolver.ts — `textarea#userInput` → `textarea[data-testid="composer-input"]` → `textarea[placeholder*="Message"]` |
 | Send button | `button[aria-label*="Submit"]`, `button[aria-label*="Send"]` |
 
 **Notes:**
@@ -178,13 +183,15 @@ A `watchForInput()` function uses a MutationObserver — if the input is not yet
 
 | Element | Selectors (in order) |
 |---|---|
-| User messages | `.user-message`, `[data-role="user"]` |
-| AI responses | `.assistant-message`, `[data-role="assistant"]` |
-| Chat input | See resolver.ts — `textarea[placeholder*="Ask"]` is most stable |
-| Send button | `button[type="submit"]`, `button[aria-label*="send" i]` |
+| User messages | `[data-message-author-role="user"]`, `.user-message`, `[data-role="user"]` |
+| AI responses | `[data-message-author-role="assistant"]`, `.assistant-message`, `[data-role="assistant"]` |
+| Chat input | See resolver.ts — `div.ProseMirror` is most stable (Mistral uses ProseMirror, not a textarea) |
+| Send button | `button[aria-label="Send"]`, `button[type="submit"]`, `button[aria-label*="send" i]` |
 
 **Notes:**
-- Mistral uses simple and clean `.user-message` and `.assistant-message` styling classes, which have remained highly stable.
+- Mistral uses a **ProseMirror** `div[contenteditable]` editor — `div.ProseMirror` is the correct and most stable input selector. A `textarea` selector will never match.
+- Messages are tagged with `data-message-author-role="user"` and `data-message-author-role="assistant"` — the same pattern used by ChatGPT and DeepSeek. These are more durable than the class-based `.user-message`/`.assistant-message` fallbacks.
+- Verified live via headless browser inspection in May 2026.
 
 ---
 

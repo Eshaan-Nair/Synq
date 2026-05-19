@@ -4,10 +4,12 @@ export const mistral = {
   name: "mistral" as const,
   hostname: "chat.mistral.ai",
   userSelectors: [
+    '[data-message-author-role="user"]',
     '.user-message',
     '[data-role="user"]',
   ],
   responseSelectors: [
+    '[data-message-author-role="assistant"]',
     '.assistant-message',
     '[data-role="assistant"]',
   ],
