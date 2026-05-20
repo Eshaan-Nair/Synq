@@ -12,13 +12,14 @@
  *   - MongoDB running on port 27017
  */
 
-// Helpers — import from actual service files
-import { storeWindowChunks, retrieveRelevantChunks } from "../../src/services/chroma";
+import path from "path";
+process.env.GLIA_STORAGE_MODE = process.env.GLIA_STORAGE_MODE || "sqlite";
+if (process.env.GLIA_STORAGE_MODE === "sqlite") {
+  process.env.SQLITE_DB_PATH = process.env.SQLITE_DB_PATH || path.resolve(__dirname, "../../glia-pipeline-test.db");
+}
+
+import { initStorage, sessionStore, vectorStore } from "../../src/services/storage";
 import { slidingWindowChunks } from "../../src/services/chunker";
-import { connectChroma } from "../../src/services/chroma";
-import { connectMongo } from "../../src/services/mongo";
-import { Session } from "../../src/services/mongo";
-import mongoose from "mongoose";
 
 // Known fixture — deterministic test data
 const FIXTURE_TEXT = `
@@ -34,20 +35,16 @@ const TEST_SESSION  = `test-session-${Date.now()}`;
 let testSessionId: string;
 
 beforeAll(async () => {
-  // Connect to real services
-  await connectMongo();
-  await connectChroma();
+  // Connect to unified storage
+  await initStorage();
 
   // Create a test session
-  const session = await Session.create({
-    projectName: TEST_PROJECT,
-    platform: "claude",
-  });
+  const session = await sessionStore.createSession(TEST_PROJECT, "claude");
   testSessionId = session._id.toString();
 
   // Seed the known fixture using sliding window chunker
   const chunks = slidingWindowChunks(FIXTURE_TEXT, testSessionId);
-  await storeWindowChunks(chunks);
+  await vectorStore.storeChunks(chunks);
 
   // Allow embeddings to settle
   await new Promise(r => setTimeout(r, 2000));
@@ -55,13 +52,23 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Clean up test session
-  await Session.findByIdAndDelete(testSessionId);
-  await mongoose.disconnect();
+  try {
+    await sessionStore.deleteSession(testSessionId);
+  } catch {}
+
+  // Clean up SQLite test db if we created one
+  if (process.env.GLIA_STORAGE_MODE === "sqlite") {
+    const fs = await import("fs");
+    const dbPath = process.env.SQLITE_DB_PATH!;
+    for (const ext of ["", "-shm", "-wal"]) {
+      try { fs.unlinkSync(dbPath + ext); } catch {}
+    }
+  }
 });
 
 describe("Full RAG Pipeline", () => {
   it("retrieves relevant chunk for semantically related query", async () => {
-    const results = await retrieveRelevantChunks(
+    const results = await vectorStore.retrieveRelevantChunks(
       "JWT refresh token security issue",
       testSessionId,
       3
@@ -72,7 +79,7 @@ describe("Full RAG Pipeline", () => {
   }, 15_000);
 
   it("unrelated query scores below threshold", async () => {
-    const results = await retrieveRelevantChunks(
+    const results = await vectorStore.retrieveRelevantChunks(
       "how to bake sourdough bread with a natural starter",
       testSessionId,
       3
@@ -83,7 +90,7 @@ describe("Full RAG Pipeline", () => {
   }, 15_000);
 
   it("chunk count is non-zero after embedding fixture", async () => {
-    const results = await retrieveRelevantChunks(
+    const results = await vectorStore.retrieveRelevantChunks(
       "authentication session storage",
       testSessionId,
       6
@@ -92,7 +99,7 @@ describe("Full RAG Pipeline", () => {
   }, 15_000);
 
   it("retrieves httpOnly flag fix from related query", async () => {
-    const results = await retrieveRelevantChunks(
+    const results = await vectorStore.retrieveRelevantChunks(
       "cookie security XSS prevention",
       testSessionId,
       3

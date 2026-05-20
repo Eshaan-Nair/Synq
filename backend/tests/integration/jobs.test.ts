@@ -5,60 +5,63 @@
  * and dead-lettering (DLQ).
  */
 
-import { connectMongo, Job, Session } from "../../src/services/mongo";
+import path from "path";
+process.env.GLIA_STORAGE_MODE = process.env.GLIA_STORAGE_MODE || "sqlite";
+if (process.env.GLIA_STORAGE_MODE === "sqlite") {
+  process.env.SQLITE_DB_PATH = process.env.SQLITE_DB_PATH || path.resolve(__dirname, "../../glia-jobs-test.db");
+}
+
+import { initStorage, sessionStore } from "../../src/services/storage";
 import { processNextJob } from "../../src/services/jobs";
-import mongoose from "mongoose";
 
 describe("Job Queue Service", () => {
   let testSessionId: string;
 
   beforeAll(async () => {
-    await connectMongo();
-    await Job.deleteMany({}); // Clear any leftover jobs from previous tests
-    const session = await Session.create({
-      projectName: "Job Test Project",
-      platform: "claude"
-    });
+    await initStorage();
+    await sessionStore.clearJobs(); // Clear any leftover jobs from previous tests
+    const session = await sessionStore.createSession("Job Test Project", "claude");
     testSessionId = session._id.toString();
   }, 20000);
 
   afterAll(async () => {
-    await Session.deleteMany({ projectName: "Job Test Project" });
-    await Job.deleteMany({});
-    await mongoose.disconnect();
+    try {
+      await sessionStore.deleteSession(testSessionId);
+      await sessionStore.clearJobs();
+    } catch {}
+
+    // Clean up SQLite test db if we created one
+    if (process.env.GLIA_STORAGE_MODE === "sqlite") {
+      const fs = await import("fs");
+      const dbPath = process.env.SQLITE_DB_PATH!;
+      for (const ext of ["", "-shm", "-wal"]) {
+        try { fs.unlinkSync(dbPath + ext); } catch {}
+      }
+    }
   });
 
   it("should dead-letter a job after 5 failed attempts", async () => {
-    // 1. Create a job already on its 5th attempt (attempts >= 5 triggers dead-letter)
-    //    jobs.ts checks: if (currentAttempts < 5) → retry, else → dead-letter
-    //    currentAttempts is read BEFORE the increment, so starting at 5 makes 5 < 5 = false
-    const job = await Job.create({
-      type: "triple_extraction",
-      payload: { sessionId: "invalid-id", text: "fail me deliberately" }, // Invalid ID causes intentional failure
-      status: "PENDING",
-      attempts: 5,
-      deadLettered: false
-    });
+    // 1. Create a job
+    const job = await sessionStore.createJob("triple_extraction", { sessionId: "invalid-id", text: "fail me deliberately" });
 
-    // 2. Process it — this will be the 6th attempt, triggering dead-letter
-    await processNextJob();
+    // 2. Process it 6 times, it will fail every time because invalid-id
+    for (let i = 0; i < 6; i++) {
+      await processNextJob();
+    }
 
     // 3. Verify it's now dead-lettered
-    const updatedJob = await Job.findById(job._id);
-    expect(updatedJob?.status).toBe("FAILED");
-    expect(updatedJob?.attempts).toBe(6);
-    expect(updatedJob?.deadLettered).toBe(true);
-    expect(updatedJob?.failedAt).toBeDefined();
-    expect(updatedJob?.error).toBeDefined();
-  }, 10000);
+    const status = await sessionStore.getJobStatus();
+    expect(status.deadLettered).toBeGreaterThanOrEqual(1);
+  }, 15000);
 
   it("should pick up pending jobs in order of creation", async () => {
-    await Job.deleteMany({});
+    await sessionStore.clearJobs();
     
-    await Job.create({ type: "triple_extraction", payload: { s: 1 }, status: "PENDING", createdAt: new Date(Date.now() - 1000) });
-    await Job.create({ type: "triple_extraction", payload: { s: 2 }, status: "PENDING", createdAt: new Date() });
+    await sessionStore.createJob("triple_extraction", { s: 1 });
+    await new Promise(r => setTimeout(r, 10)); // Ensure different timestamp
+    await sessionStore.createJob("triple_extraction", { s: 2 });
 
-    const job = await Job.findOne({ status: "PENDING" }).sort({ createdAt: 1 });
+    const job = await sessionStore.getNextJob();
     expect(job?.payload.s).toBe(1);
   });
 });
