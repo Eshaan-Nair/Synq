@@ -250,6 +250,7 @@ const App: React.FC = () => {
           filterType={graphTypeFilter}
           minDegree={minDegree}
           setMinDegree={setMinDegree}
+          activeSessionId={activeSession?._id}
         />
         {(activeSession?.isProcessingGraph || jobStatus.pending > 0 || jobStatus.processing > 0) && (
           <div className="job-status-bar centered-progress">

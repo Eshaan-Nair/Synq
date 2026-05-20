@@ -9,7 +9,7 @@ export async function generateHyDEAnswer(query: string): Promise<string> {
   const prompt = `User: ${query}\nGenerate a 1-sentence hypothetical answer for vector search:`;
 
   try {
-    logger.info(`[GLIA] HyDE: "${query.slice(0, 40)}..."`);
+    logger.debug(`[GLIA] HyDE: "${query.slice(0, 40)}..."`);
     const hypotheticalAnswer = await llm(prompt, 100);
     return hypotheticalAnswer.trim();
   } catch (err) {

@@ -10,7 +10,7 @@ export class SqliteSessionStore implements ISessionStore {
     const id = customId || uuidv4();
     const now = new Date().toISOString();
     
-    logger.info(`[STORAGE] Creating session: "${projectName}" with ID: "${id}"`);
+    logger.debug(`[STORAGE] Creating session: "${projectName}" with ID: "${id}"`);
 
     const session: Session = {
       _id: id,

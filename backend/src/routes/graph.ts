@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { graphStore } from "../services/storage";
 import { logger } from "../utils/logger";
 import { isValidObjectId } from "../utils/validators";
+import { prune } from "../mcp/tools/prune";
 
 const router = Router();
 
@@ -51,6 +52,29 @@ router.get("/session/:sessionId", async (req: Request, res: Response) => {
   } catch (err) {
     logger.error("Graph /session query failed:", err);
     res.status(500).json({ error: "Failed to retrieve session graph" });
+  }
+});
+
+// POST /api/graph/prune
+// Exposes the prune_memory MCP tool logic to the dashboard
+router.post("/prune", async (req: Request, res: Response) => {
+  const { prompt, sessionId } = req.body;
+  
+  if (!prompt) {
+    res.status(400).json({ error: "prompt is required" });
+    return;
+  }
+
+  try {
+    const result = await prune(prompt, sessionId);
+    if (result.includes("failed:") || result.includes("Could not identify")) {
+      res.status(400).json({ error: result });
+      return;
+    }
+    res.json({ success: true, message: result });
+  } catch (err) {
+    logger.error("Graph prune failed:", err);
+    res.status(500).json({ error: "Failed to prune graph node" });
   }
 });
 

@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import type { Node, Link } from "../types";
 import { TYPE_COLORS } from "../constants";
+import { pruneGraphNode } from "../api/glia";
 
 interface Props {
   nodes: Node[];
@@ -18,6 +19,7 @@ interface Props {
   filterType?: string | null;
   minDegree: number;
   setMinDegree: (val: number) => void;
+  activeSessionId?: string;
 }
 
 const ABBREVIATIONS: Record<string, string> = {
@@ -42,11 +44,15 @@ export default function GraphView({
   selectedNodeId, 
   filterType,
   minDegree,
-  setMinDegree
+  setMinDegree,
+  activeSessionId
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [isPruning, setIsPruning] = useState(false);
+  const [prunedNodes, setPrunedNodes] = useState<Set<string>>(new Set());
+  
   const transformRef = useRef(d3.zoomIdentity);
   const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(null);
@@ -70,7 +76,7 @@ export default function GraphView({
     });
 
     return {
-      nodes: nodes.map(node => {
+      nodes: nodes.filter(n => !prunedNodes.has(n.id)).map(node => {
         const pos = posMap.get(node.id);
         const degree = degreeMap.get(node.id) || 0;
         return { 
@@ -83,7 +89,11 @@ export default function GraphView({
           hidden: degree < minDegree
         };
       }),
-      links: links.map(link => {
+      links: links.filter(l => {
+        const sid = typeof l.source === "string" ? l.source : (l.source as any).id;
+        const tid = typeof l.target === "string" ? l.target : (l.target as any).id;
+        return !prunedNodes.has(sid) && !prunedNodes.has(tid);
+      }).map(link => {
         const s = typeof link.source === "string" ? link.source : (link.source as any).id;
         const t = typeof link.target === "string" ? link.target : (link.target as any).id;
         const sDegree = degreeMap.get(s) || 0;
@@ -95,7 +105,7 @@ export default function GraphView({
       }),
       degreeMap
     };
-  }, [nodes, links, minDegree]);
+  }, [nodes, links, minDegree, prunedNodes]);
 
   const getNodeRadius = useCallback((degree: number) => {
     const base = 8;
@@ -442,6 +452,7 @@ export default function GraphView({
   }, [processedData, getNodeRadius, hoveredNodeId, selectedNodeId, filterType]);
 
   const hoveredNode = useMemo(() => nodes.find(n => n.id === hoveredNodeId), [nodes, hoveredNodeId]);
+  const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -491,11 +502,51 @@ export default function GraphView({
         </div>
       )}
 
-      {hoveredNode && (
+      {hoveredNode && !prunedNodes.has(hoveredNode.id) && (
         <div className="graph-tooltip" style={{ border: `1px solid ${TYPE_COLORS[hoveredNode.type]}`, boxShadow: `0 4px 20px ${TYPE_COLORS[hoveredNode.type]}33` }}>
           <div className="graph-tooltip-title">{hoveredNode.id}</div>
           <div className="graph-tooltip-type" style={{ color: TYPE_COLORS[hoveredNode.type] }}>{hoveredNode.type}</div>
           <div className="graph-tooltip-meta">{(hoveredNode as any).degree} connection{(hoveredNode as any).degree !== 1 ? "s" : ""}</div>
+        </div>
+      )}
+
+      {selectedNode && !prunedNodes.has(selectedNode.id) && (
+        <div className="graph-settings-panel" style={{ bottom: "20px", top: "auto", right: "20px" }}>
+          <div className="settings-title" style={{ color: TYPE_COLORS[selectedNode.type] }}>
+            {selectedNode.id}
+          </div>
+          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginBottom: "12px" }}>
+            Type: {selectedNode.type}
+          </div>
+          <button 
+            onClick={async () => {
+              if (window.confirm(`Are you sure you want to prune "${selectedNode.id}"? This will permanently delete the node and its connections.`)) {
+                setIsPruning(true);
+                try {
+                  await pruneGraphNode(selectedNode.id, activeSessionId);
+                  setPrunedNodes(prev => new Set(prev).add(selectedNode.id));
+                  onNodeClick?.(null);
+                } catch (err: any) {
+                  alert("Failed to prune node: " + (err.message || String(err)));
+                } finally {
+                  setIsPruning(false);
+                }
+              }
+            }}
+            disabled={isPruning}
+            style={{ 
+              background: "var(--error-glow, rgba(239, 68, 68, 0.15))", 
+              color: "var(--error, #ef4444)", 
+              border: "1px solid var(--error, #ef4444)", 
+              padding: "6px 12px", 
+              borderRadius: "4px", 
+              cursor: isPruning ? "not-allowed" : "pointer",
+              width: "100%",
+              fontWeight: "600"
+            }}
+          >
+            {isPruning ? "Pruning..." : "Prune Node"}
+          </button>
         </div>
       )}
     </div>

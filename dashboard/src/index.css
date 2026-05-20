@@ -293,6 +293,11 @@ body {
   align-items: center;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
 .header-project-name {
   font-family: 'Outfit', sans-serif;
   font-size: 18px;

@@ -4,6 +4,30 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.5.2] — Unreleased
+
+### Dashboard
+
+- **Global Search Bar** — Added a debounced global search input to the dashboard header that queries `POST /api/rag/global` across all projects. Results are displayed in a floating dropdown showing a **Facts** section (structured `subject → relation → object` triples from the knowledge graph) and a **Context** section (semantic vector chunks with project attribution). Fixes layout collision with the action bar by adding proper `header-right` flexbox CSS.
+- **Knowledge Graph Pruning** — Clicking a node in the D3 force graph opens a contextual panel showing the node name and type, with a **Prune Node** button. Confirms via `window.confirm` before calling `POST /api/graph/prune`. Pruned nodes are optimistically removed from the graph without requiring a page reload.
+
+### Backend
+
+- **`POST /api/graph/prune` endpoint** — New REST wrapper in `backend/src/routes/graph.ts` that exposes the existing internal `prune_memory` MCP tool to dashboard clients. Accepts `{ entities, sessionId }` and returns the count of deleted triples.
+- **Global Search: Graph Facts** — `POST /api/rag/global` now also calls `graphStore.findRelatedTriplesGlobal(entities)` and returns a `graphFacts` array alongside vector chunks, mirroring the behaviour of the session-scoped `/api/rag/retrieve` endpoint.
+- **Production Log Verbosity** — Downgraded storage-layer log calls from `info` to `debug` in `hyde.ts`, `embeddings.ts`, and `sqlite-session.ts`. Set `LOG_LEVEL=debug` to restore verbose output. Updated `backend/.env.example` to document `LOG_LEVEL` (replaces the undocumented `DEBUG` flag).
+
+### CI
+
+- **SQLite-native Pipeline Test** — Added `pipeline-tests-sqlite` job to `.github/workflows/integration-tests.yml`. Runs the full integration test suite with `GLIA_STORAGE_MODE=sqlite`, removing the requirement for ChromaDB and MongoDB service containers and reducing CI run time.
+
+### Roadmap
+
+- **v1.5.3 added** — Rebrand & UI restructure milestone documenting the retirement of the "Glia" name (brand collision with an established fintech platform) and a planned dashboard layout overhaul (command palette, left-rail nav, consolidated settings, resizable panels).
+- **Former v1.5.3 promoted to v1.5.4** — Multi-turn summarisation, session merging, Ollama model switcher, and export/import.
+
+---
+
 ## [1.5.1] — 2026-05-17 — MCP Security & Retrieval Hardening
 
 ### Multi-Tenant Isolation (MCP)

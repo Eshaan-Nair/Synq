@@ -21,7 +21,7 @@ export async function generateEmbedding(text: string, task: "query" | "document"
     try {
       if (attempt > 0) {
         await new Promise(r => setTimeout(r, 5000 * attempt));
-        logger.info(`[GLIA] Retrying embedding generation (attempt ${attempt}/${MAX_RETRIES})...`);
+        logger.debug(`[GLIA] Retrying embedding generation (attempt ${attempt}/${MAX_RETRIES})...`);
       }
 
       const response = await axios.post(`${OLLAMA_URL}/api/embeddings`, {
@@ -61,7 +61,7 @@ export async function generateEmbeddings(texts: string[], task: "query" | "docum
   
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
-    logger.info(`[GLIA] Embedding batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(texts.length/BATCH_SIZE)}...`);
+    logger.debug(`[GLIA] Embedding batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(texts.length/BATCH_SIZE)}...`);
     
     try {
       // Process this batch in parallel

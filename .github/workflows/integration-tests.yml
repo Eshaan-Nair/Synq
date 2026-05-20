@@ -76,6 +76,47 @@ jobs:
           GRAPH_BACKEND: ollama
           GLIA_NO_AUTH: "true"
 
+  pipeline-tests-sqlite:
+    name: Full RAG Pipeline Integration Tests (SQLite)
+    runs-on: ubuntu-latest
+
+    services:
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - "11434:11434"
+        options: >-
+          --health-cmd "ollama list"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Pull embedding model
+        run: curl -s http://localhost:11434/api/pull -d '{"name":"nomic-embed-text"}'
+
+      - name: Run integration tests
+        run: npm run test:integration
+        working-directory: backend
+        env:
+          GLIA_STORAGE_MODE: sqlite
+          SQLITE_DB_PATH: ./glia.db
+          GRAPH_BACKEND: ollama
+          GLIA_NO_AUTH: "true"
+
   mcp-tests:
     name: MCP Tool Integration Tests
     runs-on: ubuntu-latest

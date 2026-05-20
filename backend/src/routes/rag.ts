@@ -113,11 +113,16 @@ router.post("/global", async (req: Request, res: Response) => {
     // Extract entities for Global search boosting
     const entities = await extractEntitiesFromQuery(prompt);
 
+    let relatedTriples: any[] = [];
+    if (entities.length > 0) {
+      relatedTriples = await graphStore.findRelatedTriplesGlobal(entities);
+    }
+
     // Retrieve a larger candidate pool with Keyword Boosting
     const candidateChunks = await vectorStore.retrieveGlobalChunks(prompt, 8, entities);
 
-    if (candidateChunks.length === 0) {
-      res.json({ found: false, chunks: [] });
+    if (candidateChunks.length === 0 && relatedTriples.length === 0) {
+      res.json({ found: false, chunks: [], graphFacts: [] });
       return;
     }
 
@@ -132,18 +137,26 @@ router.post("/global", async (req: Request, res: Response) => {
     }
 
     const sanitized = sanitizeChunks(safeChunks);
-    const contextBlock = wrapInContextBlock(sanitized).trim();
+    
+    let contextBlockRaw = wrapInContextBlock(sanitized);
+    if (relatedTriples.length > 0) {
+      const graphText = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`).join("\n");
+      contextBlockRaw = `RELATED KNOWLEDGE:\n${graphText}\n\nRETRIEVED CONTEXT:\n${contextBlockRaw}`;
+    }
+    
+    const contextBlock = contextBlockRaw.trim();
     
     if (!contextBlock) {
-      res.json({ found: false, chunks: [] });
+      res.json({ found: false, chunks: [], graphFacts: [] });
       return;
     }
 
-    logger.success(`RAG Global: Budget filled (${currentChars}/${MAX_TOTAL_CHARS} chars). ${sanitized.length} chunks used.`);
+    logger.success(`RAG Global: Budget filled (${currentChars}/${MAX_TOTAL_CHARS} chars). ${sanitized.length} chunks used. ${relatedTriples.length} facts found.`);
 
     res.json({
       found: true,
       chunks: sanitized,
+      graphFacts: relatedTriples,
       contextBlock,
       scores: sanitized.map(c => c.score),
     });

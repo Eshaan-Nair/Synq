@@ -51,4 +51,19 @@ export async function importSession(data: any) {
   return res.data;
 }
 
+export async function searchGlobal(prompt: string) {
+  const res = await apiClient.post(`/api/rag/global`, { prompt, topN: 10 });
+  return res.data as {
+    found: boolean;
+    chunks: { content: string; projectName?: string }[];
+    graphFacts: { subject: string; relation: string; object: string; sessionId?: string }[];
+    scores?: number[];
+  };
+}
+
+export async function pruneGraphNode(prompt: string, sessionId?: string) {
+  const res = await apiClient.post(`/api/graph/prune`, { prompt, sessionId });
+  return res.data;
+}
+
 export { extractErrorMessage, apiClient };
