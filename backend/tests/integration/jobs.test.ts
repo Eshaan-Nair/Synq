@@ -42,9 +42,9 @@ describe("Job Queue Service", () => {
 
   it("should dead-letter a job after 5 failed attempts", async () => {
     // 1. Create a job
-    const job = await sessionStore.createJob("triple_extraction", { sessionId: "invalid-id", text: "fail me deliberately" });
+    const job = await sessionStore.createJob("sentence_indexing", { sessionId: testSessionId, chunks: [{ content: "fail me deliberately" }] });
 
-    // 2. Process it 6 times, it will fail every time because invalid-id
+    // 2. Process it 6 times, it will fail every time because LLM is unavailable in CI
     for (let i = 0; i < 6; i++) {
       await processNextJob();
     }
