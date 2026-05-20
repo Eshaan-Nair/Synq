@@ -4,27 +4,35 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
-## [1.5.2] — Unreleased
+## [1.5.2] — 2026-05-20 — Global Search, Observability & Extension Hardening
 
 ### Dashboard
 
-- **Global Search Bar** — Added a debounced global search input to the dashboard header that queries `POST /api/rag/global` across all projects. Results are displayed in a floating dropdown showing a **Facts** section (structured `subject → relation → object` triples from the knowledge graph) and a **Context** section (semantic vector chunks with project attribution). Fixes layout collision with the action bar by adding proper `header-right` flexbox CSS.
-- **Knowledge Graph Pruning** — Clicking a node in the D3 force graph opens a contextual panel showing the node name and type, with a **Prune Node** button. Confirms via `window.confirm` before calling `POST /api/graph/prune`. Pruned nodes are optimistically removed from the graph without requiring a page reload.
+- **Global Search Bar** — Added a debounced global search input to the dashboard header that queries `POST /api/rag/global` across all projects. Results are displayed in a floating dropdown showing a **Facts** section (structured `subject → relation → object` triples from the knowledge graph) and a **Context** section (semantic vector chunks with project attribution).
+- **Knowledge Graph Pruning** — Clicking a node in the D3 force graph opens a contextual panel with a **Prune Node** button. Pruned nodes are optimistically removed from the graph without a page reload.
+- **System Health Panel** — A live metrics panel pinned to the sidebar footer showing storage mode, session count, total chunk count, job queue status (pending / active / failed / idle pills), and Ollama reachability with model name. Polls every 10 seconds via `GET /api/health`.
 
 ### Backend
 
-- **`POST /api/graph/prune` endpoint** — New REST wrapper in `backend/src/routes/graph.ts` that exposes the existing internal `prune_memory` MCP tool to dashboard clients. Accepts `{ entities, sessionId }` and returns the count of deleted triples.
-- **Global Search: Graph Facts** — `POST /api/rag/global` now also calls `graphStore.findRelatedTriplesGlobal(entities)` and returns a `graphFacts` array alongside vector chunks, mirroring the behaviour of the session-scoped `/api/rag/retrieve` endpoint.
-- **Production Log Verbosity** — Downgraded storage-layer log calls from `info` to `debug` in `hyde.ts`, `embeddings.ts`, and `sqlite-session.ts`. Set `LOG_LEVEL=debug` to restore verbose output. Updated `backend/.env.example` to document `LOG_LEVEL` (replaces the undocumented `DEBUG` flag).
+- **`GET /api/health` endpoint** — New route returning live system metrics: session count, chunk count, job queue summary, active storage mode, and Ollama connectivity check (2 second timeout).
+- **`POST /api/graph/prune` endpoint** — REST wrapper exposing the internal `prune_memory` MCP tool to dashboard clients.
+- **Global Search: Graph Facts** — `POST /api/rag/global` now returns a `graphFacts` array (knowledge graph triples) alongside vector chunks, mirroring the session-scoped `/api/rag/retrieve` endpoint.
+- **Production Log Verbosity** — Downgraded storage-layer logs to `debug` level. Set `LOG_LEVEL=debug` to restore verbose output.
+
+### Extension
+
+- **Selector Failure Warning Badge** — When the extension fails to locate the chat input element on a supported platform due to a stale CSS selector, the popup now shows a yellow warning banner: *"Injection Failed — Could not connect to [Platform]. Selector may be stale."* with a **Report** link (GitHub Issues) and a **Dismiss** button. The status badge turns amber. State persists via `chrome.storage.local` and clears on dismiss.
 
 ### CI
 
-- **SQLite-native Pipeline Test** — Added `pipeline-tests-sqlite` job to `.github/workflows/integration-tests.yml`. Runs the full integration test suite with `GLIA_STORAGE_MODE=sqlite`, removing the requirement for ChromaDB and MongoDB service containers and reducing CI run time.
+- **SQLite-native Pipeline Test** — Added `pipeline-tests-sqlite` job to `.github/workflows/integration-tests.yml`. Runs the full integration test suite with `GLIA_STORAGE_MODE=sqlite`, removing the Docker service container requirement.
+- **Storage-Agnostic Integration Tests** — Refactored `pipeline.integration.test.ts` and `jobs.test.ts` to use the Unified Storage Interface (`initStorage()`, `sessionStore`, `vectorStore`). Tests auto-fallback to SQLite mode if `GLIA_STORAGE_MODE` is unset, creating and cleaning up a temporary `.db` file.
 
 ### Roadmap
 
-- **v1.5.3 added** — Rebrand & UI restructure milestone documenting the retirement of the "Glia" name (brand collision with an established fintech platform) and a planned dashboard layout overhaul (command palette, left-rail nav, consolidated settings, resizable panels).
+- **v1.5.3 added** — Rebrand & UI restructure milestone (name change due to brand collision, dashboard layout overhaul with command palette and left-rail nav).
 - **Former v1.5.3 promoted to v1.5.4** — Multi-turn summarisation, session merging, Ollama model switcher, and export/import.
+
 
 ---
 

@@ -15,45 +15,10 @@ Completed items are in [CHANGELOG.md](CHANGELOG.md).
 - **MCP Tool Improvements** — Add new tools to the MCP server for additional
   functionality and improve existing tools with more features.
 
-## v1.5.1 — Released
+## v1.5.2 — Released
 
-Core hardening, documentation overhaul, and CI improvements.
+Global search graph facts, system health panel, extension warning badge, storage-agnostic CI tests.
 See [CHANGELOG.md](CHANGELOG.md) for the full list.
-
----
-
-## v1.5.2 — In Progress
-
-### Dashboard
-
-- **Global Search Bar** — A search input in the dashboard UI that queries
-  `search_memory` across all projects and renders results with project
-  attribution. The backend tool already exists; this is a frontend addition.
-
-- **Knowledge Graph Pruning** — Click a node in the D3 force graph to
-  surface a "Prune" button that deletes the fact via the `prune_memory`
-  backend endpoint. Pure frontend addition.
-
-- **System Health Panel** — Live view of SQLite metrics: chunk count,
-  session count, job queue status, active storage mode, and Ollama status.
-
-### Backend
-
-- **Production Log Verbosity** — Move storage-layer logs (HyDE queries,
-  embedding batches, session lookups) from `info` to `debug` level so the
-  terminal is quiet in production. Set `LOG_LEVEL=debug` to restore them.
-
-### Extension
-
-- **Visible Error State** — When the extension fails to find the input
-  element on a supported platform (selector stale), show a warning badge
-  in the popup instead of silently skipping injection.
-
-### CI
-
-- **SQLite-native Pipeline Test** — Supplement or replace the Docker-
-  dependent `pipeline-tests` CI job with a SQLite-mode equivalent that
-  runs without ChromaDB or MongoDB service containers.
 
 ---
 

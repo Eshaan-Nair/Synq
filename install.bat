@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=glia"
 
 echo.
 echo  ===================================
-echo   GLIA v1.5.1 - Smart Installer
+echo   GLIA v1.5.2 - Smart Installer
 echo  ===================================
 echo.
 

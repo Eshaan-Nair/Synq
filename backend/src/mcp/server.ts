@@ -11,7 +11,7 @@
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
- * Updated: v1.5.1
+ * Updated: v1.5.2
  */
 process.env.GLIA_MCP_MODE = "true";
 
@@ -136,7 +136,7 @@ const TOOLS = [
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "glia-memory", version: "1.5.1" },
+  { name: "glia-memory", version: "1.5.2" },
   { capabilities: { tools: {}, resources: {} } }
 );
 

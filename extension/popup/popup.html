@@ -51,6 +51,20 @@
 
     <button id="inject-btn">Inject Context (one-time)</button>
 
+    <div id="selector-warning" class="selector-warning" style="display:none">
+      <div class="selector-warning-body">
+        <span class="selector-warning-icon">⚠</span>
+        <div>
+          <div class="selector-warning-title">Injection Failed</div>
+          <div class="selector-warning-msg" id="selector-warning-msg">Could not find chat input. Selector may be stale.</div>
+        </div>
+      </div>
+      <div class="selector-warning-actions">
+        <a class="selector-warning-link" href="https://github.com/Eshaan-Nair/Glia-AI/issues" target="_blank">Report</a>
+        <button class="selector-warning-dismiss" id="selector-dismiss-btn">Dismiss</button>
+      </div>
+    </div>
+
     <div id="status"></div>
 
     <script src="popup.js"></script>

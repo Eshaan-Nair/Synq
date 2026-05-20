@@ -176,14 +176,21 @@ async function handleSentenceIndexing(jobId: string, payload: { chunks: any[] })
         return;
       }
 
+      const cId = chunk.id || chunk.chunk_id;
       const sentences = chunk.content.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim().length >= 5);
       if (sentences.length === 0) continue;
+
+      // Check if chunk still exists (might have been deleted or overwritten by a re-save)
+      const exists = sqliteStore.db.prepare("SELECT 1 FROM chunk_metadata WHERE chunk_id = ?").get(cId);
+      if (!exists) {
+        logger.warn(`[Job Queue] Chunk ${cId} not found. Skipping sentence indexing (likely deleted).`);
+        continue;
+      }
 
       const sentEmbeddings = await generateEmbeddings(sentences, "document");
       
       sqliteStore.db.transaction(() => {
         for (let j = 0; j < sentences.length; j++) {
-          const cId = chunk.id || chunk.chunk_id;
           const sId = `${cId}_s${j}`;
           const sVec = Buffer.from(new Float32Array(sentEmbeddings[j]).buffer);
           

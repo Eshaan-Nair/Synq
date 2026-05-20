@@ -16,6 +16,7 @@ import chatRoutes from "./routes/chat";
 import ragRoutes from "./routes/rag";
 import sessionRoutes from "./routes/session";
 import jobsRoutes from "./routes/jobs";
+import healthRoutes from "./routes/health";
 
 
 // ── #9: .env validation — fail fast with a clear message ──────────
@@ -116,12 +117,13 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/rag", ragRoutes);
 app.use("/api/session", sessionRoutes);
 app.use("/api/jobs", jobsRoutes);
+app.use("/api/health", healthRoutes);
 
 // Health check — includes service status
 app.get("/health", (_req, res) => {
   res.json({
     status: "GLIA backend running",
-    version: "1.5.1",
+    version: "1.5.2",
     services: {
       backend: "ok",
       port: PORT,

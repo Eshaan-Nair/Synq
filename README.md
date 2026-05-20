@@ -13,7 +13,7 @@
 [![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/Glia-AI/forks)
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/issues)
 [![Downloads](https://img.shields.io/npm/dt/glia-ai-setup?style=for-the-badge&logo=npm&labelColor=0B0E14&color=CB3837)](https://www.npmjs.com/package/glia-ai-setup)
-[![Version](https://img.shields.io/badge/version-1.5.1-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.2-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 
 <br/>
@@ -63,7 +63,7 @@ GLIA stops the cycle. It captures your AI conversations, extracts structured fac
 - [Quality-of-Life Details](#quality-of-life-details)
 - [Architecture](#architecture)
 - [Privacy and Security](#privacy-and-security)
-- [What's New in v1.5.1](#whats-new-in-v151)
+- [What's New in v1.5.2](#whats-new-in-v152)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -631,15 +631,13 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## What's New in v1.5.1
+## What's New in v1.5.2
 
-- **100% Project Isolation** — MCP sessions are permanently anchored to project names. Cross-tenant memory leakage is architecturally impossible.
-- **Sentence Indexing Fixed** — Resolved a background worker payload mismatch that silently prevented sentence-level vectors from being stored.
-- **Delete-then-Insert** — Migrated vector updates to a conflict-safe pattern, eliminating SQLite virtual table `UNIQUE` constraint failures on re-save.
-- **WAL Mode** — Write-Ahead Logging enabled by default for all SQLite storage, enabling safe concurrent access from the MCP server and HTTP backend.
-- **Interface Parity** — Added `hybridSearch` to the `IVectorStore` interface, ensuring both Docker and SQLite backends expose the same API surface.
-- **Zero-Docker Documented** — Updated `MCP_SETUP.md` and `.env.example` to fully document the SQLite storage mode for new users.
-- **Global Version Sync** — Synchronized v1.5.1 across all package files, manifests, startup scripts, source comments, and documentation.
+- **Global Search Bar** — New debounced global search in the dashboard header querying across all projects with combined vector chunks and graph facts.
+- **Knowledge Graph Pruning** — Click a node in the graph to prune it instantly without a page reload.
+- **System Health Panel** — Live SQLite metrics, session count, job queue status, and Ollama connectivity pinned to the dashboard sidebar.
+- **Selector Warning Badge** — The extension popup now shows an amber warning banner if it fails to locate the chat input element due to a stale CSS selector.
+- **SQLite-Native CI Tests** — Refactored integration tests to use the Unified Storage Interface (`initStorage()`), automatically falling back to SQLite and removing Docker service container requirements in CI.
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
 

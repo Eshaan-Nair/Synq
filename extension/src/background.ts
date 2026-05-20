@@ -1,5 +1,5 @@
 /**
- * background.ts — v1.5.1
+ * background.ts — v1.5.2
  */
 
 import { GliaMessage } from "./types/messages";
@@ -89,6 +89,15 @@ chrome.runtime.onMessage.addListener((message: GliaMessage, _sender, sendRespons
     case "SESSION_CHANGED":
       // Content scripts send this to themselves — no handler needed in background
       return false;
+    case "REPORT_SELECTOR_FAILURE":
+      handleReportSelectorFailure(message.payload?.platform).then(sendResponse);
+      return true;
+    case "GET_SELECTOR_STATE":
+      handleGetSelectorState().then(sendResponse);
+      return true;
+    case "CLEAR_SELECTOR_FAILURE":
+      handleClearSelectorFailure().then(sendResponse);
+      return true;
     default:
       return false;
   }
@@ -334,3 +343,34 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     });
   }
 });
+
+// ── Selector Failure State ────────────────────────────────────────
+async function handleReportSelectorFailure(platform?: string) {
+  await chrome.storage.local.set({
+    glia_selector_failed: true,
+    glia_selector_failed_platform: platform || "unknown",
+  });
+  // Notify popup if it's open
+  chrome.runtime.sendMessage({
+    type: "SELECTOR_FAILURE_CHANGED",
+    payload: { failed: true, platform: platform || "unknown" },
+  }).catch(() => {});
+  return { ok: true };
+}
+
+async function handleGetSelectorState(): Promise<{ failed: boolean; platform: string }> {
+  const result = await chrome.storage.local.get(["glia_selector_failed", "glia_selector_failed_platform"]);
+  return {
+    failed: result.glia_selector_failed === true,
+    platform: (result.glia_selector_failed_platform as string) || "unknown",
+  };
+}
+
+async function handleClearSelectorFailure() {
+  await chrome.storage.local.remove(["glia_selector_failed", "glia_selector_failed_platform"]);
+  chrome.runtime.sendMessage({
+    type: "SELECTOR_FAILURE_CHANGED",
+    payload: { failed: false, platform: "unknown" },
+  }).catch(() => {});
+  return { ok: true };
+}

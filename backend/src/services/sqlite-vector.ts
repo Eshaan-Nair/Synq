@@ -214,8 +214,15 @@ export class SqliteVectorStore implements IVectorStore {
   }
 
   async retrieveGlobalChunks(query: string, topN = 3, keywords: string[] = []): Promise<RetrievedChunk[]> {
-    const hydeAnswer = await generateHyDEAnswer(query);
-    const augmentedQuery = `${query}\n${hydeAnswer}`;
+    const words = query.trim().split(/\s+/).filter(w => w.length > 0);
+    const isSingleWord = words.length <= 1;
+
+    let augmentedQuery = query;
+    if (!isSingleWord) {
+      const hydeAnswer = await generateHyDEAnswer(query);
+      augmentedQuery = `${query}\n${hydeAnswer}`;
+    }
+
     const queryEmbedding = await generateEmbedding(augmentedQuery, "query");
     const vector = Buffer.from(new Float32Array(queryEmbedding).buffer);
 

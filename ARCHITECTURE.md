@@ -194,6 +194,10 @@ These schemas apply to both **SQLite tables** and **MongoDB collections**.
 | `RESUME_GLIA` | popup → content | Resume interception |
 | `INJECT_NOW` | popup → content | One-time injection |
 | `PING` | popup → content | Check if content script is alive |
+| `REPORT_SELECTOR_FAILURE` | content → background | Report stale CSS selector |
+| `GET_SELECTOR_STATE` | popup → background | Read selector warning state |
+| `CLEAR_SELECTOR_FAILURE`| popup → background | Dismiss selector warning |
+| `SELECTOR_FAILURE_CHANGED`| background → popup (broadcast) | Live selector state update |
 
 ### Selector Strategy
 

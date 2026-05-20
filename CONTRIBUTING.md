@@ -115,7 +115,7 @@ type(scope): short description
 Examples:
 feat(extension): add Example platform support
 fix(rag): lower similarity threshold for shorter queries
-docs(readme): update quick start for v1.5.1
+docs(readme): update quick start for v1.5.2
 test(pipeline): add edge case for empty conversation
 chore(deps): bump chromadb to 0.6.4
 ```

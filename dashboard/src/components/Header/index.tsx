@@ -80,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({
           <>
             <span className="header-project-name">{activeSession.projectName}</span>
             <span className="header-meta" style={{ opacity: 0.5, fontSize: "12px", marginLeft: "12px" }}>
-              {nodeCount} nodes · {linkCount} edges
+              {nodeCount} nodes · {linkCount} edges · {activeSession.topicCount || 0} chunks
             </span>
             {selectedNodeId && (
               <div

@@ -23,4 +23,7 @@ export type GliaMessage =
   | { type: "INJECT_NOW" }
   | { type: "PAUSE_GLIA" }
   | { type: "RESUME_GLIA" }
-  | { type: "SESSION_CHANGED"; payload: { sessionId: string | null; projectName?: string } };
+  | { type: "SESSION_CHANGED"; payload: { sessionId: string | null; projectName?: string } }
+  | { type: "REPORT_SELECTOR_FAILURE"; payload?: { platform: Platform } }
+  | { type: "GET_SELECTOR_STATE" }
+  | { type: "CLEAR_SELECTOR_FAILURE" };

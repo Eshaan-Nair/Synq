@@ -811,3 +811,124 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .clear-btn:hover {
   background: rgba(248, 81, 73, 0.1);
 }
+
+/* ── Sidebar Footer & System Health Panel ─────────────────────────── */
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.system-health-panel {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.health-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.health-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.health-updated {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.health-loading {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 8px 0;
+}
+
+.health-error {
+  font-size: 11px;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.health-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.health-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.health-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.health-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.health-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+}
+
+.health-queue {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.queue-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.queue-pill.pending { background: rgba(251, 191, 36, 0.15); color: #FBbf24; }
+.queue-pill.processing { background: rgba(129, 140, 248, 0.15); color: var(--primary); }
+.queue-pill.failed { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+.queue-pill.idle { background: rgba(52, 211, 153, 0.1); color: #34D399; }
+
+.health-ollama {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.health-indicator {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.health-indicator.green { background: #34D399; box-shadow: 0 0 6px #34D399; }
+.health-indicator.red { background: var(--danger); box-shadow: 0 0 6px var(--danger); }

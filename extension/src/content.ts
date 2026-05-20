@@ -1,7 +1,7 @@
 /**
- * GLIA content.ts — v1.5.1
+ * GLIA content.ts — v1.5.2
  *
- * Fix: History-aware sentence trimming + authoritative headers.
+ * feat: Selector failure detection — reports stale input selectors to popup.
  * 
  * Note: Use execCommand("insertText") which triggers the browser's native
  * input pipeline and is correctly intercepted by all frameworks. Fall back
@@ -117,7 +117,7 @@ function handleUrlChange() {
 
 async function init() {
   seenMessageFingerprints.clear();
-  log.info(`[GLIA] v1.5.1 active on: ${platform}`);
+  log.info(`[GLIA] v1.5.2 active on: ${platform}`);
 
   const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
   if (activeData?.activeSession) {
@@ -315,7 +315,11 @@ async function handlePromptKeydown(e: KeyboardEvent) {
   const now = Date.now();
   if (now - lastSendTimestamp < 300) return;
   const input = queryOne(config.inputSelectors);
-  if (!input || !document.activeElement?.closest(config.inputSelectors.join(","))) return;
+  if (!input) {
+    reportSelectorFailure();
+    return;
+  }
+  if (!document.activeElement?.closest(config.inputSelectors.join(","))) return;
   const promptText = input.textContent?.trim() || (input as HTMLTextAreaElement).value?.trim() || "";
   if (!promptText || promptText.length < 5) return;
   lastSendTimestamp = now;
@@ -332,7 +336,10 @@ async function handleSendButtonClick(e: MouseEvent) {
   const now = Date.now();
   if (now - lastSendTimestamp < 300) return;
   const input = queryOne(config.inputSelectors);
-  if (!input) return;
+  if (!input) {
+    reportSelectorFailure();
+    return;
+  }
   const promptText = input.textContent?.trim() || (input as HTMLTextAreaElement).value?.trim() || "";
   if (!promptText || promptText.length < 5) return;
   lastSendTimestamp = now;
@@ -638,6 +645,18 @@ function showToast(message: string) {
   toast.textContent = message;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 4000);
+}
+
+// ── Selector failure reporting ─────────────────────────────────────
+let _selectorFailureReported = false;
+function reportSelectorFailure() {
+  if (_selectorFailureReported) return; // Only report once per page load
+  _selectorFailureReported = true;
+  log.warn(`[GLIA] Input selector not found on ${platform}. Reporting failure to popup.`);
+  chrome.runtime.sendMessage({
+    type: "REPORT_SELECTOR_FAILURE",
+    payload: { platform },
+  }).catch(() => {});
 }
 
 // ── Messaging ─────────────────────────────────────────────────────

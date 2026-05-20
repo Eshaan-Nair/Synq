@@ -2,6 +2,7 @@ import React from "react";
 import SidebarHeader from "./SidebarHeader";
 import ProjectList from "./ProjectList";
 import Legend from "./Legend";
+import { SystemHealth } from "../SystemHealth";
 import type { Session } from "../../types";
 
 interface SidebarProps {
@@ -73,6 +74,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             onFilterToggle={onFilterToggle}
           />
         )}
+      </div>
+
+      <div className="sidebar-footer">
+        <SystemHealth />
       </div>
     </aside>
   );

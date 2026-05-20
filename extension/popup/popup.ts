@@ -1,4 +1,4 @@
-// popup.ts — v1.5.1
+// popup.ts — v1.5.2
 // Replaced Connect/Disconnect with a Pause toggle
 // Auto-connect happens in content.ts on init — popup only shows state + pause control
 
@@ -24,6 +24,9 @@ const detectedPlatformEl = document.getElementById("detected-platform") as HTMLE
 const platformDot = document.getElementById("platform-dot") as HTMLElement;
 const gliaStatusBadge = document.getElementById("glia-status-badge") as HTMLElement;
 const projectNameInput = document.getElementById("project-name") as HTMLInputElement;
+const selectorWarningEl = document.getElementById("selector-warning") as HTMLElement;
+const selectorWarningMsgEl = document.getElementById("selector-warning-msg") as HTMLElement;
+const selectorDismissBtn = document.getElementById("selector-dismiss-btn") as HTMLButtonElement;
 
 const PLATFORM_LABELS: Record<Platform, string> = {
   claude: "Claude (claude.ai)",
@@ -191,6 +194,13 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
   await Promise.all([sessionPromise, pausePromise]);
   pauseToggleBtn.disabled = false; // Always allow pausing/resuming
   updatePauseUI();
+
+  // Check for a pending selector failure from the last session
+  chrome.runtime.sendMessage({ type: "GET_SELECTOR_STATE" }, (response) => {
+    if (response?.failed) {
+      showSelectorWarning(response.platform);
+    }
+  });
 })();
 
 // ── Save Chat ─────────────────────────────────────────────────────
@@ -421,6 +431,14 @@ chrome.runtime.onMessage.addListener((message) => {
     }
     updatePauseUI();
   }
+
+  if (message.type === "SELECTOR_FAILURE_CHANGED") {
+    if (message.payload?.failed) {
+      showSelectorWarning(message.payload.platform);
+    } else {
+      hideSelectorWarning();
+    }
+  }
 });
 
 // ── Inject Context (one-time) ─────────────────────────────────────
@@ -475,3 +493,28 @@ function setStatus(msg: string, type: "ok" | "error" | "warn" = "ok") {
   statusEl.className = type;
   if (type === "ok") setTimeout(() => (statusEl.textContent = ""), 6000);
 }
+
+// ── Selector Warning Banner ────────────────────────────────────────
+function showSelectorWarning(platform: string) {
+  selectorWarningMsgEl.textContent =
+    `Could not connect to ${capitalize(platform)}. Selector may be stale.`;
+  selectorWarningEl.style.display = "block";
+  // Also update the glia status badge to warning
+  gliaStatusBadge.textContent = "⚠ Injection Failed";
+  gliaStatusBadge.className = "glia-status warning";
+}
+
+function hideSelectorWarning() {
+  selectorWarningEl.style.display = "none";
+  updatePauseUI(); // Restore normal badge
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ── Dismiss button ─────────────────────────────────────────────────
+selectorDismissBtn.addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "CLEAR_SELECTOR_FAILURE" });
+  hideSelectorWarning();
+});

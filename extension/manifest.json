@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GLIA - AI Memory Layer",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Persistent memory layer for AI chats",
   "permissions": [
     "storage",
