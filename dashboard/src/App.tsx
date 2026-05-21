@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import GraphView from "./components/GraphView";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-import FloatingPanel from "./components/Panels/FloatingPanel";
 import MainLayout from "./components/Layout/MainLayout";
+import { GlobalSearchView } from "./components/GlobalSearchView";
+import FloatingPanel from "./components/Panels/FloatingPanel";
 
 import { apiClient, extractErrorMessage } from "./api/glia";
 import type { Session } from "./types";
@@ -14,11 +15,26 @@ import { PAGE_SIZE } from "./constants";
 const App: React.FC = () => {
   // Navigation & UI State
   const [activeSession, setActiveSession] = useState<Session | null>(null);
-  const [activeTab, setActiveTab] = useState<"history" | "chat" | null>("history");
+  const [activeMainTab, setActiveMainTab] = useState<"graph" | "search">("graph");
+  const [activeSideTab, setActiveSideTab] = useState<"history" | "chat" | null>("history");
   const [loadedToExtension, setLoadedToExtension] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isClosed, setIsClosed] = useState(false);
+  const [isClosed, setIsClosed] = useState(true);
+
+  const loadIntoExtension = async () => {
+    if (!activeSession) return;
+    try {
+      const resp = await apiClient.post("/api/context/active", { sessionId: activeSession._id });
+      if (resp.data.success) {
+        setLoadedToExtension(true);
+        setTimeout(() => setLoadedToExtension(false), 3000);
+      }
+    } catch (err) {
+      setError(`Failed to sync: ${extractErrorMessage(err)}`);
+    }
+  };
+
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [graphTypeFilter, setGraphTypeFilter] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<"projects" | "legend">("projects");
@@ -75,19 +91,6 @@ const App: React.FC = () => {
       setJobStatus({ pending: 0, processing: 0, deadLettered: 0 });
     }
   }, [activeSession, loadSessionData]);
-
-  const loadIntoExtension = async () => {
-    if (!activeSession) return;
-    try {
-      const resp = await apiClient.post("/api/context/active", { sessionId: activeSession._id });
-      if (resp.data.success) {
-        setLoadedToExtension(true);
-        setTimeout(() => setLoadedToExtension(false), 3000);
-      }
-    } catch (err) {
-      setError(`Failed to sync: ${extractErrorMessage(err)}`);
-    }
-  };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -227,31 +230,52 @@ const App: React.FC = () => {
       />
 
       <Header
-        activeSession={activeSession}
-        nodeCount={nodes.length}
-        linkCount={links.length}
-        selectedNodeId={selectedNodeId}
-        setSelectedNodeId={setSelectedNodeId}
-        graphTypeFilter={graphTypeFilter}
-        setGraphTypeFilter={setGraphTypeFilter}
+        activeMainTab={activeMainTab as any}
+        setActiveMainTab={setActiveMainTab as any}
+        activeSideTab={activeSideTab}
+        setActiveSideTab={setActiveSideTab}
+        isClosed={isClosed}
+        setIsClosed={setIsClosed}
         loadedToExtension={loadedToExtension}
         loadIntoExtension={loadIntoExtension}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        setIsClosed={setIsClosed}
       />
 
-      <main className="background-graph">
-        <GraphView
-          nodes={nodes}
-          links={links}
-          onNodeClick={setSelectedNodeId}
-          selectedNodeId={selectedNodeId}
-          filterType={graphTypeFilter}
-          minDegree={minDegree}
-          setMinDegree={setMinDegree}
-          activeSessionId={activeSession?._id}
+      <main className="background-graph" style={{ zIndex: 1 }}>
+        <div style={{ position: "absolute", inset: 0, opacity: activeMainTab === "search" ? 0 : 1, pointerEvents: activeMainTab === "search" ? "none" : "auto", transition: "opacity 0.2s" }}>
+          <GraphView
+            nodes={nodes}
+            links={links}
+            onNodeClick={setSelectedNodeId}
+            selectedNodeId={selectedNodeId}
+            filterType={graphTypeFilter}
+            minDegree={minDegree}
+            setMinDegree={setMinDegree}
+            activeSessionId={activeSession?._id}
+          />
+        </div>
+        
+        <FloatingPanel
+          isClosed={isClosed}
+          setIsClosed={setIsClosed}
+          isExpanded={isExpanded}
+          setIsExpanded={setIsExpanded}
+          activeTab={activeSideTab || "history"}
+          loadingSession={loadingSession}
+          pagedTriples={pagedTriples}
+          factsPage={factsPage}
+          setFactsPage={setFactsPage}
+          factSearch={factSearch}
+          setFactSearch={setFactSearch}
+          totalPages={totalPages}
+          chatData={chatData}
+          activeSession={activeSession}
         />
+
+        {activeMainTab === "search" && (
+          <div style={{ position: "absolute", top: 0, left: 240, right: 0, bottom: 0, zIndex: 10, background: "var(--bg-deep)", overflowY: "auto" }}>
+            <GlobalSearchView />
+          </div>
+        )}
         {(activeSession?.isProcessingGraph || jobStatus.pending > 0 || jobStatus.processing > 0) && (
           <div className="job-status-bar centered-progress">
             <div className="status-header">
@@ -273,23 +297,6 @@ const App: React.FC = () => {
         )}
 
       </main>
-
-      <FloatingPanel
-        isClosed={isClosed}
-        setIsClosed={setIsClosed}
-        isExpanded={isExpanded}
-        setIsExpanded={setIsExpanded}
-        activeTab={activeTab}
-        loadingSession={loadingSession}
-        pagedTriples={pagedTriples}
-        factsPage={factsPage}
-        setFactsPage={setFactsPage}
-        factSearch={factSearch}
-        setFactSearch={setFactSearch}
-        totalPages={totalPages}
-        chatData={chatData}
-        activeSession={activeSession}
-      />
 
       {currentError && (
         <div className="error-banner">

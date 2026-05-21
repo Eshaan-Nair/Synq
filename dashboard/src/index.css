@@ -85,7 +85,7 @@ body {
   top: 0;
   left: 0;
   bottom: 0;
-  width: 280px;
+  width: 240px;
   background: var(--surface);
   backdrop-filter: var(--surface-blur);
   border-right: 1px solid var(--border-main);
@@ -266,7 +266,7 @@ body {
 .top-header {
   position: absolute;
   top: 0;
-  left: 280px; /* Offset by sidebar width */
+  left: 240px; /* Offset by sidebar width */
   right: 0;
   height: 64px;
   background: var(--surface);
@@ -460,7 +460,7 @@ body {
 .graph-controls {
   position: absolute;
   bottom: 24px;
-  left: 304px;
+  left: 264px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -493,7 +493,7 @@ body {
 .graph-settings-panel {
   position: absolute;
   bottom: 24px;
-  left: 340px;
+  left: 300px;
   background: var(--surface);
   backdrop-filter: var(--surface-blur);
   border: 1px solid var(--border-main);

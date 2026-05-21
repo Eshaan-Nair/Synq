@@ -130,12 +130,9 @@ export default function GraphView({
       });
     };
 
-    const visibleNodes = processedData.nodes.filter(n => !n.hidden);
-    const visibleLinks = processedData.links.filter(l => !l.hidden);
-
     if (!simulationRef.current) {
-      simulationRef.current = d3.forceSimulation<Node>(visibleNodes)
-        .force("link", d3.forceLink<Node, Link>(visibleLinks)
+      simulationRef.current = d3.forceSimulation<Node>(processedData.nodes)
+        .force("link", d3.forceLink<Node, Link>(processedData.links)
           .id(d => d.id)
           .distance(link => {
             const baseDist = 200;
@@ -145,12 +142,12 @@ export default function GraphView({
           })
           .strength(0.4)
         )
-        .force("charge", d3.forceManyBody().strength(visibleNodes.length > 500 ? -400 : -800))
+        .force("charge", d3.forceManyBody().strength(processedData.nodes.length > 500 ? -400 : -800))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force("radial", d3.forceRadial(0, width / 2, height / 2).strength(0.015))
         .force("x", d3.forceX(width / 2).strength(d => (d as any).degree === 0 ? 0.25 : 0.12))
         .force("y", d3.forceY(height / 2).strength(d => (d as any).degree === 0 ? 0.25 : 0.12))
-        .force("collision", d3.forceCollide<Node>(d => getNodeRadius(d.degree || 0) + (visibleNodes.length > 500 ? 10 : 35)))
+        .force("collision", d3.forceCollide<Node>(d => getNodeRadius(d.degree || 0) + (processedData.nodes.length > 500 ? 10 : 35)))
         .force("wander", wanderForce)
         .alphaDecay(0.05)
         .alphaMin(0.001)
@@ -158,11 +155,11 @@ export default function GraphView({
         .velocityDecay(0.45);
     } else {
       const prevNodes = simulationRef.current.nodes();
-      const hasChanged = prevNodes.length !== visibleNodes.length || 
-                         (simulationRef.current.force("link") as any).links().length !== visibleLinks.length;
+      const hasChanged = prevNodes.length !== processedData.nodes.length || 
+                         (simulationRef.current.force("link") as any).links().length !== processedData.links.length;
 
-      simulationRef.current.nodes(visibleNodes);
-      (simulationRef.current.force("link") as d3.ForceLink<Node, Link>).links(visibleLinks);
+      simulationRef.current.nodes(processedData.nodes);
+      (simulationRef.current.force("link") as d3.ForceLink<Node, Link>).links(processedData.links);
       simulationRef.current.force("radial", d3.forceRadial(0, width / 2, height / 2).strength(0.015));
       simulationRef.current.force("center", d3.forceCenter(width / 2, height / 2));
       simulationRef.current.force("x", d3.forceX(width / 2).strength(d => (d as any).degree === 0 ? 0.25 : 0.12));
@@ -512,8 +509,8 @@ export default function GraphView({
       )}
 
       {selectedNode && !prunedNodes.has(selectedNode.id) && (
-        <div className="graph-settings-panel" style={{ bottom: "20px", top: "auto", right: "20px" }}>
-          <div className="settings-title" style={{ color: TYPE_COLORS[selectedNode.type] }}>
+        <div className="graph-settings-panel" style={{ bottom: "20px", top: "auto", right: "20px", left: "auto" }}>
+          <div className="settings-title" style={{ color: TYPE_COLORS[selectedNode.type], wordBreak: "break-all" }}>
             {selectedNode.id}
           </div>
           <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginBottom: "12px" }}>
