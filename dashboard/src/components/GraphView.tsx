@@ -17,6 +17,7 @@ interface Props {
   onNodeClick?: (nodeId: string | null) => void;
   selectedNodeId?: string | null;
   filterType?: string | null;
+  setFilterType?: (type: string | null) => void;
   minDegree: number;
   setMinDegree: (val: number) => void;
   activeSessionId?: string;
@@ -43,6 +44,7 @@ export default function GraphView({
   onNodeClick, 
   selectedNodeId, 
   filterType,
+  setFilterType,
   minDegree,
   setMinDegree,
   activeSessionId
@@ -384,7 +386,7 @@ export default function GraphView({
     simulationRef.current?.on("tick", draw);
 
     const zoom = d3.zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent([0.15, 5])
+      .scaleExtent([0.02, 10])
       .on("zoom", (event) => {
         transformRef.current = event.transform;
         draw();
@@ -472,6 +474,31 @@ export default function GraphView({
           if (!canvas || !zoomRef.current) return;
           d3.select(canvas).transition().duration(400).call(zoomRef.current.transform, d3.zoomIdentity);
         }} className="graph-btn">⟲</button>
+        <button title="Fit to screen" onClick={() => {
+          const canvas = canvasRef.current;
+          if (!canvas || !zoomRef.current || !simulationRef.current) return;
+          const allNodes = simulationRef.current.nodes().filter(n => n.x != null && n.y != null);
+          if (allNodes.length === 0) return;
+          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          allNodes.forEach(n => {
+            if (n.x! < minX) minX = n.x!;
+            if (n.x! > maxX) maxX = n.x!;
+            if (n.y! < minY) minY = n.y!;
+            if (n.y! > maxY) maxY = n.y!;
+          });
+          const padding = 40;
+          const w = canvas.clientWidth;
+          const h = canvas.clientHeight;
+          const scaleX = (w - padding * 2) / (maxX - minX || 1);
+          const scaleY = (h - padding * 2) / (maxY - minY || 1);
+          const scale = Math.min(scaleX, scaleY, 5);
+          const tx = w / 2 - scale * (minX + maxX) / 2;
+          const ty = h / 2 - scale * (minY + maxY) / 2;
+          d3.select(canvas).transition().duration(500).call(
+            zoomRef.current.transform,
+            d3.zoomIdentity.translate(tx, ty).scale(scale)
+          );
+        }} className="graph-btn" style={{ fontSize: "16px", lineHeight: 1 }}>⤢</button>
         <button title="Settings" onClick={() => setShowSettings(!showSettings)} className={`graph-btn ${showSettings ? "active" : ""}`}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="12" cy="12" r="3"></circle>
@@ -532,7 +559,7 @@ export default function GraphView({
         {filterType && (
           <div 
             style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--surface)", border: `1px solid ${TYPE_COLORS[filterType]}`, padding: "4px 10px", borderRadius: "12px", fontSize: "12px", cursor: "pointer", color: TYPE_COLORS[filterType], fontWeight: 600, backdropFilter: "blur(4px)" }}
-            onClick={(e) => { e.stopPropagation(); onFilterToggle?.(filterType); }}
+            onClick={(e) => { e.stopPropagation(); setFilterType?.(null); }}
           >
             {filterType}
             <span style={{ fontSize: "14px", lineHeight: 1 }}>×</span>

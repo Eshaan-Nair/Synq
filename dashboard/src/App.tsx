@@ -252,6 +252,7 @@ const App: React.FC = () => {
             onNodeClick={setSelectedNodeId}
             selectedNodeId={selectedNodeId}
             filterType={graphTypeFilter}
+            setFilterType={setGraphTypeFilter}
             minDegree={minDegree}
             setMinDegree={setMinDegree}
             activeSessionId={activeSession?._id}

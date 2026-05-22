@@ -1,5 +1,4 @@
 import React from "react";
-import { TYPE_COLORS } from "../../constants";
 
 interface HeaderProps {
   activeMainTab: "graph" | "search";
@@ -10,10 +9,6 @@ interface HeaderProps {
   setIsClosed: (closed: boolean) => void;
   loadedToExtension: boolean;
   loadIntoExtension: () => void;
-  filterType?: string | null;
-  setFilterType?: (type: string | null) => void;
-  selectedNodeId?: string | null;
-  setSelectedNodeId?: (id: string | null) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
