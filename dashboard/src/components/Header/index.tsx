@@ -1,4 +1,5 @@
 import React from "react";
+import { TYPE_COLORS } from "../../constants";
 
 interface HeaderProps {
   activeMainTab: "graph" | "search";
@@ -9,13 +10,43 @@ interface HeaderProps {
   setIsClosed: (closed: boolean) => void;
   loadedToExtension: boolean;
   loadIntoExtension: () => void;
+  filterType?: string | null;
+  setFilterType?: (type: string | null) => void;
+  selectedNodeId?: string | null;
+  setSelectedNodeId?: (id: string | null) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ activeMainTab, setActiveMainTab, activeSideTab, setActiveSideTab, isClosed, setIsClosed, loadedToExtension, loadIntoExtension }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  activeMainTab, setActiveMainTab, activeSideTab, setActiveSideTab, 
+  isClosed, setIsClosed, loadedToExtension, loadIntoExtension,
+  filterType, setFilterType, selectedNodeId, setSelectedNodeId
+}) => {
   return (
     <div style={{ position: "absolute", top: "16px", left: "264px", right: "24px", zIndex: 100, display: "flex", justifyContent: "space-between", padding: "6px 12px", background: "var(--surface)", border: "1px solid var(--border-main)", borderRadius: "12px", backdropFilter: "var(--surface-blur)", alignItems: "center" }}>
-      {/* Spacer to keep center tabs exactly centered */}
-      <div style={{ flex: 1 }}></div>
+      {/* Left Tabs */}
+      <div style={{ flex: 1, display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "12px" }}>
+        <button className={`tab-btn ${loadedToExtension ? "active" : ""}`} onClick={loadIntoExtension}>
+          {loadedToExtension ? "Loaded" : "Load Session"}
+        </button>
+        {filterType && (
+          <div 
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--surface)", border: `1px solid ${TYPE_COLORS[filterType]}`, padding: "4px 10px", borderRadius: "12px", fontSize: "12px", cursor: "pointer", color: TYPE_COLORS[filterType], fontWeight: 600 }}
+            onClick={() => setFilterType?.(null)}
+          >
+            {filterType}
+            <span style={{ fontSize: "14px", lineHeight: 1 }}>×</span>
+          </div>
+        )}
+        {selectedNodeId && (
+          <div 
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--surface)", border: `1px solid var(--border-dim)`, padding: "4px 10px", borderRadius: "12px", fontSize: "12px", cursor: "pointer", color: "var(--text-primary)", fontWeight: 600 }}
+            onClick={() => setSelectedNodeId?.(null)}
+          >
+            {selectedNodeId.length > 15 ? selectedNodeId.slice(0, 15) + "..." : selectedNodeId}
+            <span style={{ fontSize: "14px", lineHeight: 1 }}>×</span>
+          </div>
+        )}
+      </div>
 
       {/* Center Tabs */}
       <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
@@ -25,6 +56,18 @@ const Header: React.FC<HeaderProps> = ({ activeMainTab, setActiveMainTab, active
         >
           Knowledge Graph
         </button>
+        <button 
+          className={`tab-btn ${!isClosed && activeSideTab === "history" ? "active" : ""}`} 
+          onClick={() => { setActiveSideTab("history"); setIsClosed(false); }}
+        >
+          Facts
+        </button>
+        <button 
+          className={`tab-btn ${!isClosed && activeSideTab === "chat" ? "active" : ""}`} 
+          onClick={() => { setActiveSideTab("chat"); setIsClosed(false); }}
+        >
+          Chat
+        </button>
         <button
           className={`tab-btn ${activeMainTab === "search" ? "active" : ""}`}
           onClick={() => setActiveMainTab("search")}
@@ -33,19 +76,8 @@ const Header: React.FC<HeaderProps> = ({ activeMainTab, setActiveMainTab, active
         </button>
       </div>
 
-      {/* Right Tabs */}
-      <div style={{ flex: 1, display: "flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
-        <button className={`tab-btn ${loadedToExtension ? "active" : ""}`} onClick={loadIntoExtension}>
-          {loadedToExtension ? "Loaded" : "Load Extension"}
-        </button>
-        <div style={{ width: "1px", height: "16px", background: "var(--border-dim)", margin: "0 4px" }} />
-        <button className={`tab-btn ${!isClosed && activeSideTab === "history" ? "active" : ""}`} onClick={() => { setActiveSideTab("history"); setIsClosed(false); }}>
-          Facts
-        </button>
-        <button className={`tab-btn ${!isClosed && activeSideTab === "chat" ? "active" : ""}`} onClick={() => { setActiveSideTab("chat"); setIsClosed(false); }}>
-          Chat
-        </button>
-      </div>
+      {/* Right Spacer */}
+      <div style={{ flex: 1 }}></div>
     </div>
   );
 };

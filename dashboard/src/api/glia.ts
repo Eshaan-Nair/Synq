@@ -61,8 +61,8 @@ export async function searchGlobal(prompt: string) {
   };
 }
 
-export async function pruneGraphNode(prompt: string, sessionId?: string) {
-  const res = await apiClient.post(`/api/graph/prune`, { prompt, sessionId });
+export async function pruneGraphNode(nodeId: string, sessionId?: string) {
+  const res = await apiClient.post(`/api/graph/prune`, { nodeId, sessionId });
   return res.data;
 }
 

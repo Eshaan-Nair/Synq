@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { graphStore } from "../services/storage";
+import { graphStore, vectorStore, sessionStore } from "../services/storage";
 import { logger } from "../utils/logger";
 import { isValidObjectId } from "../utils/validators";
 import { prune } from "../mcp/tools/prune";
@@ -58,10 +58,31 @@ router.get("/session/:sessionId", async (req: Request, res: Response) => {
 // POST /api/graph/prune
 // Exposes the prune_memory MCP tool logic to the dashboard
 router.post("/prune", async (req: Request, res: Response) => {
-  const { prompt, sessionId } = req.body;
+  const { prompt, nodeId, sessionId } = req.body;
   
+  if (nodeId) {
+    try {
+      const factsDeleted = await graphStore.deleteTriples([nodeId], sessionId);
+      const chunksDeleted = await vectorStore.deleteChunksByQuery(nodeId, sessionId);
+      if (sessionId) {
+        const session = await sessionStore.getSession(sessionId);
+        if (session) {
+          await sessionStore.updateSession(sessionId, {
+            tripleCount: Math.max(0, (session.tripleCount || 0) - factsDeleted),
+            updatedAt: new Date()
+          });
+        }
+      }
+      res.json({ success: true, message: `Deleted ${nodeId}` });
+    } catch (err) {
+      logger.error("Graph node deletion failed:", err);
+      res.status(500).json({ error: "Failed to delete node" });
+    }
+    return;
+  }
+
   if (!prompt) {
-    res.status(400).json({ error: "prompt is required" });
+    res.status(400).json({ error: "prompt or nodeId is required" });
     return;
   }
 

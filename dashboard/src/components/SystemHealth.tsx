@@ -53,7 +53,7 @@ export function SystemHealth() {
 
   return (
     <div className="system-health-panel">
-      <div className="health-header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="health-header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isCollapsed ? 0 : "10px" }}>
         <div>
           <span className="health-title">System Health</span>
           {lastUpdated && !isCollapsed && (
