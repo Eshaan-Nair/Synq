@@ -13,41 +13,40 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ activeMainTab, setActiveMainTab, activeSideTab, setActiveSideTab, isClosed, setIsClosed, loadedToExtension, loadIntoExtension }) => {
   return (
-    <>
+    <div style={{ position: "absolute", top: "16px", left: "264px", right: "24px", zIndex: 100, display: "flex", justifyContent: "space-between", padding: "6px 12px", background: "var(--surface)", border: "1px solid var(--border-main)", borderRadius: "12px", backdropFilter: "var(--surface-blur)", alignItems: "center" }}>
+      {/* Spacer to keep center tabs exactly centered */}
+      <div style={{ flex: 1 }}></div>
+
       {/* Center Tabs */}
-      <div style={{ position: "absolute", top: "16px", left: "calc(50% + 120px)", transform: "translateX(-50%)", zIndex: 100 }}>
-        <div className="unified-action-bar" style={{ display: "flex", gap: "8px", padding: "6px", background: "var(--surface)", border: "1px solid var(--border-main)", borderRadius: "12px", backdropFilter: "var(--surface-blur)" }}>
-          <button
-            className={`tab-btn ${activeMainTab === "graph" ? "active" : ""}`}
-            onClick={() => setActiveMainTab("graph")}
-          >
-            Knowledge Graph
-          </button>
-          <button
-            className={`tab-btn ${activeMainTab === "search" ? "active" : ""}`}
-            onClick={() => setActiveMainTab("search")}
-          >
-            Global Search
-          </button>
-        </div>
+      <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+        <button
+          className={`tab-btn ${activeMainTab === "graph" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("graph")}
+        >
+          Knowledge Graph
+        </button>
+        <button
+          className={`tab-btn ${activeMainTab === "search" ? "active" : ""}`}
+          onClick={() => setActiveMainTab("search")}
+        >
+          Global Search
+        </button>
       </div>
 
       {/* Right Tabs */}
-      <div style={{ position: "absolute", top: "16px", right: "24px", zIndex: 100 }}>
-        <div className="unified-action-bar" style={{ display: "flex", gap: "8px", padding: "6px", background: "var(--surface)", border: "1px solid var(--border-main)", borderRadius: "12px", backdropFilter: "var(--surface-blur)", alignItems: "center" }}>
-          <button className={`tab-btn ${loadedToExtension ? "active" : ""}`} onClick={loadIntoExtension}>
-            {loadedToExtension ? "Loaded" : "Load Extension"}
-          </button>
-          <div style={{ width: "1px", height: "16px", background: "var(--border-dim)", margin: "0 4px" }} />
-          <button className={`tab-btn ${!isClosed && activeSideTab === "history" ? "active" : ""}`} onClick={() => { setActiveSideTab("history"); setIsClosed(false); }}>
-            Facts
-          </button>
-          <button className={`tab-btn ${!isClosed && activeSideTab === "chat" ? "active" : ""}`} onClick={() => { setActiveSideTab("chat"); setIsClosed(false); }}>
-            Chat
-          </button>
-        </div>
+      <div style={{ flex: 1, display: "flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
+        <button className={`tab-btn ${loadedToExtension ? "active" : ""}`} onClick={loadIntoExtension}>
+          {loadedToExtension ? "Loaded" : "Load Extension"}
+        </button>
+        <div style={{ width: "1px", height: "16px", background: "var(--border-dim)", margin: "0 4px" }} />
+        <button className={`tab-btn ${!isClosed && activeSideTab === "history" ? "active" : ""}`} onClick={() => { setActiveSideTab("history"); setIsClosed(false); }}>
+          Facts
+        </button>
+        <button className={`tab-btn ${!isClosed && activeSideTab === "chat" ? "active" : ""}`} onClick={() => { setActiveSideTab("chat"); setIsClosed(false); }}>
+          Chat
+        </button>
       </div>
-    </>
+    </div>
   );
 };
 

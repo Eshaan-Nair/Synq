@@ -14,8 +14,8 @@ export function getDynamicColor(type: string): string {
   if (STATIC_TYPE_COLORS[type]) return STATIC_TYPE_COLORS[type];
   let hash = 0;
   for (let i = 0; i < type.length; i++) hash = type.charCodeAt(i) + ((hash << 5) - hash);
-  const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-  return "#" + "00000".substring(0, 6 - c.length) + c;
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 70%, 55%)`;
 }
 
 export const TYPE_COLORS = new Proxy(STATIC_TYPE_COLORS, {

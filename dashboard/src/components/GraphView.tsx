@@ -509,7 +509,7 @@ export default function GraphView({
       )}
 
       {selectedNode && !prunedNodes.has(selectedNode.id) && (
-        <div className="graph-settings-panel" style={{ bottom: "20px", top: "auto", right: "20px", left: "auto" }}>
+        <div className="graph-settings-panel" style={{ bottom: "auto", top: "24px", left: "264px", right: "auto" }}>
           <div className="settings-title" style={{ color: TYPE_COLORS[selectedNode.type], wordBreak: "break-all" }}>
             {selectedNode.id}
           </div>
@@ -518,14 +518,14 @@ export default function GraphView({
           </div>
           <button 
             onClick={async () => {
-              if (window.confirm(`Are you sure you want to prune "${selectedNode.id}"? This will permanently delete the node and its connections.`)) {
+              if (window.confirm(`Are you sure you want to delete "${selectedNode.id}"? This will permanently delete the node and its connections.`)) {
                 setIsPruning(true);
                 try {
                   await pruneGraphNode(selectedNode.id, activeSessionId);
                   setPrunedNodes(prev => new Set(prev).add(selectedNode.id));
                   onNodeClick?.(null);
                 } catch (err: any) {
-                  alert("Failed to prune node: " + (err.message || String(err)));
+                  alert("Failed to delete node: " + (err.message || String(err)));
                 } finally {
                   setIsPruning(false);
                 }
@@ -543,7 +543,7 @@ export default function GraphView({
               fontWeight: "600"
             }}
           >
-            {isPruning ? "Pruning..." : "Prune Node"}
+            {isPruning ? "Deleting..." : "Delete Node"}
           </button>
         </div>
       )}
