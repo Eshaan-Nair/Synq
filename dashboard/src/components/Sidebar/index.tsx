@@ -51,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`sidebar-tab ${sidebarTab === "legend" ? "active" : ""}`}
           onClick={() => setSidebarTab("legend")}
         >
-          Legend
+          Node Types
         </button>
       </div>
 

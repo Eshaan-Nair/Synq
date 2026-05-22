@@ -47,7 +47,7 @@ export function SystemHealth() {
     return () => clearInterval(timer);
   }, []);
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const storageBadgeColor = health?.storageMode === "sqlite" ? "#818CF8" : "#34D399";
 

@@ -30,8 +30,43 @@ export const GlobalSearchView: React.FC = () => {
   }, [searchQuery]);
 
   return (
-    <div style={{ padding: "32px", maxWidth: "800px", margin: "0 auto", color: "var(--text-primary)", width: "100%", minHeight: "calc(100vh - 64px)", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ width: "100%", marginTop: searchResults.chunks.length === 0 && searchResults.facts.length === 0 && searchQuery.length < 3 ? "30vh" : "40px", transition: "margin-top 0.3s ease", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div style={{ 
+      position: "relative",
+      minHeight: "calc(100vh - 64px)", 
+      width: "100%", 
+      overflow: "hidden",
+      backgroundColor: "var(--background)"
+    }}>
+      {/* Background Effects */}
+      <div style={{
+        position: "absolute",
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundImage: "radial-gradient(circle at 50% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 60%)",
+        pointerEvents: "none"
+      }} />
+      <div style={{
+        position: "absolute",
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`,
+        backgroundSize: "40px 40px",
+        maskImage: "linear-gradient(to bottom, black 10%, transparent 80%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 10%, transparent 80%)",
+        pointerEvents: "none"
+      }} />
+
+      {/* Content */}
+      <div style={{ 
+        position: "relative",
+        padding: "32px", 
+        maxWidth: "800px", 
+        margin: "0 auto", 
+        color: "var(--text-primary)", 
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center",
+        zIndex: 1
+      }}>
+        <div style={{ width: "100%", marginTop: searchResults.chunks.length === 0 && searchResults.facts.length === 0 && searchQuery.length < 3 ? "25vh" : "40px", transition: "margin-top 0.4s cubic-bezier(0.16, 1, 0.3, 1)", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <h2 style={{ fontFamily: "Outfit", fontSize: "32px", marginBottom: "24px" }}>Global Search</h2>
         <input
           type="text"
@@ -89,6 +124,7 @@ export const GlobalSearchView: React.FC = () => {
         ) : (
           <div style={{ opacity: 0.5 }}>Type at least 3 characters to search.</div>
         )}
+      </div>
       </div>
       </div>
     </div>
