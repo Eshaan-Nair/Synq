@@ -61,6 +61,10 @@ router.post("/prune", async (req: Request, res: Response) => {
   const { prompt, nodeId, sessionId } = req.body;
   
   if (nodeId) {
+    if (!sessionId) {
+      res.status(400).json({ error: "sessionId is required to delete a node" });
+      return;
+    }
     try {
       const factsDeleted = await graphStore.deleteTriples([nodeId], sessionId);
       const chunksDeleted = await vectorStore.deleteChunksByQuery(nodeId, sessionId);

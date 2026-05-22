@@ -527,6 +527,28 @@ export default function GraphView({
         </div>
       )}
 
+      {/* Filter Pills Under Navbar */}
+      <div style={{ position: "absolute", top: "80px", left: "264px", display: "flex", gap: "8px", zIndex: 50 }}>
+        {filterType && (
+          <div 
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--surface)", border: `1px solid ${TYPE_COLORS[filterType]}`, padding: "4px 10px", borderRadius: "12px", fontSize: "12px", cursor: "pointer", color: TYPE_COLORS[filterType], fontWeight: 600, backdropFilter: "blur(4px)" }}
+            onClick={(e) => { e.stopPropagation(); onFilterToggle?.(filterType); }}
+          >
+            {filterType}
+            <span style={{ fontSize: "14px", lineHeight: 1 }}>×</span>
+          </div>
+        )}
+        {selectedNodeId && (
+          <div 
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--surface)", border: `1px solid var(--border-dim)`, padding: "4px 10px", borderRadius: "12px", fontSize: "12px", cursor: "pointer", color: "var(--text-primary)", fontWeight: 600, backdropFilter: "blur(4px)" }}
+            onClick={(e) => { e.stopPropagation(); onNodeClick?.(null); }}
+          >
+            {selectedNodeId.length > 15 ? selectedNodeId.slice(0, 15) + "..." : selectedNodeId}
+            <span style={{ fontSize: "14px", lineHeight: 1 }}>×</span>
+          </div>
+        )}
+      </div>
+
       {hoveredNode && !prunedNodes.has(hoveredNode.id) && (
         <div className="graph-tooltip" style={{ border: `1px solid ${TYPE_COLORS[hoveredNode.type]}`, boxShadow: `0 4px 20px ${TYPE_COLORS[hoveredNode.type]}33` }}>
           <div className="graph-tooltip-title">{hoveredNode.id}</div>

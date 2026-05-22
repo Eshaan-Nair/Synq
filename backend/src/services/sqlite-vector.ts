@@ -216,33 +216,58 @@ export class SqliteVectorStore implements IVectorStore {
   async retrieveGlobalChunks(query: string, topN = 3, keywords: string[] = []): Promise<RetrievedChunk[]> {
     const words = query.trim().split(/\s+/).filter(w => w.length > 0);
     const isSingleWord = words.length <= 1;
-
-    let augmentedQuery = query;
-    if (!isSingleWord) {
-      const hydeAnswer = await generateHyDEAnswer(query);
-      augmentedQuery = `${query}\n${hydeAnswer}`;
-    }
-
-    const queryEmbedding = await generateEmbedding(augmentedQuery, "query");
-    const vector = Buffer.from(new Float32Array(queryEmbedding).buffer);
-
-    const sentRows = this.db.prepare(`
-      SELECT sm.chunk_id, sm.content, vs.distance
-      FROM vec_sentences vs
-      JOIN sentence_metadata sm ON vs.sentence_id = sm.sentence_id
-      WHERE vs.embedding MATCH ? AND k = 100
-    `).all(vector) as any[];
-
     const candidates = new Map<string, { chunkIndex: number, sentences: Set<string>, maxScore: number }>();
 
-    sentRows.forEach(r => {
-      const score = l2ToScore(r.distance);
-      if (score < SENTENCE_THRESHOLD) return;
-      if (!candidates.has(r.chunk_id)) {
-        candidates.set(r.chunk_id, { chunkIndex: 0, sentences: new Set(), maxScore: score });
+    try {
+      let augmentedQuery = query;
+      if (!isSingleWord) {
+        try {
+          const hydeAnswer = await generateHyDEAnswer(query);
+          augmentedQuery = `${query}\n${hydeAnswer}`;
+        } catch (e) {
+          logger.warn(`HyDE failed for global search: ${e}`);
+        }
       }
-      candidates.get(r.chunk_id)!.sentences.add(r.content);
-    });
+
+      const queryEmbedding = await generateEmbedding(augmentedQuery, "query");
+      const vector = Buffer.from(new Float32Array(queryEmbedding).buffer);
+
+      const sentRows = this.db.prepare(`
+        SELECT sm.chunk_id, sm.content, vs.distance
+        FROM vec_sentences vs
+        JOIN sentence_metadata sm ON vs.sentence_id = sm.sentence_id
+        WHERE vs.embedding MATCH ? AND k = 100
+      `).all(vector) as any[];
+
+      sentRows.forEach(r => {
+        const score = l2ToScore(r.distance);
+        if (score < SENTENCE_THRESHOLD) return;
+        if (!candidates.has(r.chunk_id)) {
+          candidates.set(r.chunk_id, { chunkIndex: 0, sentences: new Set(), maxScore: score });
+        }
+        candidates.get(r.chunk_id)!.sentences.add(r.content);
+      });
+    } catch (e) {
+      logger.error(`Embedding generation failed for global search, falling back to FTS: ${e}`);
+    }
+
+    const ftsWords = query.toLowerCase().replace(/[^\w\s]/g, " ").split(/\s+/).filter(w => w.length >= 3);
+    if (ftsWords.length > 0) {
+      const ftsQuery = ftsWords.map(w => `${w}*`).join(" OR ");
+      const ftsRows = this.db.prepare(`
+        SELECT m.chunk_id, m.chunkIndex, m.content
+        FROM fts_chunks f
+        JOIN chunk_metadata m ON f.chunk_id = m.chunk_id
+        WHERE f.content MATCH ?
+        LIMIT 20
+      `).all(ftsQuery) as any[];
+
+      ftsRows.forEach(r => {
+        if (!candidates.has(r.chunk_id)) {
+           candidates.set(r.chunk_id, { chunkIndex: r.chunkIndex, sentences: new Set([r.content.substring(0, 300) + "..."]), maxScore: GLOBAL_THRESHOLD });
+        }
+      });
+    }
 
     return Array.from(candidates.values())
       .map(c => ({
@@ -264,23 +289,12 @@ export class SqliteVectorStore implements IVectorStore {
   }
 
   async deleteChunksByQuery(query: string, sessionId: string): Promise<number> {
-    // 1. Find candidates using standard retrieval logic (top 5 for deletion)
-    const candidates = await this.retrieveRelevantChunks(query, sessionId, 5);
-    if (candidates.length === 0) return 0;
-
-    // 2. Identify the specific chunk_ids that matched
-    // retrieveRelevantChunks doesn't return the raw ID, but we can look them up via content/sessionId
-    const deletedIds: string[] = [];
-    for (const c of candidates) {
-      const row = this.db.prepare(`
-        SELECT chunk_id FROM chunk_metadata 
-        WHERE sessionId = ? AND content LIKE ?
-        LIMIT 1
-      `).get(sessionId, `%${c.content.substring(0, 50)}%`) as { chunk_id: string } | undefined;
-      
-      if (row) deletedIds.push(row.chunk_id);
-    }
-
+    const rows = this.db.prepare(`
+      SELECT chunk_id FROM chunk_metadata 
+      WHERE sessionId = ? AND content LIKE ?
+    `).all(sessionId, `%${query}%`) as { chunk_id: string }[];
+    
+    const deletedIds = rows.map(r => r.chunk_id);
     if (deletedIds.length === 0) return 0;
 
     // 3. Delete them from all tables

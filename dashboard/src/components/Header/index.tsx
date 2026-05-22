@@ -18,8 +18,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ 
   activeMainTab, setActiveMainTab, activeSideTab, setActiveSideTab, 
-  isClosed, setIsClosed, loadedToExtension, loadIntoExtension,
-  filterType, setFilterType, selectedNodeId, setSelectedNodeId
+  isClosed, setIsClosed, loadedToExtension, loadIntoExtension
 }) => {
   return (
     <div style={{ position: "absolute", top: "16px", left: "264px", right: "24px", zIndex: 100, display: "flex", justifyContent: "space-between", padding: "6px 12px", background: "var(--surface)", border: "1px solid var(--border-main)", borderRadius: "12px", backdropFilter: "var(--surface-blur)", alignItems: "center" }}>
@@ -28,24 +27,6 @@ const Header: React.FC<HeaderProps> = ({
         <button className={`tab-btn ${loadedToExtension ? "active" : ""}`} onClick={loadIntoExtension}>
           {loadedToExtension ? "Loaded" : "Load Session"}
         </button>
-        {filterType && (
-          <div 
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--surface)", border: `1px solid ${TYPE_COLORS[filterType]}`, padding: "4px 10px", borderRadius: "12px", fontSize: "12px", cursor: "pointer", color: TYPE_COLORS[filterType], fontWeight: 600 }}
-            onClick={() => setFilterType?.(null)}
-          >
-            {filterType}
-            <span style={{ fontSize: "14px", lineHeight: 1 }}>×</span>
-          </div>
-        )}
-        {selectedNodeId && (
-          <div 
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--surface)", border: `1px solid var(--border-dim)`, padding: "4px 10px", borderRadius: "12px", fontSize: "12px", cursor: "pointer", color: "var(--text-primary)", fontWeight: 600 }}
-            onClick={() => setSelectedNodeId?.(null)}
-          >
-            {selectedNodeId.length > 15 ? selectedNodeId.slice(0, 15) + "..." : selectedNodeId}
-            <span style={{ fontSize: "14px", lineHeight: 1 }}>×</span>
-          </div>
-        )}
       </div>
 
       {/* Center Tabs */}

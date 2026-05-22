@@ -258,22 +258,24 @@ const App: React.FC = () => {
           />
         </div>
         
-        <FloatingPanel
-          isClosed={isClosed}
-          setIsClosed={setIsClosed}
-          isExpanded={isExpanded}
-          setIsExpanded={setIsExpanded}
-          activeTab={activeSideTab || "history"}
-          loadingSession={loadingSession}
-          pagedTriples={pagedTriples}
-          factsPage={factsPage}
-          setFactsPage={setFactsPage}
-          factSearch={factSearch}
-          setFactSearch={setFactSearch}
-          totalPages={totalPages}
-          chatData={chatData}
-          activeSession={activeSession}
-        />
+        {activeMainTab === "graph" && (
+          <FloatingPanel
+            isClosed={isClosed}
+            setIsClosed={setIsClosed}
+            isExpanded={isExpanded}
+            setIsExpanded={setIsExpanded}
+            activeTab={activeSideTab || "history"}
+            loadingSession={loadingSession}
+            pagedTriples={pagedTriples}
+            factsPage={factsPage}
+            setFactsPage={setFactsPage}
+            factSearch={factSearch}
+            setFactSearch={setFactSearch}
+            totalPages={totalPages}
+            chatData={chatData}
+            activeSession={activeSession}
+          />
+        )}
 
         {activeMainTab === "search" && (
           <div style={{ position: "absolute", top: 0, left: 240, right: 0, bottom: 0, zIndex: 10, background: "var(--bg-deep)", overflowY: "auto" }}>
