@@ -1,72 +1,78 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>ArcRift</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="popup.css" />
-  </head>
-  <body>
 
-    <div class="header">
+<head>
+  <meta charset="UTF-8" />
+  <title>ArcRift</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+
+  <div class="header">
+    <div>
+      <div class="header-title">ArcRift</div>
+      <div class="header-sub">AI Memory Layer</div>
+    </div>
+    <span id="ArcRift-status-badge" class="ArcRift-status idle">NO SESSION</span>
+  </div>
+
+  <div class="platform-bar">
+    <div class="platform-dot" id="platform-dot"></div>
+    <span id="detected-platform">Detecting...</span>
+  </div>
+
+  <div id="session-info">
+    <div class="session-row">
+      <span class="session-label">Session</span>
+      <span class="session-value" id="session-name">—</span>
+    </div>
+    <div class="session-row">
+      <span class="session-label">Chunks</span>
+      <span class="session-value" id="topic-count">—</span>
+    </div>
+    <div class="session-row">
+      <span class="session-label">Facts</span>
+      <span class="session-value" id="triple-count">—</span>
+    </div>
+    <button id="unload-btn" class="secondary-btn" disabled>Unload Session</button>
+  </div>
+
+  <div class="section">
+    <label>Session Name</label>
+    <input type="text" id="project-name" placeholder="e.g. Project" autocomplete="off" />
+
+    <p class="hint">
+      Finish your chat → name it → Save Chat. ArcRift auto-connects and recalls context on your next chat.
+    </p>
+
+    <button id="save-btn">Save Chat</button>
+    <button id="pause-toggle-btn" disabled>Pause ArcRift</button>
+  </div>
+
+  <button id="inject-btn">Inject Context (one-time)</button>
+
+  <div id="selector-warning" class="selector-warning" style="display:none">
+    <div class="selector-warning-body">
+      <span class="selector-warning-icon">⚠</span>
       <div>
-        <div class="header-title">ArcRift</div>
-        <div class="header-sub">AI Memory Layer</div>
-      </div>
-      <span id="ArcRift-status-badge" class="ArcRift-status idle">NO SESSION</span>
-    </div>
-
-    <div class="platform-bar">
-      <div class="platform-dot" id="platform-dot"></div>
-      <span id="detected-platform">Detecting...</span>
-    </div>
-
-    <div id="session-info">
-      <div class="session-row">
-        <span class="session-label">Session</span>
-        <span class="session-value" id="session-name">—</span>
-      </div>
-      <div class="session-row">
-        <span class="session-label">Chunks</span>
-        <span class="session-value" id="topic-count">—</span>
-      </div>
-      <div class="session-row">
-        <span class="session-label">Facts</span>
-        <span class="session-value" id="triple-count">—</span>
-      </div>
-      <button id="unload-btn" class="secondary-btn" disabled>Unload Session</button>
-    </div>
-
-    <div class="section">
-      <label>Session Name</label>
-      <input type="text" id="project-name" placeholder="e.g. SplitSmart v2" autocomplete="off" />
-
-      <p class="hint">
-        Finish your chat → name it → Save Chat. ArcRift auto-connects and recalls context on your next chat.
-      </p>
-
-      <button id="save-btn">Save Chat</button>
-      <button id="pause-toggle-btn" disabled>Pause ArcRift</button>
-    </div>
-
-    <button id="inject-btn">Inject Context (one-time)</button>
-
-    <div id="selector-warning" class="selector-warning" style="display:none">
-      <div class="selector-warning-body">
-        <span class="selector-warning-icon">⚠</span>
-        <div>
-          <div class="selector-warning-title">Injection Failed</div>
-          <div class="selector-warning-msg" id="selector-warning-msg">Could not find chat input. Selector may be stale.</div>
+        <div class="selector-warning-title">Injection Failed</div>
+        <div class="selector-warning-msg" id="selector-warning-msg">Could not find chat input. Selector may be stale.
         </div>
       </div>
-      <div class="selector-warning-actions">
-        <a class="selector-warning-link" href="https://github.com/Eshaan-Nair/ARCRIFT/issues" target="_blank">Report</a>
-        <button class="selector-warning-dismiss" id="selector-dismiss-btn">Dismiss</button>
-      </div>
     </div>
+    <div class="selector-warning-actions">
+      <a class="selector-warning-link" href="https://github.com/Eshaan-Nair/ARCRIFT/issues" target="_blank">Report</a>
+      <button class="selector-warning-dismiss" id="selector-dismiss-btn">Dismiss</button>
+    </div>
+  </div>
 
-    <div id="status"></div>
+  <div id="status"></div>
 
-    <script src="popup.js"></script>
-  </body>
+  <script src="popup.js"></script>
+</body>
+
 </html>
