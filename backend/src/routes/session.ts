@@ -41,7 +41,7 @@ router.get("/export/:id", async (req: Request, res: Response) => {
       .replace(/^-|-$/g, "");
 
     res.setHeader("Content-Type", "application/json");
-    res.setHeader("Content-Disposition", `attachment; filename="glia-${safeName}.json"`);
+    res.setHeader("Content-Disposition", `attachment; filename="ArcRift-${safeName}.json"`);
     res.send(JSON.stringify(exportData, null, 2));
   } catch (err) {
     logger.error("Export error:", err);

@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 
-const db = new Database(path.join(__dirname, "../glia.db"));
+const db = new Database(path.join(__dirname, "../ArcRift.db"));
 console.log("Sessions:", db.prepare("SELECT count(*) FROM sessions").get());
 console.log("Chunks Metadata:", db.prepare("SELECT count(*) FROM chunk_metadata").get());
 console.log("Vec Chunks:", db.prepare("SELECT count(*) FROM vec_chunks").get());

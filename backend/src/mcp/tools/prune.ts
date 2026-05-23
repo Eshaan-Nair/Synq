@@ -20,7 +20,7 @@ export async function prune(
       return `Project "${sessionId}" not found.`;
     }
 
-    logger.info(`[GLIA MCP] Pruning memory in project "${session.projectName}" for: "${prompt}"`);
+    logger.info(`[ArcRift MCP] Pruning memory in project "${session.projectName}" for: "${prompt}"`);
 
     // 1. Identify entities to prune using extraction logic on the prompt
     // This helps us find the "Nouns" the user wants to forget.
@@ -55,7 +55,7 @@ export async function prune(
            `- Targeted entities: ${entitiesToPrune.join(", ")}`;
 
   } catch (err: any) {
-    logger.error(`[GLIA MCP] Pruning failed: ${err.message}`);
+    logger.error(`[ArcRift MCP] Pruning failed: ${err.message}`);
     return `prune_memory failed: ${err.message ?? String(err)}`;
   }
 }

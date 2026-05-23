@@ -10,8 +10,8 @@ import path from "path";
 import dotenv from "dotenv";
 
 // Setup environment for Zero-Docker mode BEFORE any imports
-process.env.GLIA_STORAGE_MODE = "sqlite";
-process.env.SQLITE_DB_PATH = path.resolve(__dirname, "../../glia.db");
+process.env.ARCRIFT_STORAGE_MODE = "sqlite";
+process.env.SQLITE_DB_PATH = path.resolve(__dirname, "../../ArcRift.db");
 dotenv.config();
 
 import { initStorage, sessionStore } from "../../src/services/storage";
@@ -39,7 +39,7 @@ describe("MCP Tool Integration", () => {
   });
 
   it("identify_active_project: should return a result for any path", async () => {
-    const result = await identifyProject("C:/Code/Glia-Test-Project");
+    const result = await identifyProject("C:/Code/ArcRift-Test-Project");
     expect(typeof result).toBe("string");
     expect(result.length).toBeGreaterThan(0);
   }, 10000);
@@ -56,7 +56,7 @@ describe("MCP Tool Integration", () => {
       return;
     }
     const result = await store(
-      "The Glia project uses a Hybrid Search engine combining SQLite-vec and custom Graph logic.",
+      "The ArcRift project uses a Hybrid Search engine combining SQLite-vec and custom Graph logic.",
       targetId
     );
     expect(typeof result).toBe("string");
@@ -74,7 +74,7 @@ describe("MCP Tool Integration", () => {
   }, 15000);
 
   it("search_memory: should return results or a not-found message", async () => {
-    const result = await search("Glia search engine");
+    const result = await search("ArcRift search engine");
     expect(typeof result).toBe("string");
     expect(result.length).toBeGreaterThan(0);
   }, 30000);

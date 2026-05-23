@@ -64,25 +64,25 @@ async function detectBackend(): Promise<"ollama" | "groq" | "local-openai"> {
   try {
     const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
     await axios.get(`${ollamaUrl}/api/tags`, { timeout: 2000 });
-    logger.success("[GLIA] Ollama detected — graph extraction will run locally (fully private)");
+    logger.success("[ArcRift] Ollama detected — graph extraction will run locally (fully private)");
     return "ollama";
   } catch {
     // Try Local OpenAI (LM Studio / LocalAI)
     try {
       const localUrl = process.env.LOCAL_OPENAI_URL ?? "http://localhost:1234/v1";
       await axios.get(`${localUrl}/models`, { timeout: 2000 });
-      logger.success("[GLIA] LM Studio / LocalAI detected — using local OpenAI-compatible backend");
+      logger.success("[ArcRift] LM Studio / LocalAI detected — using local OpenAI-compatible backend");
       return "local-openai";
     } catch {
       if (process.env.GROQ_API_KEY) {
         logger.warn(
-          "[GLIA] Local LLM (Ollama/LM Studio) not available — falling back to Groq API. " +
+          "[ArcRift] Local LLM (Ollama/LM Studio) not available — falling back to Groq API. " +
           "Note: PII-scrubbed conversation text will leave your machine via Groq."
         );
         return "groq";
       } else {
         logger.warn(
-          "[GLIA] No local LLM found and GROQ_API_KEY missing. " +
+          "[ArcRift] No local LLM found and GROQ_API_KEY missing. " +
           "Graph extraction disabled — install Ollama or set GROQ_API_KEY in backend/.env"
         );
         return "groq";
@@ -171,7 +171,7 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
     try {
       if (attempt > 0) {
         const waitTime = attempt * 15000; // 15s, 30s, 45s...
-        logger.info(`[GLIA] LLM call retry ${attempt}/${MAX_RETRIES} in ${waitTime / 1000}s...`);
+        logger.info(`[ArcRift] LLM call retry ${attempt}/${MAX_RETRIES} in ${waitTime / 1000}s...`);
         await sleep(waitTime);
       }
 
@@ -185,7 +185,7 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
             err.message?.includes("ECONNREFUSED") ||
             err.message?.includes("connection refused");
           if (isDown && process.env.GROQ_API_KEY) {
-            logger.warn(`[GLIA] Ollama unreachable — falling back to Groq.`);
+            logger.warn(`[ArcRift] Ollama unreachable — falling back to Groq.`);
             res = await callGroq(prompt, maxTokens);
           } else {
             throw err;
@@ -200,7 +200,7 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
             err.message?.includes("ECONNREFUSED") ||
             err.message?.includes("connection refused");
           if (isDown && process.env.GROQ_API_KEY) {
-            logger.warn(`[GLIA] Local OpenAI unreachable — falling back to Groq.`);
+            logger.warn(`[ArcRift] Local OpenAI unreachable — falling back to Groq.`);
             res = await callGroq(prompt, maxTokens);
           } else {
             throw err;
@@ -221,13 +221,13 @@ async function _llm(prompt: string, maxTokens = 1000): Promise<string> {
       const isBadFormat = err?.message?.includes("JSON") || err?.message?.includes("formatting");
 
       if ((isRateLimit || isTimeout || isBadFormat) && attempt < MAX_RETRIES) {
-        if (isTimeout) logger.warn(`[GLIA] LLM timeout (attempt ${attempt + 1}). Model might be loading or hardware is slow.`);
-        if (isBadFormat) logger.warn("[GLIA] Model returned malformed data. Retrying...");
+        if (isTimeout) logger.warn(`[ArcRift] LLM timeout (attempt ${attempt + 1}). Model might be loading or hardware is slow.`);
+        if (isBadFormat) logger.warn("[ArcRift] Model returned malformed data. Retrying...");
         continue;
       }
 
       // Permanent failure
-      logger.error(`[GLIA] LLM call failed permanently: ${err.message}`);
+      logger.error(`[ArcRift] LLM call failed permanently: ${err.message}`);
       throw err;
     }
   }
@@ -283,7 +283,7 @@ export async function extractEntitiesFromQuery(query: string): Promise<string[]>
   const prompt = `Extract entities from this search query. Be broad and include any potential projects, technologies, or people mentioned.
 Return ONLY a JSON array of strings, or "none" if no entities are found.
 
-Example: ["React", "Glia", "Eshaan"]
+Example: ["React", "arcrift", "Eshaan"]
 
 Query: "${query}"
 
@@ -320,7 +320,7 @@ Entities:`;
           !e.toLowerCase().includes("not json");
       });
   } catch (err) {
-    logger.warn(`[GLIA] Entity extraction failed: ${err instanceof Error ? err.message : String(err)}`);
+    logger.warn(`[ArcRift] Entity extraction failed: ${err instanceof Error ? err.message : String(err)}`);
     return [];
   }
 }
@@ -370,7 +370,7 @@ export async function extractTriplesFromSummary(summary: string): Promise<Triple
 Return ONLY a valid JSON array, no explanation, no markdown, no code fences.
 
 Each triple MUST have these exact fields:
-- subject: the main entity name (e.g. "Eshaan", "Glia", "React", "User")
+- subject: the main entity name (e.g. "Eshaan", "arcrift", "React", "User")
 - subjectType: MUST be exactly one of:
   "Person" | "Pet" | "Organization" | "Location" | "Education"
   "Project" | "Technology" | "Feature" | "Bug" | "Decision"

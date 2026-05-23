@@ -1,4 +1,4 @@
-# GLIA — Changelog
+# ArcRift — Changelog
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
@@ -25,8 +25,8 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ### CI
 
-- **SQLite-native Pipeline Test** — Added `pipeline-tests-sqlite` job to `.github/workflows/integration-tests.yml`. Runs the full integration test suite with `GLIA_STORAGE_MODE=sqlite`, removing the Docker service container requirement.
-- **Storage-Agnostic Integration Tests** — Refactored `pipeline.integration.test.ts` and `jobs.test.ts` to use the Unified Storage Interface (`initStorage()`, `sessionStore`, `vectorStore`). Tests auto-fallback to SQLite mode if `GLIA_STORAGE_MODE` is unset, creating and cleaning up a temporary `.db` file.
+- **SQLite-native Pipeline Test** — Added `pipeline-tests-sqlite` job to `.github/workflows/integration-tests.yml`. Runs the full integration test suite with `ARCRIFT_STORAGE_MODE=sqlite`, removing the Docker service container requirement.
+- **Storage-Agnostic Integration Tests** — Refactored `pipeline.integration.test.ts` and `jobs.test.ts` to use the Unified Storage Interface (`initStorage()`, `sessionStore`, `vectorStore`). Tests auto-fallback to SQLite mode if `ARCRIFT_STORAGE_MODE` is unset, creating and cleaning up a temporary `.db` file.
 
 ### Roadmap
 
@@ -58,7 +58,7 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 - **All Four Benchmarks Published** — Added Web Context Engine, MCP Context Engine, MCP Project Isolation, and Knowledge Graph stress test results to the README with per-engine attribution breakdowns.
 - **Shared Memory Clarified** — Explicitly documented that memory saved via the browser extension is immediately available to MCP tools and vice versa, sharing the same database.
 - **MCP Setup Guide Updated** — `MCP_SETUP.md` troubleshooting and architecture sections updated to cover both Docker and Zero-Docker (SQLite) environments.
-- **Environment Template** — Added `GLIA_STORAGE_MODE` and `SQLITE_DB_PATH` to `backend/.env.example` for new user discoverability.
+- **Environment Template** — Added `ARCRIFT_STORAGE_MODE` and `SQLITE_DB_PATH` to `backend/.env.example` for new user discoverability.
 
 ### CI & Tooling
 - **Selector CI Expanded** — `scripts/check-selectors.js` now monitors all 7 supported platforms (added Grok, Copilot, Mistral alongside the original four).
@@ -73,11 +73,11 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ### Versioning & Alignment
 - **Unified Versioning** — Synchronized version `1.5.0` across all modules: root setup, backend, dashboard, extension package, and manifest.
-- **Architectural Cleanup** — Removed legacy `GLIA_SECRET` requirement and updated all docstrings to reflect the current state of the platform.
+- **Architectural Cleanup** — Removed legacy `ARCRIFT_SECRET` requirement and updated all docstrings to reflect the current state of the platform.
 
 ### Documentation Overhaul
-- **Standardized Context Format** — Updated all documentation to reflect the move from XML delimiters to the Lean Text Header (`=== GLIA RETRIEVED CONTEXT ===`).
-- **Npx-First Installation** — Refactored all "Getting Started" guides to prioritize `npx glia-ai-setup` over manual cloning.
+- **Standardized Context Format** — Updated all documentation to reflect the move from XML delimiters to the Lean Text Header (`=== ArcRift RETRIEVED CONTEXT ===`).
+- **Npx-First Installation** — Refactored all "Getting Started" guides to prioritize `npx ARCRIFT-setup` over manual cloning.
 - **New ROADMAP.md** — Introduced a formal project roadmap for future milestones.
 - **New TROUBLESHOOTING.md** — Created a comprehensive guide for common installation and runtime issues.
 - **Architecture Sync** — Updated `ARCHITECTURE.md` and `RAG_PIPELINE.md` with accurate diagrams and thresholding logic.
@@ -94,8 +94,8 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ### RAG Precision & Token Efficiency
 - **Hybrid Retrieval** — Implemented keyword boosting for search queries and corrected L2 distance scoring to prioritize exact conceptual matches.
-- **Lean Context Injection** — Replaced heavy XML tags with a professional, token-efficient text header (`=== GLIA RETRIEVED CONTEXT ===`).
-- **Context Suppression** — Glia now automatically suppresses the context block if no relevant memories are found, saving tokens.
+- **Lean Context Injection** — Replaced heavy XML tags with a professional, token-efficient text header (`=== ArcRift RETRIEVED CONTEXT ===`).
+- **Context Suppression** — ArcRift now automatically suppresses the context block if no relevant memories are found, saving tokens.
 
 ### Stability & Infrastructure
 - **Resilient Database** — Implemented a robust SQLite migration for the `externalChatId` column and added `busy_timeout` to handle simultaneous dashboard polling.
@@ -108,12 +108,12 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
-## [1.4.6] — 2026-05-11 — The Glia-AI Rebrand
+## [1.4.6] — 2026-05-11 — The ARCRIFT Rebrand
 
 ### Rebranding & Identity
-- **Project Rebrand** — Transitioned the project identity from **Synq** to **Glia-AI**.
-- **CLI Refresh** — Updated the one-command installer to `npx glia-ai-setup`.
-- **Infrastructure Update** — Renamed all environment variables (`GLIA_SECRET`, `GLIA_STORAGE_MODE`), Docker containers, and internal storage keys.
+- **Project Rebrand** — Transitioned the project identity from **Synq** to **ARCRIFT**.
+- **CLI Refresh** — Updated the one-command installer to `npx ARCRIFT-setup`.
+- **Infrastructure Update** — Renamed all environment variables (`ARCRIFT_SECRET`, `ARCRIFT_STORAGE_MODE`), Docker containers, and internal storage keys.
 - **Documentation Audit** — Comprehensive update of all guides, architecture diagrams, and repository metadata.
 - **Extension Stability** — Fixed a crash in the popup when opened on restricted browser pages (`chrome://`, `edge://`).
 
@@ -154,11 +154,11 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 ### Retrieval & Intelligence
 - **Hybrid Search (Vector + Graph)** — Both the Dashboard and MCP server now perform Hybrid Retrieval. The system extracts entities from user prompts and queries the Knowledge Graph for structured facts, combining them with semantic vector chunks.
 - **Global Hybrid Search** — `search_memory` now performs cross-project graph scans, improving discovery across multiple repositories.
-- **Smart Project Detection** — Added `identify_active_project` MCP tool to automatically match a terminal's CWD to a Glia project ID.
+- **Smart Project Detection** — Added `identify_active_project` MCP tool to automatically match a terminal's CWD to a ArcRift project ID.
 
 ### MCP (Model Context Protocol) Improvements
 - **Dashboard Visibility** — Manual saves from MCP-compatible tools (Claude Code, Cursor) are now saved to the `full_chats` table and appear in the Dashboard history.
-- **MCP Resources** — Exposed the entire Knowledge Graph as a browsable MCP Resource (`glia://projects/{id}/graph`).
+- **MCP Resources** — Exposed the entire Knowledge Graph as a browsable MCP Resource (`ArcRift://projects/{id}/graph`).
 - **LLM Robustness** — Implemented try/catch fallbacks for AI extraction. If Ollama/Groq is unavailable, tools fallback gracefully to vector-only mode.
 - **Config Generator** — Added `npm run mcp:config` to automatically generate absolute path configurations for AI tools.
 
@@ -172,8 +172,8 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ### Storage Architecture
 - **Unified Storage Interface** — Introduced `ISessionStore`, `IGraphStore`, and `IVectorStore` interfaces.
-- **SQLite Support** — Implemented `better-sqlite3` and `sqlite-vec` backends, allowing Glia to run without Docker (MongoDB, Neo4j, ChromaDB).
-- **Dynamic Storage Factory** — Added `GLIA_STORAGE_MODE` (docker/sqlite) to `.env` to toggle between legacy Docker and new local storage.
+- **SQLite Support** — Implemented `better-sqlite3` and `sqlite-vec` backends, allowing ArcRift to run without Docker (MongoDB, Neo4j, ChromaDB).
+- **Dynamic Storage Factory** — Added `ARCRIFT_STORAGE_MODE` (docker/sqlite) to `.env` to toggle between legacy Docker and new local storage.
 
 ### Onboarding & Deployment
 - **Zero-Docker Fallback** — `install.bat` and `install.sh` now automatically detect if Docker is missing/not running and default to SQLite mode.
@@ -209,7 +209,7 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 ### Security
 
 - **Prompt injection defence** — `backend/src/middleware/sanitize.ts` scans every retrieved RAG chunk for 10 known injection patterns before it reaches any AI. Matching content is replaced with `[Content redacted: potential prompt injection pattern detected]`
-- **XML context delimiters** — all injected context is wrapped in `<glia_retrieved_context>` XML tags. LLMs treat XML-tagged content as structured data rather than executable instructions
+- **XML context delimiters** — all injected context is wrapped in `<ARCRIFT_retrieved_context>` XML tags. LLMs treat XML-tagged content as structured data rather than executable instructions
 - **SECURITY.md** — expanded with prompt injection threat model and Groq privacy disclosure
 
 ### MCP Server — Universal Memory Layer
@@ -267,7 +267,7 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ## [1.3.3] — 2026-05-03 — Startup Robustness
 
-- Forced Docker Compose project name to `glia` — prevents errors when the repository folder has dots or version numbers in the name
+- Forced Docker Compose project name to `ArcRift` — prevents errors when the repository folder has dots or version numbers in the name
 - Removed Unicode box-drawing characters from `start.bat` that caused rendering errors in Windows CMD
 
 ---
@@ -287,7 +287,7 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 - Multi-save support — same chat can be saved multiple times without duplicate sessions
 - Unload Session button — explicitly disconnect from active session
 - Pause/Resume always visible in compact UI layout
-- Badge toggle — click the GLIA badge to toggle on/off instantly
+- Badge toggle — click the ArcRift badge to toggle on/off instantly
 - Save button contrast fix
 
 ---

@@ -10,11 +10,11 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const REPO_URL = 'https://github.com/Eshaan-Nair/Glia-AI.git';
+const REPO_URL = 'https://github.com/Eshaan-Nair/ARCRIFT.git';
 
 console.log(`
  ===================================
-   GLIA v1.5.1 - Initializer
+   ArcRift v1.5.1 - Initializer
  ===================================
 `);
 
@@ -27,8 +27,8 @@ function ask(question, defaultVal) {
 }
 
 async function run() {
-  const parentDir = await ask('Where should we install Glia? (press Enter for current folder)', '.');
-  const targetDirName = 'Glia-AI';
+  const parentDir = await ask('Where should we install ArcRift? (press Enter for current folder)', '.');
+  const targetDirName = 'ARCRIFT';
   const fullPath = path.resolve(process.cwd(), parentDir, targetDirName);
 
   if (fs.existsSync(fullPath)) {
@@ -36,7 +36,7 @@ async function run() {
     process.exit(1);
   }
 
-  console.log(`\n [*] Cloning Glia into ${fullPath}...`);
+  console.log(`\n [*] Cloning ArcRift into ${fullPath}...`);
 
   const clone = spawn('git', ['clone', REPO_URL, fullPath], { stdio: 'inherit' });
 

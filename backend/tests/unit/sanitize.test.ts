@@ -19,12 +19,12 @@ describe("Sanitize Middleware", () => {
   test("wrapInContextBlock should format the context block correctly", () => {
     const safeChunks = [mockChunks[0], mockChunks[2]];
     const result = wrapInContextBlock(safeChunks);
-    expect(result).toContain("=== GLIA RETRIEVED CONTEXT ===");
+    expect(result).toContain("=== ArcRift RETRIEVED CONTEXT ===");
     expect(result).toContain("[1] (Relevance: 90%)");
     expect(result).toContain("[2] (Relevance: 70%)");
     expect(result).toContain("This is a safe chunk about React.");
     expect(result).toContain("The user decided to use MongoDB.");
-    expect(result).not.toContain("<glia_retrieved_context>");
+    expect(result).not.toContain("<ARCRIFT_retrieved_context>");
   });
 
   test("wrapInContextBlock should return empty string for empty chunks", () => {

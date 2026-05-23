@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# GLIA v1.5.2 - Startup Script (Linux/macOS)
+# ArcRift v1.5.2 - Startup Script (Linux/macOS)
 # ------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  GLIA v1.5.2 - Starting up"
+echo "  ArcRift v1.5.2 - Starting up"
 echo " ==================================="
 echo ""
 
@@ -19,16 +19,16 @@ fi
 
 GRAPH_BACKEND=$(grep "GRAPH_BACKEND=" backend/.env | cut -d'=' -f2 | tr -d '\r')
 OLLAMA_MODEL=$(grep "OLLAMA_MODEL=" backend/.env | cut -d'=' -f2 | tr -d '\r')
-GLIA_STORAGE_MODE=$(grep "GLIA_STORAGE_MODE=" backend/.env | cut -d'=' -f2 | tr -d '\r')
+ARCRIFT_STORAGE_MODE=$(grep "ARCRIFT_STORAGE_MODE=" backend/.env | cut -d'=' -f2 | tr -d '\r')
 GRAPH_BACKEND=${GRAPH_BACKEND:-ollama}
 
 USE_SQLITE=0
-if [ "$GLIA_STORAGE_MODE" == "sqlite" ]; then USE_SQLITE=1; fi
+if [ "$ARCRIFT_STORAGE_MODE" == "sqlite" ]; then USE_SQLITE=1; fi
 
 # 2. Check Dependencies (skip Docker if SQLite)
 if [ "$USE_SQLITE" == "0" ]; then
     if ! command -v docker &> /dev/null; then
-        echo " ERROR: Docker not found. Use Zero-Docker mode by setting GLIA_STORAGE_MODE=sqlite in .env"
+        echo " ERROR: Docker not found. Use Zero-Docker mode by setting ARCRIFT_STORAGE_MODE=sqlite in .env"
         exit 1
     fi
     echo " OK Docker ready"
@@ -91,7 +91,7 @@ echo " Building extension..."
 # 7. Start Backend
 echo ""
 echo " ==================================="
-echo "  GLIA is running!"
+echo "  ArcRift is running!"
 echo " ==================================="
 echo "  Dashboard -> \033[1;96mhttp://localhost:3001\033[0m"
 echo ""

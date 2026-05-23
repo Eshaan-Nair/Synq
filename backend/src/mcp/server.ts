@@ -1,19 +1,19 @@
 /**
- * mcp/server.ts — GLIA MCP Server (stdio transport)
+ * mcp/server.ts — ArcRift MCP Server (stdio transport)
  *
- * Transforms GLIA into a universal memory layer accessible from any
+ * Transforms ArcRift into a universal memory layer accessible from any
  * MCP-compatible AI tool: Claude Code, Cursor, Windsurf, Claude Desktop.
  *
  * Five tools exposed:
  *   - recall_context      → retrieve relevant memory for a prompt
- *   - store_memory        → save text to GLIA long-term memory
+ *   - store_memory        → save text to ArcRift long-term memory
  *   - search_memory       → semantic search across all sessions
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
  * Updated: v1.5.2
  */
-process.env.GLIA_MCP_MODE = "true";
+process.env.ARCRIFT_MCP_MODE = "true";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -46,7 +46,7 @@ const TOOLS = [
     name: "recall_context",
     description:
       "Retrieve the most relevant memory chunks for a given prompt. " +
-      "Returns sanitised chunks wrapped in <glia_retrieved_context> delimiters.",
+      "Returns sanitised chunks wrapped in <ARCRIFT_retrieved_context> delimiters.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -61,7 +61,7 @@ const TOOLS = [
   {
     name: "store_memory",
     description:
-      "Save text or a full conversation transcript to GLIA long-term memory. " +
+      "Save text or a full conversation transcript to ArcRift long-term memory. " +
       "This updates the Knowledge Graph and makes the chat visible in the Dashboard history. " +
       "Use this to 'save' a coding session or a key decision.",
     inputSchema: {
@@ -77,7 +77,7 @@ const TOOLS = [
     name: "prune_memory",
     description:
       "Surgically remove facts or context chunks from a project. " +
-      "Use this to correct errors or tell Glia to 'forget' outdated info.",
+      "Use this to correct errors or tell ArcRift to 'forget' outdated info.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -102,7 +102,7 @@ const TOOLS = [
   },
   {
     name: "list_projects",
-    description: "List all project names and IDs stored in GLIA memory.",
+    description: "List all project names and IDs stored in ArcRift Memory.",
     inputSchema: {
       type: "object" as const,
       properties: {},
@@ -123,7 +123,7 @@ const TOOLS = [
   },
   {
     name: "identify_active_project",
-    description: "Automatically identify the Glia project ID based on a folder path or CWD.",
+    description: "Automatically identify the ArcRift project ID based on a folder path or CWD.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -136,7 +136,7 @@ const TOOLS = [
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "glia-memory", version: "1.5.2" },
+  { name: "ArcRift-memory", version: "1.5.2" },
   { capabilities: { tools: {}, resources: {} } }
 );
 
@@ -149,7 +149,7 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
   const sessions = await sessionStore.getSessions();
   return {
     resources: sessions.map(s => ({
-      uri: `glia://projects/${s._id}/graph`,
+      uri: `ArcRift://projects/${s._id}/graph`,
       name: `${s.projectName} Knowledge Graph`,
       mimeType: "text/markdown",
       description: `Structured knowledge graph facts for ${s.projectName}`
@@ -248,10 +248,10 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  logger.info("Glia MCP Server running on stdio");
+  logger.info("ArcRift MCP Server running on stdio");
 }
 
 main().catch(err => {
-  process.stderr.write(`[GLIA MCP] Fatal: ${err}\n`);
+  process.stderr.write(`[ArcRift MCP] Fatal: ${err}\n`);
   process.exit(1);
 });

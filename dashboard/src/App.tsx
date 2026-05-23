@@ -6,7 +6,7 @@ import MainLayout from "./components/Layout/MainLayout";
 import { GlobalSearchView } from "./components/GlobalSearchView";
 import FloatingPanel from "./components/Panels/FloatingPanel";
 
-import { apiClient, extractErrorMessage } from "./api/glia";
+import { apiClient, extractErrorMessage } from "./api/ArcRift";
 import type { Session } from "./types";
 import { useSessions } from "./hooks/useSessions";
 import { useGraphData } from "./hooks/useGraphData";

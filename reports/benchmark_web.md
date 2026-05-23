@@ -36,12 +36,12 @@ This aggressive trimming allows us to safely lower our semantic thresholds (from
 ## Detailed Scenario Breakdown
 | Scenario | Query | Rank | Score | Engines | Retrieved Snippet |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| ✅ | "What is the core encryption key?" | 1 | 0.501 | Sentence Vector, Chunk Vector | The encryption key for the Glia-AI core is 'HYPER_... |
-| ✅ | "what is the core encryption key?" | 1 | 0.505 | Sentence Vector, Chunk Vector | The encryption key for the Glia-AI core is 'HYPER_... |
-| ✅ | "Context on encryption key?" | 1 | 0.446 | Sentence Vector, Chunk Vector | The encryption key for the Glia-AI core is 'HYPER_... |
-| ✅ | "Where did Glia-AI start?" | 1 | 0.447 | Sentence Vector | The project was started in a garage in Bangalore, ... |
-| ✅ | "where did glia-ai start?" | 2 | 0.397 | Sentence Vector | The project was started in a garage in Bangalore, ... |
-| ❌ | "Context on Glia-AI start?" | N/A | 0.000 | None | MISSED |
+| ✅ | "What is the core encryption key?" | 1 | 0.501 | Sentence Vector, Chunk Vector | The encryption key for the ARCRIFT core is 'HYPER_... |
+| ✅ | "what is the core encryption key?" | 1 | 0.505 | Sentence Vector, Chunk Vector | The encryption key for the ARCRIFT core is 'HYPER_... |
+| ✅ | "Context on encryption key?" | 1 | 0.446 | Sentence Vector, Chunk Vector | The encryption key for the ARCRIFT core is 'HYPER_... |
+| ✅ | "Where did ARCRIFT start?" | 1 | 0.447 | Sentence Vector | The project was started in a garage in Bangalore, ... |
+| ✅ | "where did ARCRIFT start?" | 2 | 0.397 | Sentence Vector | The project was started in a garage in Bangalore, ... |
+| ❌ | "Context on ARCRIFT start?" | N/A | 0.000 | None | MISSED |
 | ✅ | "What is the precision threshold value?" | 1 | 0.540 | Sentence Vector, Chunk Vector | The retrieval threshold is set to 0.40 for surgica... |
 | ✅ | "what is the precision threshold value?" | 1 | 0.554 | Sentence Vector, Chunk Vector | The retrieval threshold is set to 0.40 for surgica... |
 | ✅ | "Context on threshold value?" | 1 | 0.523 | Sentence Vector, Chunk Vector | The retrieval threshold is set to 0.40 for surgica... |
@@ -60,15 +60,15 @@ This aggressive trimming allows us to safely lower our semantic thresholds (from
 | ✅ | "Where is the progress bar located?" | 1 | 0.503 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.1.... |
 | ✅ | "where is the progress bar located?" | 1 | 0.486 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.1.... |
 | ✅ | "Context on bar located?" | 1 | 0.407 | Sentence Vector, Chunk Vector | The UI uses a centered progress bar in v1.5.1.... |
-| ✅ | "Which keyword engine is used?" | 1 | 0.434 | Sentence Vector, Chunk Vector | Glia-AI supports hybrid search with FTS5.... |
-| ✅ | "which keyword engine is used?" | 3 | 0.406 | Sentence Vector, Chunk Vector | Glia-AI supports hybrid search with FTS5.... |
-| ✅ | "Context on is used?" | 1 | 0.454 | Sentence Vector, Chunk Vector | Glia-AI supports hybrid search with FTS5.... |
+| ✅ | "Which keyword engine is used?" | 1 | 0.434 | Sentence Vector, Chunk Vector | ARCRIFT supports hybrid search with FTS5.... |
+| ✅ | "which keyword engine is used?" | 3 | 0.406 | Sentence Vector, Chunk Vector | ARCRIFT supports hybrid search with FTS5.... |
+| ✅ | "Context on is used?" | 1 | 0.454 | Sentence Vector, Chunk Vector | ARCRIFT supports hybrid search with FTS5.... |
 | ✅ | "What is the minimum sentence length?" | 1 | 0.431 | Sentence Vector, Chunk Vector | The sentence trimmer ignores fragments under 5 cha... |
 | ✅ | "what is the minimum sentence length?" | 1 | 0.421 | Sentence Vector, Chunk Vector | The sentence trimmer ignores fragments under 5 cha... |
 | ❌ | "Context on sentence length?" | N/A | 0.000 | None | MISSED |
-| ✅ | "What docker network does the app use?" | 4 | 0.392 | Sentence Vector, Chunk Vector | Docker-compose networks use the 'glia_net' bridge ... |
-| ✅ | "what docker network does the app use?" | 5 | 0.394 | Sentence Vector, Chunk Vector | Docker-compose networks use the 'glia_net' bridge ... |
-| ✅ | "Context on app use?" | 2 | 0.365 | Chunk Vector | Docker-compose networks use the 'glia_net' bridge ... |
+| ✅ | "What docker network does the app use?" | 4 | 0.392 | Sentence Vector, Chunk Vector | Docker-compose networks use the 'ARCRIFT_net' bridge ... |
+| ✅ | "what docker network does the app use?" | 5 | 0.394 | Sentence Vector, Chunk Vector | Docker-compose networks use the 'ARCRIFT_net' bridge ... |
+| ✅ | "Context on app use?" | 2 | 0.365 | Chunk Vector | Docker-compose networks use the 'ARCRIFT_net' bridge ... |
 | ✅ | "How often are ping events sent?" | 1 | 0.577 | Sentence Vector, Chunk Vector | The telemetry module sends ping events every 5 min... |
 | ✅ | "how often are ping events sent?" | 1 | 0.575 | Sentence Vector, Chunk Vector | The telemetry module sends ping events every 5 min... |
 | ✅ | "Context on events sent?" | 1 | 0.424 | Sentence Vector, Chunk Vector | The telemetry module sends ping events every 5 min... |

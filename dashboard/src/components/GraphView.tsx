@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import type { Node, Link } from "../types";
 import { TYPE_COLORS } from "../constants";
-import { pruneGraphNode } from "../api/glia";
+import { pruneGraphNode } from "../api/ArcRift";
 
 interface Props {
   nodes: Node[];

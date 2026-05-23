@@ -1,32 +1,32 @@
-name: glia
+name: ArcRift
 services:
   neo4j:
     image: neo4j:5.18
-    container_name: glia_neo4j
+    container_name: ARCRIFT_neo4j
     profiles: ["full"]          # skipped in lite mode — saves ~2 GB RAM
     ports:
       - "127.0.0.1:7474:7474"
       - "127.0.0.1:7687:7687"
     environment:
-      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-gliapassword123}
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-arcriftpassword123}
     volumes:
       - neo4j_data:/data
 
   mongodb:
     image: mongo:7.0
-    container_name: glia_mongo
+    container_name: ARCRIFT_mongo
     profiles: ["full", "lite"]  # always starts
     ports:
       - "127.0.0.1:27018:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-glia}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-gliapassword123}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-ArcRift}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-arcriftpassword123}
     volumes:
       - mongo_data:/data/db
 
   chromadb:
     image: chromadb/chroma:0.6.3
-    container_name: glia_chroma
+    container_name: ARCRIFT_chroma
     profiles: ["full", "lite"]  # always starts
     ports:
       - "127.0.0.1:8000:8000"

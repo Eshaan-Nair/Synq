@@ -35,4 +35,4 @@
 | PROJ_ALPHA | Cross-Leak Check | ✅ PASS | Zero Leakage |
 
 ---
-**Audit Summary:** Glia-AI confirms 100% isolation across multi-project environments. Each project's vector space and knowledge graph remains strictly siloed via the `sessionId` constraint.
+**Audit Summary:** ARCRIFT confirms 100% isolation across multi-project environments. Each project's vector space and knowledge graph remains strictly siloed via the `sessionId` constraint.

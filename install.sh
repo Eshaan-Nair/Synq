@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# GLIA v1.5.2 - Smart Installer (Linux/macOS)
+# ArcRift v1.5.2 - Smart Installer (Linux/macOS)
 # -------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  GLIA v1.5.2 - Smart Installer"
+echo "  ArcRift v1.5.2 - Smart Installer"
 echo " ==================================="
 echo ""
 
@@ -154,16 +154,16 @@ fi
 # SQLite mode update
 if [ "$USE_SQLITE" == "1" ]; then
     if [[ "$OS_TYPE" == "Darwin" ]]; then
-        if grep -q "GLIA_STORAGE_MODE=" backend/.env; then
-            sed -i '' "s/GLIA_STORAGE_MODE=.*/GLIA_STORAGE_MODE=sqlite/" backend/.env
+        if grep -q "ARCRIFT_STORAGE_MODE=" backend/.env; then
+            sed -i '' "s/ARCRIFT_STORAGE_MODE=.*/ARCRIFT_STORAGE_MODE=sqlite/" backend/.env
         else
-            echo "GLIA_STORAGE_MODE=sqlite" >> backend/.env
+            echo "ARCRIFT_STORAGE_MODE=sqlite" >> backend/.env
         fi
     else
-        if grep -q "GLIA_STORAGE_MODE=" backend/.env; then
-            sed -i "s/GLIA_STORAGE_MODE=.*/GLIA_STORAGE_MODE=sqlite/" backend/.env
+        if grep -q "ARCRIFT_STORAGE_MODE=" backend/.env; then
+            sed -i "s/ARCRIFT_STORAGE_MODE=.*/ARCRIFT_STORAGE_MODE=sqlite/" backend/.env
         else
-            echo "GLIA_STORAGE_MODE=sqlite" >> backend/.env
+            echo "ARCRIFT_STORAGE_MODE=sqlite" >> backend/.env
         fi
     fi
 fi
@@ -203,7 +203,7 @@ fi
 
 echo ""
 echo " ==================================="
-echo "  GLIA Installed Successfully"
+echo "  ArcRift Installed Successfully"
 echo " ==================================="
 if [ "$GRAPH_BACKEND" == "groq" ]; then
     echo "  IMPORTANT: Ensure GROQ_API_KEY is set in backend/.env"
@@ -216,8 +216,8 @@ echo "  FINAL STEP: LOAD THE EXTENSION"
 echo " -----------------------------------"
 echo "  1. Open Chrome -> chrome://extensions"
 echo "  2. Enable Developer mode (top-right toggle)"
-echo "  3. Load unpacked -> select Glia-AI/extension/dist"
-echo "  4. The GLIA badge appears on Claude, ChatGPT, Gemini, and DeepSeek"
+echo "  3. Load unpacked -> select ARCRIFT/extension/dist"
+echo "  4. The ArcRift badge appears on Claude, ChatGPT, Gemini, and DeepSeek"
 echo ""
 echo "  All set! Your AI now has a memory."
 echo ""

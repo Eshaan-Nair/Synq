@@ -1,10 +1,10 @@
 {
-  "name": "glia-ai-setup",
+  "name": "arcrift-setup",
   "version": "1.5.2",
   "description": "Smart, local-first RAG and Knowledge Graph for AI conversations.",
   "main": "index.js",
   "bin": {
-    "glia-ai-setup": "bin/setup.js"
+    "arcrift-setup": "bin/setup.js"
   },
   "files": [
     "bin/",
@@ -16,10 +16,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Eshaan-Nair/Glia-AI"
+    "url": "https://github.com/Eshaan-Nair/ArcRift"
   },
   "keywords": [
-    "glia",
+    "arcrift",
     "ai",
     "memory",
     "rag",

@@ -25,13 +25,13 @@ jobs:
         with:
           generate_release_notes: true   # auto-generates changelog from commits
           body: |
-            ## GLIA ${{ github.ref_name }}
+            ## ArcRift ${{ github.ref_name }}
 
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full release notes.
 
             ### One-Command Setup (Recommended)
             ```bash
-            npx glia-ai-setup
+            npx ARCRIFT-setup
             ```
             ```bash
             # Regular Start
@@ -42,7 +42,7 @@ jobs:
             ### Manual Setup
             ```bash
             git clone https://github.com/${{ github.repository }}.git
-            cd Glia-AI
+            cd ARCRIFT
 
             # Installation
             ./install.sh # Linux/macOS
@@ -56,5 +56,5 @@ jobs:
             ### Load the Extension
             1. After installation, open `chrome://extensions`
             2. Enable **Developer mode**
-            3. **Load unpacked** → select `Glia-AI/extension`
-            4. GLIA will automatically open the folder and page for you at the end of setup.
+            3. **Load unpacked** → select `ARCRIFT/extension`
+            4. ArcRift will automatically open the folder and page for you at the end of setup.

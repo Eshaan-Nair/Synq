@@ -13,9 +13,9 @@
  */
 
 import path from "path";
-process.env.GLIA_STORAGE_MODE = process.env.GLIA_STORAGE_MODE || "sqlite";
-if (process.env.GLIA_STORAGE_MODE === "sqlite") {
-  process.env.SQLITE_DB_PATH = process.env.SQLITE_DB_PATH || path.resolve(__dirname, "../../glia-pipeline-test.db");
+process.env.ARCRIFT_STORAGE_MODE = process.env.ARCRIFT_STORAGE_MODE || "sqlite";
+if (process.env.ARCRIFT_STORAGE_MODE === "sqlite") {
+  process.env.SQLITE_DB_PATH = process.env.SQLITE_DB_PATH || path.resolve(__dirname, "../../ArcRift-pipeline-test.db");
 }
 
 import { initStorage, sessionStore, vectorStore } from "../../src/services/storage";
@@ -29,7 +29,7 @@ which allowed XSS to steal tokens. We fixed this by setting httpOnly and Secure 
 The session is stored in Redis with a 7-day TTL.
 `;
 
-const TEST_PROJECT  = "glia-pipeline-test";
+const TEST_PROJECT  = "ArcRift-pipeline-test";
 const TEST_SESSION  = `test-session-${Date.now()}`;
 
 let testSessionId: string;
@@ -57,7 +57,7 @@ afterAll(async () => {
   } catch {}
 
   // Clean up SQLite test db if we created one
-  if (process.env.GLIA_STORAGE_MODE === "sqlite") {
+  if (process.env.ARCRIFT_STORAGE_MODE === "sqlite") {
     const fs = await import("fs");
     const dbPath = process.env.SQLITE_DB_PATH!;
     for (const ext of ["", "-shm", "-wal"]) {

@@ -1,5 +1,5 @@
 /**
- * Centralized constants for the GLIA backend.
+ * Centralized constants for the ArcRift backend.
  */
 
 export const VALID_PLATFORMS = [

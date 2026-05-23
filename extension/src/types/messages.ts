@@ -4,7 +4,7 @@
 
 export type Platform = "claude" | "chatgpt" | "gemini" | "deepseek" | "grok" | "copilot" | "mistral" | "unknown";
 
-export type GliaMessage =
+export type ArcRiftMessage =
   | { type: "SAVE_CHAT"; payload: { rawText: string; sessionId: string; platform: Platform; messageCount: number } }
   | { type: "GET_CONTEXT"; payload: { sessionId: string } }
   | { type: "RAG_RETRIEVE"; payload: { prompt: string; sessionId: string; topN?: number } }
@@ -21,8 +21,8 @@ export type GliaMessage =
   | { type: "INGEST_TEXT"; payload: { text: string; sessionId: string; platform: Platform } }
   | { type: "SAVE_CHAT_FROM_POPUP"; payload: { projectName: string; platform: Platform; sessionId?: string } }
   | { type: "INJECT_NOW" }
-  | { type: "PAUSE_GLIA" }
-  | { type: "RESUME_GLIA" }
+  | { type: "PAUSE_ARCRIFT" }
+  | { type: "RESUME_ARCRIFT" }
   | { type: "SESSION_CHANGED"; payload: { sessionId: string | null; projectName?: string } }
   | { type: "REPORT_SELECTOR_FAILURE"; payload?: { platform: Platform } }
   | { type: "GET_SELECTOR_STATE" }

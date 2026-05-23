@@ -12,15 +12,15 @@ const REPORTS_DIR = path.resolve(__dirname, "../../reports");
 const REPORT_PATH = path.join(REPORTS_DIR, "benchmark_mcp.md");
 
 const needles = [
-  { fact: "The encryption key for the Glia-AI core is 'HYPER_SECURE_X9'.", query: "What is the core encryption key?", key: "HYPER_SECURE_X9" },
-  { fact: "The project was started in a garage in Bangalore, India.", query: "Where did Glia-AI start?", key: "Bangalore" },
+  { fact: "The encryption key for the ARCRIFT core is 'HYPER_SECURE_X9'.", query: "What is the core encryption key?", key: "HYPER_SECURE_X9" },
+  { fact: "The project was started in a garage in Bangalore, India.", query: "Where did ARCRIFT start?", key: "Bangalore" },
   { fact: "The retrieval threshold is set to 0.40 for surgical precision.", query: "What is the precision threshold value?", key: "0.40" },
   { fact: "The original name of the project was 'Cortex-Surgical'.", query: "What was the project's first name?", key: "Cortex-Surgical" },
   { fact: "The database uses WAL mode for high-concurrency writes.", query: "How does the DB handle multiple writes?", key: "WAL mode" },
   { fact: "The extraction logic uses a 10-second pacing for Groq.", query: "What is the Groq API delay?", key: "10-second" },
   { fact: "Nomic-embed-text uses a 'query:' prefix for search.", query: "How are search queries prefixed?", key: "query:" },
   { fact: "The UI uses a centered progress bar in v1.5.1.", query: "Where is the progress bar located?", key: "centered progress" },
-  { fact: "Glia-AI supports hybrid search with FTS5.", query: "Which keyword engine is used?", key: "FTS5" },
+  { fact: "ARCRIFT supports hybrid search with FTS5.", query: "Which keyword engine is used?", key: "FTS5" },
   { fact: "The sentence trimmer ignores fragments under 5 chars.", query: "What is the minimum sentence length?", key: "5 chars" }
 ];
 
@@ -59,7 +59,7 @@ async function prepareData(sessionId: string) {
   const insertSentVec = db.prepare("INSERT INTO vec_sentences (sentence_id, embedding) VALUES (?, ?)");
   const insertSentMeta = db.prepare("INSERT INTO sentence_metadata (sentence_id, chunk_id, content) VALUES (?, ?, ?)");
 
-  logger.info(`[GLIA] Batch-embedding ${chunks.length} chunks...`);
+  logger.info(`[ArcRift] Batch-embedding ${chunks.length} chunks...`);
   
   for (let i = 0; i < chunks.length; i += 50) {
     const batch = chunks.slice(i, i + 50);
@@ -75,7 +75,7 @@ async function prepareData(sessionId: string) {
     })();
   }
 
-  logger.info(`[GLIA] Batch-embedding sentences...`);
+  logger.info(`[ArcRift] Batch-embedding sentences...`);
   const allSentences: { content: string, chunkId: string }[] = [];
   chunks.forEach(chunk => {
     const sentences = splitIntoSentences(chunk.content);
@@ -106,7 +106,7 @@ async function runBenchmark() {
   const serverPath = path.resolve(__dirname, "../src/mcp/server.ts");
   const server = spawn("npx", ["ts-node", serverPath], {
     stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, GLIA_STORAGE_MODE: "sqlite", GLIA_MCP_MODE: "true" },
+    env: { ...process.env, ARCRIFT_STORAGE_MODE: "sqlite", ARCRIFT_MCP_MODE: "true" },
     shell: true
   });
 
@@ -228,7 +228,7 @@ By using **Surgical Trimming** (Comparison against ${topN} full chunks):
 ${results.map(r => `| ${r.found ? "✅" : "❌"} | ${r.type} | ${r.found ? "FOUND" : "MISSED"} | ${r.engines} | ${((1 - r.payloadSize/r.rawSize)*100).toFixed(0)}% |`).join("\n")}
 
 ---
-**Summary:** Glia-AI v1.6.3 demonstrates elite context delivery for AI agents. By surgically trimming 150-word chunks into precise sentences, we maintain high recall while significantly reducing token waste.
+**Summary:** ARCRIFT v1.6.3 demonstrates elite context delivery for AI agents. By surgically trimming 150-word chunks into precise sentences, we maintain high recall while significantly reducing token waste.
 `;
       if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
       fs.writeFileSync(REPORT_PATH, report);
@@ -243,7 +243,7 @@ ${results.map(r => `| ${r.found ? "✅" : "❌"} | ${r.type} | ${r.found ? "FOUN
         send("initialize", {
           protocolVersion: "2024-11-05",
           capabilities: {},
-          clientInfo: { name: "Glia-Benchmark", version: "1.0.0" }
+          clientInfo: { name: "ArcRift-Benchmark", version: "1.0.0" }
         });
       }
     });

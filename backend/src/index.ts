@@ -21,7 +21,7 @@ import healthRoutes from "./routes/health";
 
 // ── #9: .env validation — fail fast with a clear message ──────────
 function validateEnv() {
-  const STORAGE_MODE = (process.env.GLIA_STORAGE_MODE || "docker").toLowerCase();
+  const STORAGE_MODE = (process.env.ARCRIFT_STORAGE_MODE || "docker").toLowerCase();
 
   if (STORAGE_MODE === "docker") {
     // NEO4J, MONGO are only required in Docker mode
@@ -29,7 +29,7 @@ function validateEnv() {
       NEO4J_URI: "e.g. bolt://localhost:7687",
       NEO4J_USER: "e.g. neo4j",
       NEO4J_PASSWORD: "Set in backend/.env",
-      MONGO_URI: "e.g. mongodb://user:pass@localhost:27017/gliadb",
+      MONGO_URI: "e.g. mongodb://user:pass@localhost:27017/arcriftdb",
     };
     if (process.env.GRAPH_BACKEND === "groq") {
       required["GROQ_API_KEY"] = "Get a free key at https://console.groq.com";
@@ -38,7 +38,7 @@ function validateEnv() {
     if (missing.length > 0) {
       logger.error("Missing required environment variables for DOCKER mode:");
       missing.forEach(([k, hint]) => logger.error(`  ${k} — ${hint}`));
-      logger.error("Set GLIA_STORAGE_MODE=sqlite to use Zero-Docker mode instead.");
+      logger.error("Set ARCRIFT_STORAGE_MODE=sqlite to use Zero-Docker mode instead.");
       process.exit(1);
     }
   } else {
@@ -79,7 +79,7 @@ app.use(cors({
     callback(new Error(`CORS: Origin ${origin} not allowed`));
   },
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-GLIA-Secret"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-ArcRift-Secret"],
 }));
 // Issue #13 Fix: Rate limiting to prevent abuse of the expensive LLM pipeline
 // Global limiter: 200 requests per minute per IP across all endpoints
@@ -122,7 +122,7 @@ app.use("/api/health", healthRoutes);
 // Health check — includes service status
 app.get("/health", (_req, res) => {
   res.json({
-    status: "GLIA backend running",
+    status: "ArcRift backend running",
     version: "1.5.2",
     services: {
       backend: "ok",
@@ -141,13 +141,13 @@ if (fs.existsSync(dashboardDist)) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const sirv = require("sirv");
     app.use("/", sirv(dashboardDist, { single: true, dev: false }));
-    logger.success(`[GLIA] Dashboard served from production build: \x1b[1;96mhttp://localhost:${PORT}\x1b[0m`);
+    logger.success(`[ArcRift] Dashboard served from production build: \x1b[1;96mhttp://localhost:${PORT}\x1b[0m`);
   } catch {
-    logger.warn("[GLIA] sirv not installed — run: cd backend && npm install sirv");
+    logger.warn("[ArcRift] sirv not installed — run: cd backend && npm install sirv");
   }
 } else {
   logger.warn(
-    `[GLIA] No dashboard build found at ${dashboardDist}. ` +
+    `[ArcRift] No dashboard build found at ${dashboardDist}. ` +
     "Run: cd dashboard && npm run build"
   );
 }
@@ -159,13 +159,13 @@ async function start() {
     // Start background job worker for extraction tasks
     await startWorker();
   } catch (err) {
-    logger.error("Fatal: Database connection failed. GLIA cannot start.");
+    logger.error("Fatal: Database connection failed. ArcRift cannot start.");
     logger.error(err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
 
   app.listen(PORT, () => {
-    logger.success(`GLIA backend running on port \x1b[1;96m${PORT}\x1b[0m`);
+    logger.success(`ArcRift backend running on port \x1b[1;96m${PORT}\x1b[0m`);
   });
 }
 

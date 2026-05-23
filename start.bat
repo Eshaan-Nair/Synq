@@ -4,11 +4,11 @@ setlocal EnableDelayedExpansion
 REM Always run from the script's own directory
 cd /d "%~dp0"
 
-set "COMPOSE_PROJECT_NAME=glia"
+set "COMPOSE_PROJECT_NAME=ArcRift"
 
 echo.
 echo  ===================================
-echo   GLIA v1.5.2 - Starting up
+echo   ArcRift v1.5.2 - Starting up
 echo  ===================================
 echo.
 
@@ -19,23 +19,23 @@ if not exist "backend\.env" (
   exit /b 1
 )
 
-set "GLIA_STORAGE_MODE=docker"
+set "ARCRIFT_STORAGE_MODE=docker"
 for /f "tokens=1,2 delims==" %%a in (backend\.env) do (
     if "%%a"=="GRAPH_BACKEND" set "GRAPH_BACKEND=%%b"
     if "%%a"=="OLLAMA_MODEL" set "OLLAMA_MODEL=%%b"
-    if "%%a"=="GLIA_STORAGE_MODE" set "GLIA_STORAGE_MODE=%%b"
+    if "%%a"=="ARCRIFT_STORAGE_MODE" set "ARCRIFT_STORAGE_MODE=%%b"
 )
 if "!GRAPH_BACKEND!"=="" set "GRAPH_BACKEND=ollama"
 
 set "USE_SQLITE=0"
-if "!GLIA_STORAGE_MODE!"=="sqlite" set "USE_SQLITE=1"
+if "!ARCRIFT_STORAGE_MODE!"=="sqlite" set "USE_SQLITE=1"
 
 REM 2. Check Docker (skip if SQLite)
 
 if "!USE_SQLITE!"=="0" (
   where docker >nul 2>&1
   if errorlevel 1 (
-    echo  ERROR: Docker not found. Defaulting to SQLite? Or set GLIA_STORAGE_MODE=sqlite in .env
+    echo  ERROR: Docker not found. Defaulting to SQLite? Or set ARCRIFT_STORAGE_MODE=sqlite in .env
     pause
     exit /b 1
   )
@@ -100,7 +100,7 @@ popd
 REM 7. Start backend
 echo.
 echo  ===================================
-echo   GLIA is running!
+echo   ArcRift is running!
 echo  ===================================
 echo.
 for /f "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"

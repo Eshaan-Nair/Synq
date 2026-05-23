@@ -23,13 +23,13 @@ export async function store(
       session = await sessionStore.getSessionByName(projectStr);
       
       if (!session) {
-        logger.info(`[GLIA MCP] Auto-creating project: "${projectStr}"`);
+        logger.info(`[ArcRift MCP] Auto-creating project: "${projectStr}"`);
         session = await sessionStore.createSession(projectStr, "mcp", undefined, projectStr);
       }
     }
 
     const sessionId = session._id;
-    logger.info(`[GLIA MCP] Using Session ID: "${sessionId}" for project: "${projectStr}"`);
+    logger.info(`[ArcRift MCP] Using Session ID: "${sessionId}" for project: "${projectStr}"`);
 
     // 1. Save Full Chat (for Dashboard visualization)
     await sessionStore.saveFullChat(sessionId, content, 1, "mcp");

@@ -26,8 +26,8 @@ jest.mock("../../src/services/embeddings", () => ({
 }));
 
 // Set storage mode before any service imports
-process.env.GLIA_STORAGE_MODE = "sqlite";
-process.env.SQLITE_DB_PATH = path.resolve(__dirname, "../../glia-isolation-test.db");
+process.env.ARCRIFT_STORAGE_MODE = "sqlite";
+process.env.SQLITE_DB_PATH = path.resolve(__dirname, "../../ArcRift-isolation-test.db");
 dotenv.config();
 
 import { initStorage, sessionStore, vectorStore } from "../../src/services/storage";

@@ -1,5 +1,5 @@
 /**
- * GLIA content.ts — v1.5.2
+ * ArcRift content.ts — v1.5.2
  *
  * feat: Selector failure detection — reports stale input selectors to popup.
  * 
@@ -17,14 +17,14 @@ import {
 } from "./platforms/index";
 
 // ── Already-initialised guard ────────────────────────────────────
-if ((window as any).__gliaInitialised) {
+if ((window as any).__arcriftInitialised) {
   // Throwing at module level halts script execution — this is the correct
   // pattern for content scripts. The extension runtime catches it; it does
   // NOT crash the page. The IIFE approach used previously was a no-op that
   // failed to stop the rest of the script from running.
-  throw new Error("[GLIA] Duplicate injection detected — skipping re-initialisation.");
+  throw new Error("[ArcRift] Duplicate injection detected — skipping re-initialisation.");
 }
-(window as any).__gliaInitialised = true;
+(window as any).__arcriftInitialised = true;
 
 // ── State ────────────────────────────────────────────────────────
 let platform: Platform = detectPlatform();
@@ -34,16 +34,16 @@ let isPaused: boolean = false;
 let isProcessingPrompt = false;
 let lastSendTimestamp = 0;
 
-let gliaShadow: ShadowRoot | null = null;
+let arcriftShadow: ShadowRoot | null = null;
 let urlWatcherInterval: ReturnType<typeof setInterval> | null = null;
 
 const seenMessageFingerprints = new Set<string>();
 
-const GLIA_DEBUG = (window as any).__glia_debug === true;
+const ARCRIFT_DEBUG = (window as any).__ARCRIFT_debug === true;
 const log = {
-  info: (...args: any[]) => GLIA_DEBUG && console.log("[GLIA]", ...args),
-  warn: (...args: any[]) => console.warn("[GLIA]", ...args),
-  error: (...args: any[]) => console.error("[GLIA]", ...args),
+  info: (...args: any[]) => ARCRIFT_DEBUG && console.log("[ArcRift]", ...args),
+  warn: (...args: any[]) => console.warn("[ArcRift]", ...args),
+  error: (...args: any[]) => console.error("[ArcRift]", ...args),
 };
 
 // ── FNV-1a hash fingerprint ──────────────────────────────────────
@@ -86,30 +86,30 @@ function handleUrlChange() {
   const newSmartKey = getSmartUrlKey(window.location.href);
   
   if (newPlatform !== platform) {
-    log.info(`[GLIA] platform changed: ${platform} → ${newPlatform}`);
+    log.info(`[ArcRift] platform changed: ${platform} → ${newPlatform}`);
     detachPromptInterceptor();
     platform = newPlatform;
     config = getPlatformConfig(newPlatform);
     if (platform !== "unknown" && config) {
-      if (!gliaShadow) injectSidebarUI();
+      if (!arcriftShadow) injectSidebarUI();
       if (!isPaused && sessionId) attachPromptInterceptor();
       updateBadge(!isPaused && !!sessionId);
     }
   }
 
   if (newSmartKey !== lastSmartKey) {
-    log.info(`[GLIA] Chat ID changed: ${lastSmartKey} → ${newSmartKey}`);
+    log.info(`[ArcRift] Chat ID changed: ${lastSmartKey} → ${newSmartKey}`);
     lastSmartKey = newSmartKey;
     
     sendMessage({ type: "GET_ACTIVE_SESSION" }).then(activeData => {
       if (activeData?.activeSession) {
         sessionId = activeData.activeSession._id as string;
         updateBadge(!isPaused && !!sessionId);
-        log.info(`[GLIA] Sync: URL belongs to session ${activeData.activeSession.projectName}`);
+        log.info(`[ArcRift] Sync: URL belongs to session ${activeData.activeSession.projectName}`);
       } else {
         sessionId = null;
         updateBadge(false);
-        log.info("[GLIA] Sync: New Chat URL detected, session cleared.");
+        log.info("[ArcRift] Sync: New Chat URL detected, session cleared.");
       }
     });
   }
@@ -117,7 +117,7 @@ function handleUrlChange() {
 
 async function init() {
   seenMessageFingerprints.clear();
-  log.info(`[GLIA] v1.5.2 active on: ${platform}`);
+  log.info(`[ArcRift] v1.5.2 active on: ${platform}`);
 
   const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
   if (activeData?.activeSession) {
@@ -129,7 +129,7 @@ async function init() {
 
   if (sessionId && config && !isPaused) {
     attachPromptInterceptor();
-    log.info(`[GLIA] auto-connected for session ${sessionId}`);
+    log.info(`[ArcRift] auto-connected for session ${sessionId}`);
   }
 
   if (platform !== "unknown" && config) {
@@ -166,10 +166,10 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
 
   let userEls = queryAll(config.userSelectors);
   const assistantEls = queryAll(config.responseSelectors);
-  log.info(`[GLIA] scrape: ${userEls.length} user els, ${assistantEls.length} assistant els (platform: ${platform})`);
+  log.info(`[ArcRift] scrape: ${userEls.length} user els, ${assistantEls.length} assistant els (platform: ${platform})`);
 
   if (userEls.length === 0 && assistantEls.length > 0) {
-    log.info("[GLIA] user selectors returned 0 — trying structural fallback");
+    log.info("[ArcRift] user selectors returned 0 — trying structural fallback");
     const foundUserEls: Element[] = [];
     for (const assistantEl of assistantEls) {
       let parent = assistantEl.parentElement;
@@ -187,7 +187,7 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
     }
     if (foundUserEls.length > 0) {
       userEls = foundUserEls;
-      log.info(`[GLIA] structural fallback found ${userEls.length} user element(s)`);
+      log.info(`[ArcRift] structural fallback found ${userEls.length} user element(s)`);
     }
   }
 
@@ -204,7 +204,7 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
         const els = document.querySelectorAll(sel);
         if (els.length > 0) {
           userEls = Array.from(els);
-          log.info(`[GLIA] broad selector "${sel}" found ${userEls.length} user element(s)`);
+          log.info(`[ArcRift] broad selector "${sel}" found ${userEls.length} user element(s)`);
           break;
         }
       } catch { /* invalid selector */ }
@@ -252,7 +252,7 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
   }
 
   const rawText = lines.join("\n\n");
-  log.info(`[GLIA] saving ${rawText.length} chars, ${lines.length} turns...`);
+  log.info(`[ArcRift] saving ${rawText.length} chars, ${lines.length} turns...`);
   showToast("Saving chat...");
 
   let saveSessionId = providedSessionId;
@@ -287,7 +287,7 @@ async function saveCurrentChat(projectName: string, providedSessionId?: string):
   if (!isPaused && config) {
     attachPromptInterceptor();
     updateBadge(true);
-    showToast(`Saved! ${chunksStored} chunks, ${triplesExtracted} facts. GLIA is active.`);
+    showToast(`Saved! ${chunksStored} chunks, ${triplesExtracted} facts. ArcRift is active.`);
   } else {
     showToast(`Saved! ${chunksStored} chunks, ${triplesExtracted} facts.`);
   }
@@ -300,13 +300,13 @@ function attachPromptInterceptor() {
   if (!config) return;
   document.addEventListener("keydown", handlePromptKeydown, true);
   document.addEventListener("click", handleSendButtonClick, true);
-  log.info("[GLIA] interceptor attached");
+  log.info("[ArcRift] interceptor attached");
 }
 
 function detachPromptInterceptor() {
   document.removeEventListener("keydown", handlePromptKeydown, true);
   document.removeEventListener("click", handleSendButtonClick, true);
-  log.info("[GLIA] interceptor detached");
+  log.info("[ArcRift] interceptor detached");
 }
 
 async function handlePromptKeydown(e: KeyboardEvent) {
@@ -350,7 +350,7 @@ async function handleSendButtonClick(e: MouseEvent) {
 
 async function processPromptWithRAG(promptText: string, input: HTMLElement) {
   isProcessingPrompt = true;
-  showToast("GLIA searching memory...");
+  showToast("ArcRift searching memory...");
   try {
     // Always fetch the current active session — the cached sessionId may be stale
     // if the user saved a new session from a different tab since this tab was opened.
@@ -363,7 +363,7 @@ async function processPromptWithRAG(promptText: string, input: HTMLElement) {
     }
     // Keep local cache in sync
     if (currentSessionId !== sessionId) {
-      log.info(`[GLIA] session refreshed: ${sessionId} → ${currentSessionId}`);
+      log.info(`[ArcRift] session refreshed: ${sessionId} → ${currentSessionId}`);
       sessionId = currentSessionId;
     }
 
@@ -375,7 +375,7 @@ async function processPromptWithRAG(promptText: string, input: HTMLElement) {
       const contextualPrompt = buildRAGPrompt(result.contextBlock, promptText);
       await injectAndSend(input, contextualPrompt);
       const count = result?.chunksFound?.length ?? result?.chunks?.length ?? 0;
-      showToast(`GLIA recalled ${count} context chunk(s)`);
+      showToast(`ArcRift recalled ${count} context chunk(s)`);
     } else {
       // Fallback: search globally if session search failed
       const globalResult = await sendMessage({
@@ -384,22 +384,22 @@ async function processPromptWithRAG(promptText: string, input: HTMLElement) {
       });
       if (globalResult?.found && globalResult?.contextBlock) {
         await injectAndSend(input, globalResult.contextBlock + "\n\n" + promptText);
-        showToast("GLIA recalled cross-project context");
+        showToast("ArcRift recalled cross-project context");
       } else {
         await injectAndSend(input, promptText);
         showToast("No matching context — sending normally");
       }
     }
   } catch (err: any) {
-    console.error("[GLIA] RAG error:", err);
+    console.error("[ArcRift] RAG error:", err);
     const isInvalidated = err?.message?.includes("Extension context invalidated") ||
       err?.message?.includes("context invalidated");
     if (isInvalidated) {
-      showToast("GLIA disconnected — refresh page to reconnect");
+      showToast("ArcRift disconnected — refresh page to reconnect");
       // Don't try to injectAndSend — the extension context is gone,
       // the page will send the prompt on its own when the user retries.
     } else {
-      showToast("GLIA error — sending normally");
+      showToast("ArcRift error — sending normally");
       await injectAndSend(input, promptText);
     }
   } finally {
@@ -495,7 +495,7 @@ async function injectContext() {
   if (!config) { showToast("Unsupported platform."); return; }
   const data = await sendMessage({ type: "GET_CONTEXT", payload: { sessionId } });
   if (!data?.contextBlock || data.tripleCount === 0) { showToast("No context found."); return; }
-  const prompt = `[GLIA CONTEXT — Previous Session Knowledge]\n${data.structuredSummary || data.contextBlock}\n[END GLIA CONTEXT]\n---\n`;
+  const prompt = `[ArcRift CONTEXT — Previous Session Knowledge]\n${data.structuredSummary || data.contextBlock}\n[END ArcRift CONTEXT]\n---\n`;
   const input = queryOne(config.inputSelectors) as HTMLElement | null;
   if (!input) { showToast("Could not find chat input. Click the input box first."); return; }
 
@@ -536,9 +536,9 @@ async function injectContext() {
 
 // ── Sidebar badge + toast ────────────────────────────────────────
 function injectSidebarUI() {
-  if (document.getElementById("glia-sidebar-host")) return;
+  if (document.getElementById("ArcRift-sidebar-host")) return;
   const host = document.createElement("div");
-  host.id = "glia-sidebar-host";
+  host.id = "ArcRift-sidebar-host";
   // Ensure the host creates a top-level stacking context and doesn't block clicks globally
   host.style.position = "fixed";
   host.style.top = "0";
@@ -548,12 +548,12 @@ function injectSidebarUI() {
   host.style.zIndex = "2147483647"; // Max z-index
   host.style.pointerEvents = "none"; // Let clicks pass through the invisible host wrapper
   document.body.appendChild(host);
-  gliaShadow = host.attachShadow({ mode: "open" });
-  gliaShadow.innerHTML = `
+  arcriftShadow = host.attachShadow({ mode: "open" });
+  arcriftShadow.innerHTML = `
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&display=swap');
     
-    #glia-badge {
+    #ArcRift-badge {
       position: absolute; bottom: 24px; right: 24px;
       background: rgba(15, 18, 26, 0.8);
       backdrop-filter: blur(12px);
@@ -568,27 +568,27 @@ function injectSidebarUI() {
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       user-select: none;
     }
-    #glia-badge:hover { 
+    #ArcRift-badge:hover { 
       transform: translateY(-2px) scale(1.02);
       border-color: rgba(129, 140, 248, 0.5);
       background: rgba(25, 28, 38, 0.9);
     }
-    #glia-badge .status-dot {
+    #ArcRift-badge .status-dot {
       width: 6px; height: 6px; border-radius: 50%;
       background: #475569; transition: all 0.3s;
       box-shadow: 0 0 0 rgba(129, 140, 248, 0);
     }
-    #glia-badge.active {
+    #ArcRift-badge.active {
       border-color: rgba(129, 140, 248, 0.6);
       box-shadow: 0 0 20px rgba(129, 140, 248, 0.15), 0 4px 12px rgba(0,0,0,0.3);
     }
-    #glia-badge.active .status-dot {
+    #ArcRift-badge.active .status-dot {
       background: #818CF8;
       box-shadow: 0 0 8px #818CF8;
       animation: pulse 2s infinite;
     }
-    #glia-badge.paused { color: #64748b; opacity: 0.8; }
-    #glia-badge.paused .status-dot { background: #334155; }
+    #ArcRift-badge.paused { color: #64748b; opacity: 0.8; }
+    #ArcRift-badge.paused .status-dot { background: #334155; }
 
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.7); }
@@ -596,7 +596,7 @@ function injectSidebarUI() {
       100% { box-shadow: 0 0 0 0 rgba(129, 140, 248, 0); }
     }
 
-    #glia-toast {
+    #ArcRift-toast {
       position: absolute; bottom: 76px; right: 24px;
       background: #0B0E14; color: #F1F5F9;
       padding: 10px 16px; border-radius: 8px;
@@ -607,20 +607,20 @@ function injectSidebarUI() {
       pointer-events: none; max-width: 280px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    #glia-toast.show { opacity: 1; transform: translateY(0); }
+    #ArcRift-toast.show { opacity: 1; transform: translateY(0); }
   </style>
-  <div id="glia-badge"><div class="status-dot"></div><span>GLIA</span></div>
-  <div id="glia-toast"></div>
+  <div id="ArcRift-badge"><div class="status-dot"></div><span>ArcRift</span></div>
+  <div id="ArcRift-toast"></div>
   `;
 
-  gliaShadow.getElementById("glia-badge")?.addEventListener("click", () => {
+  arcriftShadow.getElementById("ArcRift-badge")?.addEventListener("click", () => {
     chrome.runtime.sendMessage({ type: "TOGGLE_PAUSE" });
   });
 }
 
 function updateBadge(active: boolean) {
-  if (!gliaShadow) return;
-  const badge = gliaShadow.getElementById("glia-badge") as HTMLElement;
+  if (!arcriftShadow) return;
+  const badge = arcriftShadow.getElementById("ArcRift-badge") as HTMLElement;
   const label = badge?.querySelector("span");
   const dot = badge?.querySelector(".status-dot") as HTMLElement;
   if (!badge || !label || !dot) return;
@@ -628,19 +628,19 @@ function updateBadge(active: boolean) {
   badge.classList.remove("active", "paused");
 
   if (isPaused) {
-    label.textContent = "GLIA OFF";
+    label.textContent = "ArcRift OFF";
     badge.classList.add("paused");
   } else if (active || !!sessionId) {
-    label.textContent = "GLIA ON";
+    label.textContent = "ArcRift ON";
     badge.classList.add("active");
   } else {
-    label.textContent = "GLIA";
+    label.textContent = "arcrift";
   }
 }
 
 function showToast(message: string) {
-  if (!gliaShadow) return;
-  const toast = gliaShadow.getElementById("glia-toast") as HTMLElement;
+  if (!arcriftShadow) return;
+  const toast = arcriftShadow.getElementById("ArcRift-toast") as HTMLElement;
   if (!toast) return;
   toast.textContent = message;
   toast.classList.add("show");
@@ -652,7 +652,7 @@ let _selectorFailureReported = false;
 function reportSelectorFailure() {
   if (_selectorFailureReported) return; // Only report once per page load
   _selectorFailureReported = true;
-  log.warn(`[GLIA] Input selector not found on ${platform}. Reporting failure to popup.`);
+  log.warn(`[ArcRift] Input selector not found on ${platform}. Reporting failure to popup.`);
   chrome.runtime.sendMessage({
     type: "REPORT_SELECTOR_FAILURE",
     payload: { platform },
@@ -681,23 +681,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     injectContext().then(() => sendResponse({ ok: true }));
     return true;
   }
-  if (message.type === "PAUSE_GLIA") {
+  if (message.type === "PAUSE_ARCRIFT") {
     isPaused = true;
     detachPromptInterceptor();
     updateBadge(false);
-    showToast("GLIA paused — context injection suspended");
+    showToast("ArcRift paused — context injection suspended");
     sendResponse({ ok: true });
     return true;
   }
-  if (message.type === "RESUME_GLIA") {
+  if (message.type === "RESUME_ARCRIFT") {
     isPaused = false;
     if (sessionId && config) {
       attachPromptInterceptor();
       updateBadge(true);
-      showToast("GLIA resumed — context injection active");
+      showToast("ArcRift resumed — context injection active");
     } else {
       updateBadge(false);
-      showToast("GLIA resumed — waiting for session");
+      showToast("ArcRift resumed — waiting for session");
     }
     sendResponse({ ok: true });
     return true;
@@ -707,13 +707,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const { sessionId: newId, projectName } = message.payload as { sessionId: string | null; projectName?: string };
 
     if (newId === null) {
-      log.info("[GLIA] session unloaded via broadcast");
+      log.info("[ArcRift] session unloaded via broadcast");
       sessionId = null;
       detachPromptInterceptor();
       updateBadge(false);
-      showToast("GLIA: session unloaded");
+      showToast("ArcRift: session unloaded");
     } else {
-      log.info(`[GLIA] session updated via broadcast: ${sessionId} → ${newId} (${projectName})`);
+      log.info(`[ArcRift] session updated via broadcast: ${sessionId} → ${newId} (${projectName})`);
       sessionId = newId;
       if (config && !isPaused) {
         attachPromptInterceptor();
@@ -722,7 +722,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         updateBadge(false);
       }
       if (projectName) {
-        showToast(`GLIA: session updated to "${projectName}"`);
+        showToast(`ArcRift: session updated to "${projectName}"`);
       }
     }
     sendResponse({ ok: true });

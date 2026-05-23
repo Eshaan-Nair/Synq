@@ -81,11 +81,11 @@ router.post("/session", async (req: Request, res: Response) => {
       // we must treat this as a NEW chat. We ignore the sessionId 
       // because the popup might be sending a stale ID from a previous tab.
       if (!targetSession) {
-        logger.info(`[GLIA] New Chat ID detected (${externalChatId}). Ignoring provided sessionId to prevent hijacking.`);
+        logger.info(`[ArcRift] New Chat ID detected (${externalChatId}). Ignoring provided sessionId to prevent hijacking.`);
       }
     }
 
-    // B. Fallback: Specific Glia Session ID (Only if we don't have a newer identity)
+    // B. Fallback: Specific ArcRift Session ID (Only if we don't have a newer identity)
     if (!targetSession && sessionId && isValidObjectId(sessionId)) {
       targetSession = await sessionStore.getSession(sessionId);
     }

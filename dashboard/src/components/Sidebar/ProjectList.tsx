@@ -1,6 +1,6 @@
 import React from "react";
 import type { Session } from "../../types";
-import { exportSession } from "../../api/glia";
+import { exportSession } from "../../api/ArcRift";
 
 interface ProjectListProps {
   sessions: Session[];

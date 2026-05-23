@@ -10,7 +10,7 @@ import * as mongoService from "./mongo";
 import * as neo4jService from "./neo4j";
 import * as chromaService from "./chroma";
 
-const STORAGE_MODE = (process.env.GLIA_STORAGE_MODE || "docker").toLowerCase();
+const STORAGE_MODE = (process.env.ARCRIFT_STORAGE_MODE || "docker").toLowerCase();
 
 class DockerSessionStore implements ISessionStore {
   private mapMongoSession(doc: any): any {
@@ -342,11 +342,11 @@ if (STORAGE_MODE === "sqlite") {
  */
 export async function initStorage() {
   if (STORAGE_MODE === "sqlite") {
-    logger.info("Initializing Glia in SQLITE mode (Zero-Docker)");
+    logger.info("Initializing ArcRift in SQLITE mode (Zero-Docker)");
     const { initSqlite } = require("./sqlite");
     initSqlite();
   } else {
-    logger.info("Initializing Glia in DOCKER mode (Mongo/Neo4j/Chroma)");
+    logger.info("Initializing ArcRift in DOCKER mode (Mongo/Neo4j/Chroma)");
     const { connectMongo } = require("./mongo");
     const { connectNeo4j } = require("./neo4j");
     const { connectChroma } = require("./chroma");

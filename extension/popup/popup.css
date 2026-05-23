@@ -65,7 +65,7 @@ body.success-glow {
 }
 
 /* Status badge */
-.glia-status {
+.ArcRift-status {
   font-family: 'Outfit', sans-serif;
   font-size: 10px;
   font-weight: 700;
@@ -75,10 +75,10 @@ body.success-glow {
   text-transform: uppercase;
 }
 
-.glia-status.active   { background: var(--primary-glow); color: var(--text-main); border: 1px solid var(--accent); box-shadow: 0 0 10px var(--primary-glow); }
-.glia-status.paused   { background: rgba(100,116,139,0.1); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.2); }
-.glia-status.idle     { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
-.glia-status.warning  { background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); box-shadow: 0 0 8px rgba(245,158,11,0.2); }
+.ArcRift-status.active   { background: var(--primary-glow); color: var(--text-main); border: 1px solid var(--accent); box-shadow: 0 0 10px var(--primary-glow); }
+.ArcRift-status.paused   { background: rgba(100,116,139,0.1); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.2); }
+.ArcRift-status.idle     { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
+.ArcRift-status.warning  { background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); box-shadow: 0 0 8px rgba(245,158,11,0.2); }
 
 /* Platform badge */
 .platform-bar {

@@ -10,7 +10,7 @@ import { generateEmbedding, generateEmbeddings } from "./embeddings";
 import { logger } from "../utils/logger";
 import type { WindowChunk } from "./chunker";
 
-const COLLECTION_NAME = "glia_chunks_v2";
+const COLLECTION_NAME = "ARCRIFT_chunks_v2";
 const CHROMA_URL = (process.env.CHROMA_URL || "http://localhost:8000").replace(/\/$/, "");
 const TENANT = "default_tenant";
 const DATABASE = "default_database";

@@ -1,4 +1,4 @@
-# GLIA — Roadmap
+# ArcRift — Roadmap
 
 This document tracks planned features and improvements by version.
 Completed items are in [CHANGELOG.md](CHANGELOG.md).
@@ -11,7 +11,7 @@ Completed items are in [CHANGELOG.md](CHANGELOG.md).
 - **Cloud storage backend** — Optional Supabase or PocketBase backend for
   synced memory across machines, keeping the local-first default.
 - **Voice note capture** — Transcribe voice notes via Whisper and save them
-  directly to a GLIA project.
+  directly to a ArcRift project.
 - **MCP Tool Improvements** — Add new tools to the MCP server for additional
   functionality and improve existing tools with more features.
 
@@ -26,13 +26,13 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ### Rebrand
 
-- **New Name & Identity** — Retire the "Glia" name due to brand collision with
+- **New Name & Identity** — Retire the "arcrift" name due to brand collision with
   an established fintech platform. Select a unique, memorable name and update
   all user-facing strings: the dashboard title, sidebar logo, extension popup,
   README, `package.json` names, and Docker image tags.
 
 - **Updated Visual Identity** — Refresh the colour palette and logo to match
-  the new brand. Update the landing page at `glia-ai.vercel.app` with the new
+  the new brand. Update the landing page at `ARCRIFT.vercel.app` with the new
   name and visual language.
 
 - **Namespace & Repository Migration** — Rename the GitHub repository, update

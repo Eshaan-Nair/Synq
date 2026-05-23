@@ -5,11 +5,11 @@ import fs from "fs";
 
 async function runMcpAudit() {
   console.log("========================================");
-  console.log("  GLIA-AI MCP END-TO-END TEST v1.5.1");
+  console.log("  ARCRIFT MCP END-TO-END TEST v1.5.1");
   console.log("========================================");
 
   const serverPath = path.resolve(__dirname, "../dist/src/mcp/server.js");
-  const dbPath = path.resolve(__dirname, "../glia.db");
+  const dbPath = path.resolve(__dirname, "../ArcRift.db");
 
   // Inject a test session into SQLite so tools have a target
   try {
@@ -24,14 +24,14 @@ async function runMcpAudit() {
     `).run(id, "Audit Demo Project", "mcp", 0, 0, 0, now, now);
 
     db.close();
-    console.log("[GLIA] Injected audit-demo project into database");
+    console.log("[ArcRift] Injected audit-demo project into database");
   } catch (err: any) {
-    console.log(`[GLIA] Database injection note: ${err.message}`);
+    console.log(`[ArcRift] Database injection note: ${err.message}`);
   }
 
   const server = spawn("node", [serverPath], {
     stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, GLIA_STORAGE_MODE: "sqlite", GLIA_MCP_MODE: "true" }
+    env: { ...process.env, ARCRIFT_STORAGE_MODE: "sqlite", ARCRIFT_MCP_MODE: "true" }
   });
 
   let messageId = 1;
@@ -50,7 +50,7 @@ async function runMcpAudit() {
       send("initialize", {
         protocolVersion: "2024-11-05",
         capabilities: {},
-        clientInfo: { name: "Glia-Test", version: "1.0.0" }
+        clientInfo: { name: "ArcRift-Test", version: "1.0.0" }
       });
     }, 10000);
 
@@ -75,7 +75,7 @@ async function runMcpAudit() {
             send("tools/call", {
               name: "store_memory",
               arguments: {
-                text: "The Glia-AI secret password is: NEBULA-999",
+                text: "The ARCRIFT secret password is: NEBULA-999",
                 project: targetProject
               }
             });

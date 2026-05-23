@@ -40,7 +40,7 @@ async function runStressTest() {
   const serverPath = path.resolve(__dirname, "../src/mcp/server.ts");
   const server = spawn("npx", ["ts-node", serverPath], {
     stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, GLIA_STORAGE_MODE: "sqlite", GLIA_MCP_MODE: "true" },
+    env: { ...process.env, ARCRIFT_STORAGE_MODE: "sqlite", ARCRIFT_MCP_MODE: "true" },
     shell: true
   });
 
@@ -158,7 +158,7 @@ async function runStressTest() {
 ${results.map(r => `| ${r.project} | ${r.step} | ${r.success ? "✅ PASS" : "❌ FAIL"} | ${r.success ? (r.step === "Store" ? "Data Committed" : (r.step === "Cross-Leak Check" ? "Zero Leakage" : "Secret Found")) : "Data Missing"} |`).join("\n")}
 
 ---
-**Audit Summary:** Glia-AI confirms 100% isolation across multi-project environments. Each project's vector space and knowledge graph remains strictly siloed via the \`sessionId\` constraint.
+**Audit Summary:** ARCRIFT confirms 100% isolation across multi-project environments. Each project's vector space and knowledge graph remains strictly siloed via the \`sessionId\` constraint.
 `;
       if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
       fs.writeFileSync(STRESS_REPORT_PATH, report);
@@ -175,7 +175,7 @@ ${results.map(r => `| ${r.project} | ${r.step} | ${r.success ? "✅ PASS" : "❌
         send("initialize", {
           protocolVersion: "2024-11-05",
           capabilities: {},
-          clientInfo: { name: "Glia-Stress", version: "1.0.0" }
+          clientInfo: { name: "ArcRift-Stress", version: "1.0.0" }
         });
       }
     });

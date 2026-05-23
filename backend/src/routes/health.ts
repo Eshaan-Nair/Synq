@@ -8,7 +8,7 @@ const router = Router();
 // Returns live system metrics: chunk count, session count, job queue, storage mode, Ollama status
 router.get("/", async (_req: Request, res: Response) => {
   try {
-    const storageMode = (process.env.GLIA_STORAGE_MODE || "docker").toLowerCase();
+    const storageMode = (process.env.ARCRIFT_STORAGE_MODE || "docker").toLowerCase();
 
     // Session + chunk counts
     const sessions = await sessionStore.getSessions();

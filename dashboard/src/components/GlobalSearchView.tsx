@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { searchGlobal } from "../api/glia";
+import { searchGlobal } from "../api/ArcRift";
 
 export const GlobalSearchView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");

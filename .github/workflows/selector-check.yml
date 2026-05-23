@@ -68,7 +68,7 @@ jobs:
                 "## Selector Staleness Detected",
                 "",
                 `The weekly selector smoke test failed on **${today}**.`,
-                "One or more AI platforms has updated their UI, breaking GLIA's ability to resolve the input box or response container.",
+                "One or more AI platforms has updated their UI, breaking ArcRift's ability to resolve the input box or response container.",
                 "",
                 "## Failed Platforms",
                 platformList,

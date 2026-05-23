@@ -12,12 +12,12 @@ export async function getSummary(project: string): Promise<string> {
     const session = await sessionStore.getSession(projectStr);
 
     if (!session) {
-      return `Glia project ID "${projectStr}" not found. Use list_projects to see valid IDs.`;
+      return `ArcRift project ID "${projectStr}" not found. Use list_projects to see valid IDs.`;
     }
 
     const triples = await graphStore.getTriplesBySession(projectStr);
 
-    let summary = session.summary || "No summary generated yet. Save a chat with the Glia extension to build knowledge.";
+    let summary = session.summary || "No summary generated yet. Save a chat with the ArcRift extension to build knowledge.";
     
     return `Project: ${session.projectName} (${session.platform})\n` +
            `Facts Stored: ${triples.length}\n` +

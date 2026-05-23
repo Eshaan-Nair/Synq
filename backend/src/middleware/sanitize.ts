@@ -42,7 +42,7 @@ export function sanitizeChunks(chunks: Chunk[]): Chunk[] {
     const flagged = INJECTION_PATTERNS.some(p => p.test(chunk.content));
     if (flagged) {
       logger.warn(
-        `[GLIA sanitize] Injection pattern detected in chunk ${chunk.chunkIndex} — redacting.`
+        `[ArcRift sanitize] Injection pattern detected in chunk ${chunk.chunkIndex} — redacting.`
       );
       return {
         ...chunk,
@@ -59,7 +59,7 @@ export function sanitizeChunks(chunks: Chunk[]): Chunk[] {
 export function wrapInContextBlock(chunks: Chunk[]): string {
   if (chunks.length === 0) return "";
 
-  const header = "=== GLIA RETRIEVED CONTEXT ===\n";
+  const header = "=== ArcRift RETRIEVED CONTEXT ===\n";
   const body = chunks
     .map((c, i) => `[${i + 1}] (Relevance: ${Math.round(c.score * 100)}%)\n${c.content}`)
     .join("\n\n");

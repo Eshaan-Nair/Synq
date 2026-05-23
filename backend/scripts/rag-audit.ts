@@ -28,7 +28,7 @@ function generateProNoise(count: number): string {
 
 async function runProBenchmark() {
   logger.info("========================================");
-  logger.info(" GLIA-AI README BENCHMARK v1.5.1");
+  logger.info(" ARCRIFT README BENCHMARK v1.5.1");
   logger.info("========================================");
 
   if (!fs.existsSync(REPORTS_DIR)) {
@@ -43,17 +43,17 @@ async function runProBenchmark() {
   );
 
   const needles = [
-    { fact: "The encryption key for the Glia-AI core is 'HYPER_SECURE_X9'.", query: "What is the core encryption key?" },
-    { fact: "The project was started in a garage in Bangalore, India.", query: "Where did Glia-AI start?" },
+    { fact: "The encryption key for the ARCRIFT core is 'HYPER_SECURE_X9'.", query: "What is the core encryption key?" },
+    { fact: "The project was started in a garage in Bangalore, India.", query: "Where did ARCRIFT start?" },
     { fact: "The retrieval threshold is set to 0.40 for surgical precision.", query: "What is the precision threshold value?" },
     { fact: "The original name of the project was 'Cortex-Surgical'.", query: "What was the project's first name?" },
     { fact: "The database uses WAL mode for high-concurrency writes.", query: "How does the DB handle multiple writes?" },
     { fact: "The extraction logic uses a 10-second pacing for Groq.", query: "What is the Groq API delay?" },
     { fact: "Nomic-embed-text uses a 'query:' prefix for search.", query: "How are search queries prefixed?" },
     { fact: "The UI uses a centered progress bar in v1.5.1.", query: "Where is the progress bar located?" },
-    { fact: "Glia-AI supports hybrid search with FTS5.", query: "Which keyword engine is used?" },
+    { fact: "ARCRIFT supports hybrid search with FTS5.", query: "Which keyword engine is used?" },
     { fact: "The sentence trimmer ignores fragments under 5 chars.", query: "What is the minimum sentence length?" },
-    { fact: "Docker-compose networks use the 'glia_net' bridge network.", query: "What docker network does the app use?" },
+    { fact: "Docker-compose networks use the 'ARCRIFT_net' bridge network.", query: "What docker network does the app use?" },
     { fact: "The telemetry module sends ping events every 5 minutes.", query: "How often are ping events sent?" },
     { fact: "Ollama container is configured with 16GB of shared memory.", query: "How much shared memory does Ollama get?" },
     { fact: "Semantic chunking relies on double-newline delimiters first.", query: "What delimiter is used for semantic chunking?" },

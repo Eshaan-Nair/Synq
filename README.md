@@ -1,18 +1,18 @@
 <div align="center">
 
-# GLIA — Persistent Memory for AI Coding Tools
+# ArcRift — Persistent Memory for AI Coding Tools
 
-### Your AI forgets everything between sessions. GLIA fixes that.
+### Your AI forgets everything between sessions. ArcRift fixes that.
 ### Memory saved in a browser chat is instantly available in your coding tool, and vice versa.
 
 **A local-first memory layer that captures your conversations, builds a searchable knowledge graph, and automatically injects the right context into every new prompt — no cloud, no subscriptions, no re-explaining yourself.**
 
 <br/>
 
-[![Stars](https://img.shields.io/github/stars/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/Glia-AI/stargazers)
-[![Forks](https://img.shields.io/github/forks/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/Glia-AI/forks)
-[![Issues](https://img.shields.io/github/issues/Eshaan-Nair/Glia-AI?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/Glia-AI/issues)
-[![Downloads](https://img.shields.io/npm/dt/glia-ai-setup?style=for-the-badge&logo=npm&labelColor=0B0E14&color=CB3837)](https://www.npmjs.com/package/glia-ai-setup)
+[![Stars](https://img.shields.io/github/stars/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/ARCRIFT/stargazers)
+[![Forks](https://img.shields.io/github/forks/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/ARCRIFT/forks)
+[![Issues](https://img.shields.io/github/issues/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/ARCRIFT/issues)
+[![Downloads](https://img.shields.io/npm/dt/ARCRIFT-setup?style=for-the-badge&logo=npm&labelColor=0B0E14&color=CB3837)](https://www.npmjs.com/package/ARCRIFT-setup)
 [![Version](https://img.shields.io/badge/version-1.5.2-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 
@@ -31,7 +31,7 @@ https://github.com/user-attachments/assets/49d8eb52-c266-449a-ae45-147ec755ec09
 ## One Command Setup
 
 ```bash
-npx glia-ai-setup
+npx ARCRIFT-setup
 ```
 
 
@@ -41,7 +41,7 @@ npx glia-ai-setup
 
 You are deep in a complex project. You have had 30 conversations with Claude about your auth flow, database schema, and deployment strategy. You open a new chat — and it is all gone. You spend 10 minutes re-explaining context you have already covered, and the AI gives you advice that contradicts decisions you made two weeks ago.
 
-GLIA stops the cycle. It captures your AI conversations, extracts structured facts into a knowledge graph, embeds them as searchable vectors, and automatically prepends the most relevant context to every new prompt — before you even finish typing.
+ArcRift stops the cycle. It captures your AI conversations, extracts structured facts into a knowledge graph, embeds them as searchable vectors, and automatically prepends the most relevant context to every new prompt — before you even finish typing.
 
 ---
 
@@ -72,17 +72,17 @@ GLIA stops the cycle. It captures your AI conversations, extracts structured fac
 
 ## How the Two Modes Work
 
-GLIA has two complementary modes that share the same memory store. You can use one, the other, or both at the same time.
+ArcRift has two complementary modes that share the same memory store. You can use one, the other, or both at the same time.
 
 ### Mode 1 — Browser Extension (Web)
 
-The extension lives inside Chrome and works on any AI chat website. When you save a conversation, it scrapes the page, scrubs PII, chunks and embeds the text locally, and sends it to the GLIA backend. On every subsequent prompt you type, the extension intercepts the input, queries the backend for relevant context, and prepends it to your message automatically — before the request hits the AI.
+The extension lives inside Chrome and works on any AI chat website. When you save a conversation, it scrapes the page, scrubs PII, chunks and embeds the text locally, and sends it to the ArcRift backend. On every subsequent prompt you type, the extension intercepts the input, queries the backend for relevant context, and prepends it to your message automatically — before the request hits the AI.
 
 Best for: Claude, ChatGPT, Gemini, DeepSeek, Grok, Microsoft Copilot, and Mistral web interfaces.
 
 ### Mode 2 — MCP Server (Coding Tools)
 
-The MCP server exposes GLIA as a set of tools that coding agents can call directly. Instead of intercepting DOM events, the AI tool calls `recall_context` at the start of a session to pull in relevant memory, and `store_memory` after completing work to save decisions and context for future sessions.
+The MCP server exposes ArcRift as a set of tools that coding agents can call directly. Instead of intercepting DOM events, the AI tool calls `recall_context` at the start of a session to pull in relevant memory, and `store_memory` after completing work to save decisions and context for future sessions.
 
 Best for: Claude Code, Cursor, Windsurf — anywhere you write code with an AI coding agent.
 
@@ -100,7 +100,7 @@ Both modes write to and read from the same backend database. A conversation you 
 |:---|:---|
 | **Three-Layer Hybrid Search** | Sentence vectors, chunk vectors, and FTS5 keyword search run in parallel. Results are fused and ranked by a combined score. |
 | **Surgical Sentence Trimming** | Chunks are split into individual sentences at index time. On retrieval, only the sentences that directly match the query are returned — not the entire surrounding paragraph. Reduces prompt noise by up to 95%. |
-| **HyDE (Hypothetical Document Embedding)** | Before querying the vector store, GLIA generates a hypothetical answer to your query and uses that embedding alongside the raw query. This dramatically improves recall for rephrased or indirect questions. |
+| **HyDE (Hypothetical Document Embedding)** | Before querying the vector store, ArcRift generates a hypothetical answer to your query and uses that embedding alongside the raw query. This dramatically improves recall for rephrased or indirect questions. |
 | **Small-to-Big Retrieval** | High-precision sentence match triggers fetching the parent chunk for broader context. Precision of a sentence search, context of a full paragraph. |
 | **Knowledge Graph Layer** | Every saved conversation is processed to extract subject-relation-object triples (22 entity types, 20+ relation types). Graph facts are fused with vector results on every recall. |
 | **Background Indexing** | Sentence-level embedding is offloaded to a background job queue so Save is instant. The deep index is built asynchronously without blocking the UI. |
@@ -109,7 +109,7 @@ Both modes write to and read from the same backend database. A conversation you 
 
 | Feature | Detail |
 |:---|:---|
-| **Auto-Connect** | Once a session is active, GLIA re-attaches automatically on every page load. No clicking required — just type. |
+| **Auto-Connect** | Once a session is active, ArcRift re-attaches automatically on every page load. No clicking required — just type. |
 | **SPA Navigation Awareness** | Detects "New Chat" clicks in single-page apps (ChatGPT, Claude, Gemini) without a full page reload. Automatically resets the active session so context does not bleed between conversations. |
 | **Pause / Resume** | One click in the popup pauses auto-injection. Click again to resume. State persists across tabs. |
 | **Classic Inject** | One-time manual inject button for priming a cold start without enabling auto-connect. |
@@ -122,7 +122,7 @@ Both modes write to and read from the same backend database. A conversation you 
 | Tool | What it does |
 |:---|:---|
 | `recall_context` | Retrieves the top-N most relevant memory chunks for a prompt, scoped to a project. Includes knowledge graph facts. |
-| `store_memory` | Saves text or a transcript to GLIA memory. Auto-creates the project if it does not exist. Triggers full background indexing. |
+| `store_memory` | Saves text or a transcript to ArcRift Memory. Auto-creates the project if it does not exist. Triggers full background indexing. |
 | `search_memory` | Cross-project global search. Useful for finding decisions made in a different project that apply to the current one. |
 | `list_projects` | Lists all saved projects with metadata — chunk count, triple count, last updated. |
 | `get_project_summary` | Returns a structured knowledge graph summary for a project as readable markdown. |
@@ -133,7 +133,7 @@ Both modes write to and read from the same backend database. A conversation you 
 
 | Feature | Detail |
 |:---|:---|
-| **Zero-Docker Mode** | `GLIA_STORAGE_MODE=sqlite` replaces all Docker services with a single `glia.db` file. Full feature parity — vector search, knowledge graph, job queue, everything. |
+| **Zero-Docker Mode** | `ARCRIFT_STORAGE_MODE=sqlite` replaces all Docker services with a single `ArcRift.db` file. Full feature parity — vector search, knowledge graph, job queue, everything. |
 | **WAL Concurrency** | SQLite runs in Write-Ahead Logging mode, allowing simultaneous reads from the dashboard, extension, and MCP server without lock contention. |
 | **Dead Letter Queue** | Background jobs that fail are retried up to 5 times with exponential backoff. Failed jobs move to a dead letter queue visible in the dashboard — nothing is silently lost. |
 | **Ghost Job Cleanup** | On startup, any jobs stuck in PROCESSING state from a previous crashed run are automatically reset to PENDING. |
@@ -255,7 +255,7 @@ SQLite mode is the recommended default. The installer detects Docker automatical
 ### One-Command Setup (All Platforms)
 
 ```bash
-npx glia-ai-setup
+npx ARCRIFT-setup
 ```
 
 This is the recommended starting point for all users. It clones the repo, checks dependencies, pulls Ollama models, installs packages, and builds everything. Run it once and then use `start.bat` or `start.sh` for daily use.
@@ -264,24 +264,24 @@ This is the recommended starting point for all users. It clones the repo, checks
 
 ### Web Extension Setup
 
-The extension requires the GLIA backend to be running. It does not work standalone.
+The extension requires the ArcRift backend to be running. It does not work standalone.
 
 **Step 1 — Install and start the backend**
 
 ```bash
 # One-command (recommended)
-npx glia-ai-setup
+npx ARCRIFT-setup
 
 # Or manual
-git clone https://github.com/Eshaan-Nair/Glia-AI.git
-cd Glia-AI/backend
+git clone https://github.com/Eshaan-Nair/ARCRIFT.git
+cd ARCRIFT/backend
 cp .env.example .env        # Edit .env — add GROQ_API_KEY if using Groq
 npm install
 ```
 
 Set storage mode in `backend/.env`:
 ```
-GLIA_STORAGE_MODE=sqlite    # Recommended — no Docker needed
+ARCRIFT_STORAGE_MODE=sqlite    # Recommended — no Docker needed
 OLLAMA_URL=http://localhost:11434
 GROQ_API_KEY=gsk_your_key_here
 ```
@@ -312,12 +312,12 @@ This produces the `extension/dist/` folder.
 1. Open `chrome://extensions`
 2. Enable **Developer mode** (top-right toggle)
 3. Click **Load unpacked**
-4. Select the `Glia-AI/extension/dist` folder
-5. The GLIA icon appears in your toolbar
+4. Select the `ARCRIFT/extension/dist` folder
+5. The ArcRift icon appears in your toolbar
 
 **Step 4 — Use it**
 
-Navigate to Claude, ChatGPT, Gemini, DeepSeek, Grok, Copilot, or Mistral. Click the GLIA popup, enter a project name, and click **Save Chat**. Auto-connect activates immediately.
+Navigate to Claude, ChatGPT, Gemini, DeepSeek, Grok, Copilot, or Mistral. Click the ArcRift popup, enter a project name, and click **Save Chat**. Auto-connect activates immediately.
 
 **Daily use:**
 - Windows: double-click `start.bat`
@@ -354,9 +354,9 @@ This prints a pre-formatted JSON block with absolute paths resolved for your mac
 ```json
 {
   "mcpServers": {
-    "glia": {
+    "arcrift": {
       "command": "node",
-      "args": ["C:/path/to/Glia-AI/backend/dist/mcp/server.js"]
+      "args": ["C:/path/to/ARCRIFT/backend/dist/mcp/server.js"]
     }
   }
 }
@@ -364,16 +364,16 @@ This prints a pre-formatted JSON block with absolute paths resolved for your mac
 
 **Claude Code** — run in your project directory:
 ```bash
-claude mcp add glia node /path/to/Glia-AI/backend/dist/mcp/server.js
+claude mcp add ArcRift node /path/to/ARCRIFT/backend/dist/mcp/server.js
 ```
 
 **Cursor** — create `.cursor/mcp.json` in your project root:
 ```json
 {
   "mcpServers": {
-    "glia": {
+    "arcrift": {
       "command": "node",
-      "args": ["/path/to/Glia-AI/backend/dist/mcp/server.js"]
+      "args": ["/path/to/ARCRIFT/backend/dist/mcp/server.js"]
     }
   }
 }
@@ -383,9 +383,9 @@ claude mcp add glia node /path/to/Glia-AI/backend/dist/mcp/server.js
 ```json
 {
   "mcpServers": {
-    "glia": {
+    "arcrift": {
       "command": "node",
-      "args": ["/path/to/Glia-AI/backend/dist/mcp/server.js"]
+      "args": ["/path/to/ARCRIFT/backend/dist/mcp/server.js"]
     }
   }
 }
@@ -397,7 +397,7 @@ claude mcp add glia node /path/to/Glia-AI/backend/dist/mcp/server.js
 
 The MCP server reads `backend/.env`. Make sure it contains:
 ```
-GLIA_STORAGE_MODE=sqlite
+ARCRIFT_STORAGE_MODE=sqlite
 OLLAMA_URL=http://localhost:11434
 ```
 
@@ -407,7 +407,7 @@ Ollama must be running for the MCP server to generate embeddings and extract kno
 
 ### Running Both Together
 
-When running the browser extension and MCP server together, they share the same `glia.db` database. No extra configuration is needed.
+When running the browser extension and MCP server together, they share the same `ArcRift.db` database. No extra configuration is needed.
 
 1. Start the HTTP backend: `start.bat` or `./start.sh`
 2. Load the extension in Chrome (it talks to `http://localhost:3001`)
@@ -425,31 +425,31 @@ The HTTP backend and MCP server both use WAL mode on SQLite, which allows them t
 
 **Saving a conversation:**
 1. Have a conversation on any supported platform
-2. Click the GLIA icon in the Chrome toolbar
+2. Click the ArcRift icon in the Chrome toolbar
 3. Enter a project name (e.g. `AuthService`, `MyApp-Backend`)
 4. Click **Save Chat**
 
-GLIA scrubs PII, chunks the text, embeds it locally with Ollama, and sends it to the backend. The UI confirms success in under 5 seconds. Background indexing (sentence-level embeddings, knowledge graph extraction) continues asynchronously.
+ArcRift scrubs PII, chunks the text, embeds it locally with Ollama, and sends it to the backend. The UI confirms success in under 5 seconds. Background indexing (sentence-level embeddings, knowledge graph extraction) continues asynchronously.
 
 **Auto-connect:**
 
-Once a session is saved and activated, GLIA intercepts every prompt you type on that platform. Before the request is sent, it queries the backend for relevant context and prepends the top results. You do not need to do anything — just type normally.
+Once a session is saved and activated, ArcRift intercepts every prompt you type on that platform. Before the request is sent, it queries the backend for relevant context and prepends the top results. You do not need to do anything — just type normally.
 
-To pause: click the GLIA popup and hit **Pause**. The badge dims. Click again to resume.
+To pause: click the ArcRift popup and hit **Pause**. The badge dims. Click again to resume.
 
 **New chat detection:**
 
-When you click "New Chat" on ChatGPT, Claude.ai, or Gemini, GLIA detects the URL or DOM change and resets the active session. The next Save will start a fresh project, and context from the previous session will not bleed in.
+When you click "New Chat" on ChatGPT, Claude.ai, or Gemini, ArcRift detects the URL or DOM change and resets the active session. The next Save will start a fresh project, and context from the previous session will not bleed in.
 
 **Classic inject:**
 
-For a one-time context push without enabling auto-connect, click **Inject Context** in the popup. GLIA pastes the knowledge graph summary directly into the chat input field. You review it and send manually.
+For a one-time context push without enabling auto-connect, click **Inject Context** in the popup. ArcRift pastes the knowledge graph summary directly into the chat input field. You review it and send manually.
 
 ---
 
 ### Using the MCP Tools
 
-Once connected, your coding agent has access to seven GLIA tools. A typical session looks like this:
+Once connected, your coding agent has access to seven ArcRift tools. A typical session looks like this:
 
 **At session start — recall project memory:**
 ```
@@ -537,7 +537,7 @@ These are the smaller decisions that make the system faster and more reliable in
 
 **Instant save, deep index later.** When you click Save, only the chunk-level embeddings are computed synchronously (1–2 embeddings). Sentence-level embeddings (20–40 embeddings per conversation) are offloaded to a background job. The UI confirms success immediately; the deep index catches up within seconds.
 
-**Delete-then-insert for vector updates.** SQLite virtual tables do not support `UPDATE` on vector columns. GLIA uses a delete-then-insert pattern to avoid `UNIQUE constraint` errors when re-saving a conversation.
+**Delete-then-insert for vector updates.** SQLite virtual tables do not support `UPDATE` on vector columns. ArcRift uses a delete-then-insert pattern to avoid `UNIQUE constraint` errors when re-saving a conversation.
 
 **Prefix keyword matching.** FTS5 queries use wildcard suffixes (`encrypt*` matches `encryption`, `encrypted`, `encryptor`). This significantly improves recall for technical terms where the exact suffix varies.
 
@@ -558,7 +558,7 @@ These are the smaller decisions that make the system faster and more reliable in
 ## Architecture
 
 ```
-Glia-AI/
+ARCRIFT/
 ├── backend/
 │   ├── src/
 │   │   ├── mcp/           MCP server and seven tool implementations
@@ -614,11 +614,11 @@ Glia-AI/
 
 ## Privacy and Security
 
-GLIA was designed with a local-first philosophy from the ground up. Your conversations never leave your machine unless you explicitly configure a cloud LLM.
+ArcRift was designed with a local-first philosophy from the ground up. Your conversations never leave your machine unless you explicitly configure a cloud LLM.
 
 | Control | Detail |
 |:---|:---|
-| **Local Storage** | All data lives in `glia.db` on your machine or in local Docker volumes. Nothing syncs to any external service. |
+| **Local Storage** | All data lives in `ArcRift.db` on your machine or in local Docker volumes. Nothing syncs to any external service. |
 | **Local Embeddings** | `nomic-embed-text` runs entirely via Ollama — zero API calls for embeddings. |
 | **Local Extraction** | `llama3.1:8b` runs via Ollama for knowledge graph extraction. Groq is only used as a fallback and only if you provide a key. |
 | **PII Scrubbing** | API keys, JWTs, connection strings, email addresses, and internal IPs are redacted to `[REDACTED]` in the browser before any data is sent to the backend. |
@@ -665,7 +665,7 @@ Bug fixes, new platform support, UI improvements, and test coverage are all welc
 
 [Contributing Guide](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
-Good first issues: [`good first issue`](https://github.com/Eshaan-Nair/Glia-AI/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
+Good first issues: [`good first issue`](https://github.com/Eshaan-Nair/ARCRIFT/issues?q=is%3Aissue+label%3A%22good+first+issue%22)
 
 ---
 

@@ -24,4 +24,4 @@ How the Knowledge Graph is organized:
 - **Memory Impact:** ~0.2MB SQLite storage increase.
 
 ---
-**Audit Summary:** Glia-AI confirms the dashboard can handle extreme density (1,200+ nodes) without degradation. The physics engine is stable and the database remains high-performance.
+**Audit Summary:** ARCRIFT confirms the dashboard can handle extreme density (1,200+ nodes) without degradation. The physics engine is stable and the database remains high-performance.

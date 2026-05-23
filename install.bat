@@ -4,11 +4,11 @@ setlocal EnableDelayedExpansion
 REM Always run from the script's own directory
 cd /d "%~dp0"
 
-set "COMPOSE_PROJECT_NAME=glia"
+set "COMPOSE_PROJECT_NAME=ArcRift"
 
 echo.
 echo  ===================================
-echo   GLIA v1.5.2 - Smart Installer
+echo   ArcRift v1.5.2 - Smart Installer
 echo  ===================================
 echo.
 
@@ -129,7 +129,7 @@ if not exist "dashboard\.env" (
 )
 
 REM Update .env with choices (PowerShell safe method)
-powershell -NoProfile -Command "$utf8 = New-Object System.Text.UTF8Encoding($false); $c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; if ('!GROQ_API_KEY!' -ne '') { if ($c -match 'GROQ_API_KEY=') { $c = $c -replace 'GROQ_API_KEY=.*', 'GROQ_API_KEY=!GROQ_API_KEY!' } else { $c += 'GROQ_API_KEY=!GROQ_API_KEY!' } }; if ('!USE_SQLITE!' -eq '1') { if ($c -match 'GLIA_STORAGE_MODE=') { $c = $c -replace 'GLIA_STORAGE_MODE=.*', 'GLIA_STORAGE_MODE=sqlite' } else { $c += 'GLIA_STORAGE_MODE=sqlite' } }; [System.IO.File]::WriteAllLines('backend\.env', $c, $utf8);"
+powershell -NoProfile -Command "$utf8 = New-Object System.Text.UTF8Encoding($false); $c = Get-Content backend\.env; if ($c -match 'GRAPH_BACKEND=') { $c = $c -replace 'GRAPH_BACKEND=.*', 'GRAPH_BACKEND=!GRAPH_BACKEND!' } else { $c += 'GRAPH_BACKEND=!GRAPH_BACKEND!' }; if ($c -match 'OLLAMA_MODEL=') { $c = $c -replace 'OLLAMA_MODEL=.*', 'OLLAMA_MODEL=!SELECTED_MODEL!' } else { $c += 'OLLAMA_MODEL=!SELECTED_MODEL!' }; if ('!GROQ_API_KEY!' -ne '') { if ($c -match 'GROQ_API_KEY=') { $c = $c -replace 'GROQ_API_KEY=.*', 'GROQ_API_KEY=!GROQ_API_KEY!' } else { $c += 'GROQ_API_KEY=!GROQ_API_KEY!' } }; if ('!USE_SQLITE!' -eq '1') { if ($c -match 'ARCRIFT_STORAGE_MODE=') { $c = $c -replace 'ARCRIFT_STORAGE_MODE=.*', 'ARCRIFT_STORAGE_MODE=sqlite' } else { $c += 'ARCRIFT_STORAGE_MODE=sqlite' } }; [System.IO.File]::WriteAllLines('backend\.env', $c, $utf8);"
 
 REM 6. Dependencies
 echo.
@@ -154,7 +154,7 @@ echo.
 echo  -----------------------------------
 echo   MCP Server Setup
 echo  -----------------------------------
-echo   Glia can act as a memory layer for Claude Desktop, Cursor, and Windsurf.
+echo   ArcRift can act as a memory layer for Claude Desktop, Cursor, and Windsurf.
 set /p MCP_CHOICE="Would you like to automatically configure Claude Desktop? [y/n] (default n): "
 if /i "!MCP_CHOICE!"=="y" (
   pushd backend && call npm run mcp:setup && popd
@@ -174,7 +174,7 @@ if "!USE_SQLITE!"=="0" (
 
 echo.
 echo  ===================================
-echo   GLIA Installed Successfully
+echo   ArcRift Installed Successfully
 echo  ===================================
 if "!GRAPH_BACKEND!"=="groq" (
     echo   IMPORTANT: Ensure GROQ_API_KEY is set in backend/.env
@@ -186,8 +186,8 @@ echo   FINAL STEP: LOAD THE EXTENSION
 echo  -----------------------------------
 echo   1. Open Chrome --^> chrome://extensions
 echo   2. Enable Developer mode (top-right toggle)
-echo   3. Load unpacked --^> select Glia-AI/extension/dist
-echo   4. The GLIA badge appears on Claude, ChatGPT, Gemini, and DeepSeek
+echo   3. Load unpacked --^> select ARCRIFT/extension/dist
+echo   4. The ArcRift badge appears on Claude, ChatGPT, Gemini, and DeepSeek
 echo.
 echo   All set! Your AI now has a memory.
 echo.

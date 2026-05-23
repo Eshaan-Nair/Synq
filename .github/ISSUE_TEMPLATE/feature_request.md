@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new platform, tool, or improvement to GLIA
+about: Suggest a new platform, tool, or improvement to ArcRift
 title: "[FEATURE] "
 labels: enhancement
 assignees: ''
@@ -10,7 +10,7 @@ assignees: ''
 Describe the friction or missing capability you're experiencing.
 
 **Describe the feature**
-What should GLIA do that it doesn't do today?
+What should ArcRift do that it doesn't do today?
 
 **Which component would this affect?**
 - [ ] Chrome extension

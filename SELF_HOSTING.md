@@ -1,6 +1,6 @@
-# GLIA — Self-Hosting Guide
+# ArcRift — Self-Hosting Guide
 
-This guide covers custom configuration, port changes, backups, and running GLIA behind a reverse proxy.
+This guide covers custom configuration, port changes, backups, and running ArcRift behind a reverse proxy.
 
 ---
 
@@ -23,7 +23,7 @@ Edit `backend/.env`:
 
 ```env
 NEO4J_PASSWORD=your-strong-password
-MONGO_URI=mongodb://glia:your-strong-password@localhost:27017/gliadb?authSource=admin
+MONGO_URI=mongodb://ArcRift:your-strong-password@localhost:27017/arcriftdb?authSource=admin
 ```
 
 And update `docker-compose.yml` to match:
@@ -35,7 +35,7 @@ neo4j:
 
 mongodb:
   environment:
-    - MONGO_INITDB_ROOT_USERNAME=glia
+    - MONGO_INITDB_ROOT_USERNAME=ArcRift
     - MONGO_INITDB_ROOT_PASSWORD=your-strong-password
 ```
 
@@ -45,7 +45,7 @@ Restart: `docker compose down && docker compose --profile full up -d`
 
 ## Docker Profiles
 
-GLIA supports two Docker profiles:
+ArcRift supports two Docker profiles:
 
 | Profile | Services | Use when |
 |---|---|---|
@@ -62,7 +62,7 @@ docker compose --profile lite up -d
 docker compose -f docker-compose.lite.yml up -d
 ```
 
-Override RAM auto-detection: `GLIA_PROFILE=full` or `GLIA_PROFILE=lite` before running a launcher.
+Override RAM auto-detection: `ARCRIFT_PROFILE=full` or `ARCRIFT_PROFILE=lite` before running a launcher.
 
 ---
 
@@ -74,15 +74,15 @@ All data is in a single file. Back it up with a simple copy:
 
 ```bash
 # Stop the backend first, then:
-cp backend/glia.db backend/glia.db.backup
+cp backend/ArcRift.db backend/ArcRift.db.backup
 
 # Or with a timestamp:
-cp backend/glia.db backend/glia_$(date +%Y%m%d).db.backup
+cp backend/ArcRift.db backend/ARCRIFT_$(date +%Y%m%d).db.backup
 ```
 
 Restore by copying the backup file back:
 ```bash
-cp backend/glia_20260517.db.backup backend/glia.db
+cp backend/ARCRIFT_20260517.db.backup backend/ArcRift.db
 ```
 
 ### Docker Mode
@@ -91,9 +91,9 @@ All data lives in named Docker volumes:
 
 | Volume | Contains |
 |---|---|
-| `glia_neo4j_data` | Knowledge graph triples |
-| `glia_mongo_data` | Sessions, FullChat documents |
-| `glia_chroma_data` | Vector embeddings |
+| `ARCRIFT_neo4j_data` | Knowledge graph triples |
+| `ARCRIFT_mongo_data` | Sessions, FullChat documents |
+| `ARCRIFT_chroma_data` | Vector embeddings |
 
 ### Backup
 
@@ -102,20 +102,20 @@ All data lives in named Docker volumes:
 docker compose down
 
 # Backup each volume
-docker run --rm -v glia_mongo_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v ARCRIFT_mongo_data:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/mongo_$(date +%Y%m%d).tar.gz /data
 
-docker run --rm -v glia_neo4j_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v ARCRIFT_neo4j_data:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/neo4j_$(date +%Y%m%d).tar.gz /data
 
-docker run --rm -v glia_chroma_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v ARCRIFT_chroma_data:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/chroma_$(date +%Y%m%d).tar.gz /data
 ```
 
 ### Restore
 
 ```bash
-docker run --rm -v glia_mongo_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v ARCRIFT_mongo_data:/data -v $(pwd)/backups:/backup alpine \
   tar xzf /backup/mongo_20260505.tar.gz -C /
 ```
 
@@ -138,7 +138,7 @@ To expose the dashboard at a custom domain:
 
 ```nginx
 server {
-    server_name glia.yourdomain.com;
+    server_name ArcRift.yourdomain.com;
 
     location / {
         proxy_pass http://localhost:3001;
@@ -153,12 +153,12 @@ Update `ALLOWED_ORIGINS` in `backend/src/index.ts` to include your domain:
 ```typescript
 const ALLOWED_ORIGINS = [
   "http://localhost:3001",
-  "https://glia.yourdomain.com",
+  "https://ArcRift.yourdomain.com",
   // ...
 ];
 ```
 
-Enable request authentication at the proxy level (e.g. Basic Auth in nginx) if exposing the dashboard to the public internet. GLIA is designed for local-first usage and does not include built-in user authentication.
+Enable request authentication at the proxy level (e.g. Basic Auth in nginx) if exposing the dashboard to the public internet. ArcRift is designed for local-first usage and does not include built-in user authentication.
 
 ---
 
@@ -210,5 +210,5 @@ curl http://localhost:7474
 curl http://localhost:11434/api/tags
 
 # MongoDB
-docker exec glia_mongo mongosh --eval "db.adminCommand('ping')"
+docker exec ARCRIFT_mongo mongosh --eval "db.adminCommand('ping')"
 ```

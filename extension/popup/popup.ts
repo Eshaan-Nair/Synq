@@ -22,7 +22,7 @@ const unloadBtn = document.getElementById("unload-btn") as HTMLButtonElement;
 const injectBtn = document.getElementById("inject-btn") as HTMLButtonElement;
 const detectedPlatformEl = document.getElementById("detected-platform") as HTMLElement;
 const platformDot = document.getElementById("platform-dot") as HTMLElement;
-const gliaStatusBadge = document.getElementById("glia-status-badge") as HTMLElement;
+const arcriftStatusBadge = document.getElementById("ArcRift-status-badge") as HTMLElement;
 const projectNameInput = document.getElementById("project-name") as HTMLInputElement;
 const selectorWarningEl = document.getElementById("selector-warning") as HTMLElement;
 const selectorWarningMsgEl = document.getElementById("selector-warning-msg") as HTMLElement;
@@ -122,7 +122,7 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
     if (msg.includes("Cannot access") || msg.includes("restricted")) {
       return false;
     }
-    console.error("[GLIA popup] Could not inject content script:", err);
+    console.error("[ArcRift popup] Could not inject content script:", err);
     return false;
   }
 }
@@ -164,18 +164,18 @@ async function ensureContentScript(tabId: number): Promise<boolean> {
         const tabUrl = tab?.url || "";
         const smartKey = getSmartUrlKey(tabUrl);
 
-        chrome.storage.local.get(["glia_session", "glia_url_map"], (result) => {
-          const urlMap = (result.glia_url_map || {}) as Record<string, string>;
+        chrome.storage.local.get(["ARCRIFT_session", "ARCRIFT_url_map"], (result) => {
+          const urlMap = (result.ARCRIFT_url_map || {}) as Record<string, string>;
           const mappedId = urlMap[smartKey];
 
           if (mappedId) {
-            const lastSession = result.glia_session as SessionData;
+            const lastSession = result.ARCRIFT_session as SessionData;
             if (lastSession && lastSession.sessionId === mappedId) {
               showSession(lastSession);
             }
-          } else if (result.glia_session) {
+          } else if (result.ARCRIFT_session) {
             // Show last active session info at bottom
-            showSession(result.glia_session as SessionData);
+            showSession(result.ARCRIFT_session as SessionData);
           }
           resolve();
         });
@@ -236,8 +236,8 @@ saveBtn.addEventListener("click", async () => {
   let existingSessionId: string | undefined;
 
   if (tabUrl) {
-    const result = await chrome.storage.local.get("glia_url_map");
-    const urlMap = (result.glia_url_map || {}) as Record<string, string>;
+    const result = await chrome.storage.local.get("ARCRIFT_url_map");
+    const urlMap = (result.ARCRIFT_url_map || {}) as Record<string, string>;
     existingSessionId = urlMap[smartKey] || urlMap[tabUrl];
   }
 
@@ -245,16 +245,16 @@ saveBtn.addEventListener("click", async () => {
   // BUT: Verify it belongs to this smartKey to prevent session hijacking across tabs
   let sessionIdToUse = currentSessionId || existingSessionId;
   if (sessionIdToUse && sessionIdToUse !== existingSessionId && existingSessionId) {
-    console.warn("[GLIA popup] Session ID mismatch for this URL. Resetting to URL-mapped ID.");
+    console.warn("[ArcRift popup] Session ID mismatch for this URL. Resetting to URL-mapped ID.");
     sessionIdToUse = existingSessionId;
   } else if (sessionIdToUse && !existingSessionId && currentSessionId) {
     // We are on a new URL but the popup has an old session in memory
-    console.info("[GLIA popup] New URL detected. Clearing stale session ID.");
+    console.info("[ArcRift popup] New URL detected. Clearing stale session ID.");
     sessionIdToUse = undefined;
   }
 
   if (sessionIdToUse) {
-    console.log(`[GLIA popup] using session: ${sessionIdToUse} (current: ${!!currentSessionId}, url-mapped: ${!!existingSessionId})`);
+    console.log(`[ArcRift popup] using session: ${sessionIdToUse} (current: ${!!currentSessionId}, url-mapped: ${!!existingSessionId})`);
   }
 
   const sessionResult = await new Promise<any>((resolve) => {
@@ -281,15 +281,15 @@ saveBtn.addEventListener("click", async () => {
   if (!sessionResult?.sessionId) {
     // If we tried to update an existing session but it was deleted on the backend
     if (sessionResult?.error === "Session not found" && sessionIdToUse) {
-      console.warn(`[GLIA popup] session ${sessionIdToUse} not found on backend. Clearing mapping and retrying...`);
+      console.warn(`[ArcRift popup] session ${sessionIdToUse} not found on backend. Clearing mapping and retrying...`);
 
       // Clear mapping and state
       if (tabUrl) {
-        const urlMapResult = await chrome.storage.local.get("glia_url_map");
-        const urlMap = (urlMapResult.glia_url_map || {}) as Record<string, string>;
+        const urlMapResult = await chrome.storage.local.get("ARCRIFT_url_map");
+        const urlMap = (urlMapResult.ARCRIFT_url_map || {}) as Record<string, string>;
         delete urlMap[smartKey];
         delete urlMap[tabUrl];
-        await chrome.storage.local.set({ glia_url_map: urlMap });
+        await chrome.storage.local.set({ ARCRIFT_url_map: urlMap });
       }
       currentSessionId = null;
 
@@ -345,23 +345,23 @@ saveBtn.addEventListener("click", async () => {
           tripleCount: response.triplesExtracted as number,
           topicCount: response.topicsExtracted as number,
         };
-        chrome.storage.local.set({ glia_session: sessionData });
+        chrome.storage.local.set({ ARCRIFT_session: sessionData });
 
         // Save the URL -> sessionId mapping so we update instead of create next time
         if (tabUrl) {
-          chrome.storage.local.get("glia_url_map", (result) => {
-            const urlMap = (result.glia_url_map || {}) as Record<string, string>;
+          chrome.storage.local.get("ARCRIFT_url_map", (result) => {
+            const urlMap = (result.ARCRIFT_url_map || {}) as Record<string, string>;
             urlMap[smartKey] = sessionResult.sessionId;
             // Also map the original URL just in case
             urlMap[tabUrl] = sessionResult.sessionId;
-            chrome.storage.local.set({ glia_url_map: urlMap });
+            chrome.storage.local.set({ ARCRIFT_url_map: urlMap });
           });
         }
 
         showSession(sessionData);
         const chunks = response.topicsExtracted as number;
         const facts = response.triplesExtracted as number;
-        setStatus(`Saved! GLIA auto-connected.`);
+        setStatus(`Saved! ArcRift auto-connected.`);
 
         // ── Success State Glow ───────────────────────────────────────
         document.body.classList.add("success-glow");
@@ -385,10 +385,10 @@ pauseToggleBtn.addEventListener("click", async () => {
   // Tell the content script
   const ready = await ensureContentScript(tabId);
   if (ready) {
-    chrome.tabs.sendMessage(tabId, { type: isPaused ? "PAUSE_GLIA" : "RESUME_GLIA" }, () => { });
+    chrome.tabs.sendMessage(tabId, { type: isPaused ? "PAUSE_ARCRIFT" : "RESUME_ARCRIFT" }, () => { });
   }
 
-  setStatus(isPaused ? "⏸ GLIA paused" : "▶ GLIA resumed");
+  setStatus(isPaused ? "⏸ ArcRift paused" : "▶ ArcRift resumed");
 });
 
 // ── Unload Session ───────────────────────────────────────────────
@@ -404,7 +404,7 @@ unloadBtn.addEventListener("click", async () => {
 
     if (response?.success) {
       currentSessionId = null;
-      chrome.storage.local.remove("glia_session");
+      chrome.storage.local.remove("ARCRIFT_session");
       sessionInfo.style.display = "none";
       projectNameInput.value = ""; // Clear input on unload
       updatePauseUI();
@@ -476,15 +476,15 @@ function showSession(data: SessionData) {
 
 function updatePauseUI() {
   if (isPaused) {
-    pauseToggleBtn.textContent = "▶ Resume GLIA";
+    pauseToggleBtn.textContent = "▶ Resume ArcRift";
     pauseToggleBtn.classList.add("paused");
-    gliaStatusBadge.textContent = "⏸ Paused";
-    gliaStatusBadge.className = "glia-status paused";
+    arcriftStatusBadge.textContent = "⏸ Paused";
+    arcriftStatusBadge.className = "ArcRift-status paused";
   } else {
-    pauseToggleBtn.textContent = "⏸ Pause GLIA";
+    pauseToggleBtn.textContent = "⏸ Pause ArcRift";
     pauseToggleBtn.classList.remove("paused");
-    gliaStatusBadge.textContent = currentSessionId ? "🟢 Active" : "⚪ No session";
-    gliaStatusBadge.className = `glia-status ${currentSessionId ? "active" : "idle"}`;
+    arcriftStatusBadge.textContent = currentSessionId ? "🟢 Active" : "⚪ No session";
+    arcriftStatusBadge.className = `ArcRift-status ${currentSessionId ? "active" : "idle"}`;
   }
 }
 
@@ -499,9 +499,9 @@ function showSelectorWarning(platform: string) {
   selectorWarningMsgEl.textContent =
     `Could not connect to ${capitalize(platform)}. Selector may be stale.`;
   selectorWarningEl.style.display = "block";
-  // Also update the glia status badge to warning
-  gliaStatusBadge.textContent = "⚠ Injection Failed";
-  gliaStatusBadge.className = "glia-status warning";
+  // Also update the ArcRift status badge to warning
+  arcriftStatusBadge.textContent = "⚠ Injection Failed";
+  arcriftStatusBadge.className = "ArcRift-status warning";
 }
 
 function hideSelectorWarning() {

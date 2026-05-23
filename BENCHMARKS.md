@@ -1,6 +1,6 @@
-# Glia-AI Benchmarking & Stress-Testing Suite
+# ARCRIFT Benchmarking & Stress-Testing Suite
 
-Welcome to the **Glia-AI Benchmarking and Testing Suite**. Glia-AI utilizes a series of highly automated diagnostic utilities, audits, and stress-tests to verify RAG recall, system limits, graph rendering efficiency, and multi-project tenant isolation.
+Welcome to the **ARCRIFT Benchmarking and Testing Suite**. ARCRIFT utilizes a series of highly automated diagnostic utilities, audits, and stress-tests to verify RAG recall, system limits, graph rendering efficiency, and multi-project tenant isolation.
 
 This document serves as the single source of truth for running all performance, security, and rendering audits.
 
@@ -33,7 +33,7 @@ npm run stress-test
 * **Expected Result:** Generates a complete graph database segment and produces a metric breakdown in `reports/graph_stress_test.md`.
 
 ### 2. Multi-Tenant Project Isolation Test
-Verifies that Glia-AI never leaks context or memories between different projects (tenants). It writes secret keys into 10 separate projects and actively runs queries to ensure that none of the projects can access another project's secret key.
+Verifies that ARCRIFT never leaks context or memories between different projects (tenants). It writes secret keys into 10 separate projects and actively runs queries to ensure that none of the projects can access another project's secret key.
 ```powershell
 cd backend
 npx ts-node scripts/mcp-stress-test.ts
@@ -41,7 +41,7 @@ npx ts-node scripts/mcp-stress-test.ts
 * **Expected Result:** All 10 project contexts verify successful data isolation, and `reports/mcp_stress_test.md` certifies **100% Isolation Integrity (Negative Leaks)**.
 
 ### 3. RAG Search Recall Audit
-Executes a precision retrieval stress-test evaluating the effectiveness of Glia's **Surgical Sentence-Level Trimming** (hybrid FTS5 + Vector + Chunk search).
+Executes a precision retrieval stress-test evaluating the effectiveness of ArcRift's **Surgical Sentence-Level Trimming** (hybrid FTS5 + Vector + Chunk search).
 ```powershell
 cd backend
 npm run benchmark:audit
@@ -52,7 +52,7 @@ npm run benchmark:audit
 
 ## Summary Metrics & Targets
 
-When running benchmarks, Glia-AI targets these elite performance thresholds:
+When running benchmarks, ARCRIFT targets these elite performance thresholds:
 
 > [!IMPORTANT]
 > * **Context Compression:** **>75%** (removing non-essential narrative tokens to optimize agent context window).

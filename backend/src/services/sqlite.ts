@@ -5,7 +5,7 @@ import fs from "fs";
 import { logger } from "../utils/logger";
 
 function getDbPath() {
-  return process.env.SQLITE_DB_PATH || path.join(process.cwd(), "glia.db");
+  return process.env.SQLITE_DB_PATH || path.join(process.cwd(), "ArcRift.db");
 }
 
 let db: Database.Database;

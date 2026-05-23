@@ -12,10 +12,10 @@ function generateConfig() {
   const rootDir = path.resolve(__dirname, "../../..");
   const backendDir = path.resolve(__dirname, "../..");
   const serverJs = path.join(backendDir, "dist", "mcp", "server.js");
-  const dbPath = path.join(rootDir, "glia.db");
+  const dbPath = path.join(rootDir, "ArcRift.db");
   const envPath = path.join(backendDir, ".env");
 
-  console.log("\n--- GLIA MCP CONFIGURATION GENERATOR ---");
+  console.log("\n--- ArcRift MCP CONFIGURATION GENERATOR ---");
   console.log("Detected Paths:");
   console.log(`- Server executable: ${serverJs}`);
   console.log(`- Database file:     ${dbPath}`);
@@ -26,11 +26,11 @@ function generateConfig() {
   }
 
   const config = {
-    glia: {
+    ArcRift: {
       command: "node",
       args: [serverJs],
       env: {
-        GLIA_STORAGE_MODE: "sqlite",
+        ARCRIFT_STORAGE_MODE: "sqlite",
         SQLITE_DB_PATH: dbPath,
         NODE_ENV: "production"
       }

@@ -217,7 +217,7 @@ async function checkPlatform(browser, platform, useFixtures = false) {
 
 (async () => {
   const useFixtures = process.argv.includes("--fixtures");
-  console.log(`\nGLIA Platform Selector Smoke Test ${useFixtures ? "(FIXTURE MODE)" : "(LIVE MODE)"}\n`);
+  console.log(`\nArcRift Platform Selector Smoke Test ${useFixtures ? "(FIXTURE MODE)" : "(LIVE MODE)"}\n`);
   console.log(`Platforms checked: ${PLATFORMS.map(p => p.name).join(", ")}\n`);
 
   const browser = await chromium.launch({ headless: true });

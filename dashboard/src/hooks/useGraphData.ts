@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { fetchContext, apiClient, extractErrorMessage } from "../api/glia";
+import { fetchContext, apiClient, extractErrorMessage } from "../api/ArcRift";
 import { fetchFullChat } from "../api/rag";
 import type { Session, Node, Link, Triple, ChatData } from "../types";
 

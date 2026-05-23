@@ -34,14 +34,14 @@ async function setupMcp() {
     const config = JSON.parse(configText || '{"mcpServers": {}}');
     if (!config.mcpServers) config.mcpServers = {};
 
-    config.mcpServers.glia = {
+    config.mcpServers.ArcRift = {
       command: "node",
       args: [serverPath]
     };
 
     fs.writeFileSync(claudeConfigPath, JSON.stringify(config, null, 2));
     logger.success("Claude Desktop MCP configuration updated successfully!");
-    logger.info(`Glia Memory is now active in Claude Desktop/Code using: ${serverPath}`);
+    logger.info(`ArcRift Memory is now active in Claude Desktop/Code using: ${serverPath}`);
   } catch (err: any) {
     logger.error(`Failed to update Claude config: ${err.message}`);
   }

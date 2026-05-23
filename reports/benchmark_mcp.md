@@ -57,4 +57,4 @@ By using **Surgical Trimming** (Comparison against 6 full chunks):
 | ✅ | Semantic | FOUND | Sentence Vector, FTS Keyword | 79% |
 
 ---
-**Summary:** Glia-AI v1.5.1 demonstrates elite context delivery for AI agents. By surgically trimming 150-word chunks into precise sentences, we maintain high recall while significantly reducing token waste.
+**Summary:** ARCRIFT v1.5.1 demonstrates elite context delivery for AI agents. By surgically trimming 150-word chunks into precise sentences, we maintain high recall while significantly reducing token waste.

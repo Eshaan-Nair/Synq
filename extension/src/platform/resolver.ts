@@ -2,7 +2,7 @@
  * resolver.ts — Multi-Strategy DOM Selector Resolver
  *
  * Platform UIs update frequently. This module tries multiple CSS selector
- * strategies in priority order so GLIA stays functional even after UI changes.
+ * strategies in priority order so ArcRift stays functional even after UI changes.
  *
  * Strategy cascade (per platform):
  *   1. Primary (most stable — data-testid / component-specific)
@@ -80,7 +80,7 @@ export function resolveInputSelector(platform: Platform): Element | null {
     if (el) return el;
   }
   console.warn(
-    `[GLIA resolver] No input selector resolved for "${platform}". ` +
+    `[ArcRift resolver] No input selector resolved for "${platform}". ` +
     `The platform UI may have changed. Tried: ${strategies.join(", ")}`
   );
   return null;

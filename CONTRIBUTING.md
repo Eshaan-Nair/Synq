@@ -1,4 +1,4 @@
-# Contributing to GLIA
+# Contributing to ArcRift
 
 Thanks for your interest in contributing. Bug fixes, new platform support, UI improvements, documentation, and test coverage are all welcome.
 
@@ -8,13 +8,13 @@ Thanks for your interest in contributing. Bug fixes, new platform support, UI im
 
 ### One Command Setup for Users
 ```bash
-npx glia-ai-setup
+npx ARCRIFT-setup
 ```
 
 ### For Contributors
 ```bash
-git clone https://github.com/Eshaan-Nair/Glia-AI.git
-cd Glia-AI
+git clone https://github.com/Eshaan-Nair/ARCRIFT.git
+cd ARCRIFT
 git checkout -b your-branch-name
 
 # First-time setup (install dependencies and build)
@@ -241,10 +241,10 @@ Add a section for the new platform with selectors and stability notes.
 
 ## Good First Issues
 
-Labelled [`good first issue`](https://github.com/Eshaan-Nair/Glia-AI/issues?q=is%3Aissue+label%3A%22good+first+issue%22) in the issue tracker. These are scoped, well-defined, and don't require deep system knowledge.
+Labelled [`good first issue`](https://github.com/Eshaan-Nair/ARCRIFT/issues?q=is%3Aissue+label%3A%22good+first+issue%22) in the issue tracker. These are scoped, well-defined, and don't require deep system knowledge.
 
 ---
 
 ## Questions
 
-Open a [Discussion](https://github.com/Eshaan-Nair/Glia-AI/discussions) for questions, ideas, or anything that isn't a bug.
+Open a [Discussion](https://github.com/Eshaan-Nair/ARCRIFT/discussions) for questions, ideas, or anything that isn't a bug.

@@ -22,7 +22,7 @@ const REPORT_PATH = path.join(REPORTS_DIR, "graph_stress_test.md");
 
 async function run() {
   console.log("==========================================");
-  console.log("   GLIA STRESS TEST GENERATOR (v1.6.3)");
+  console.log("   ArcRift STRESS TEST GENERATOR (v1.6.3)");
   console.log("==========================================\n");
 
   const startTime = Date.now();
@@ -38,7 +38,7 @@ async function run() {
     console.log(`Session created (ID: ${sid}). Generating 1200 triples...`);
 
     const hubs = [
-      { name: "Glia-AI", type: "Project" },
+      { name: "ARCRIFT", type: "Project" },
       { name: "React", type: "Framework" },
       { name: "Ollama", type: "Technology" },
       { name: "SQLite", type: "Database" },
@@ -137,7 +137,7 @@ How the Knowledge Graph is organized:
 - **Memory Impact:** ~0.2MB SQLite storage increase.
 
 ---
-**Audit Summary:** Glia-AI confirms the dashboard can handle extreme density (1,200+ nodes) without degradation. The physics engine is stable and the database remains high-performance.
+**Audit Summary:** ARCRIFT confirms the dashboard can handle extreme density (1,200+ nodes) without degradation. The physics engine is stable and the database remains high-performance.
 `;
     if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
     fs.writeFileSync(REPORT_PATH, report);

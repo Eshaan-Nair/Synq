@@ -1,7 +1,7 @@
 /**
  * mcp/tools/detector.ts — identify_active_project tool
  * 
- * Automatically identifies the Glia project ID based on the current 
+ * Automatically identifies the ArcRift project ID based on the current 
  * working directory or folder name.
  */
 
@@ -12,7 +12,7 @@ export async function identifyProject(currentPath: string): Promise<string> {
   try {
     const sessions = await sessionStore.getSessions();
     if (sessions.length === 0) {
-      return "No Glia projects found. Use the extension to save your first project.";
+      return "No ArcRift projects found. Use the extension to save your first project.";
     }
 
     // Extract folder name from path

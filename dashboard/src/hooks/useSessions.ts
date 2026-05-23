@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { fetchSessions, deleteSession, extractErrorMessage, apiClient } from "../api/glia";
+import { fetchSessions, deleteSession, extractErrorMessage, apiClient } from "../api/ArcRift";
 import type { Session, JobStatus } from "../types";
 
 export const useSessions = (onSessionDeleted: (sessionId: string) => void) => {

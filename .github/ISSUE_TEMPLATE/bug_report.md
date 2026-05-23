@@ -36,7 +36,7 @@ What happened instead. Include any error messages from the browser console or ba
 
 **Environment**
 - OS: 
-- GLIA version: 
+- ArcRift version: 
 - Chrome version: 
 - Docker running: yes / no
 - Ollama running: yes / no

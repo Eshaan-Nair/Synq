@@ -1,8 +1,8 @@
-# GLIA — Architecture
+# ArcRift — Architecture
 
 ## Overview
 
-GLIA has three layers:
+ArcRift has three layers:
 
 1. **Chrome Extension** — scrapes AI conversations, intercepts prompts, injects context
 2. **Node.js Backend** — processes text, orchestrates services, handles RAG retrieval, serves the dashboard, runs the MCP server
@@ -160,7 +160,7 @@ These schemas apply to both **SQLite tables** and **MongoDB collections**.
 
 ### ChromaDB
 
-**Collection:** `glia_chunks_v2`
+**Collection:** `ARCRIFT_chunks_v2`
 
 ```json
 {
@@ -190,8 +190,8 @@ These schemas apply to both **SQLite tables** and **MongoDB collections**.
 | `SESSION_CHANGED` | background → content (broadcast) | Notify all tabs of session change |
 | `GET_PAUSE_STATE` | popup → background | Read pause state |
 | `SET_PAUSE_STATE` | popup → background | Write pause state |
-| `PAUSE_GLIA` | popup → content | Suspend interception |
-| `RESUME_GLIA` | popup → content | Resume interception |
+| `PAUSE_ARCRIFT` | popup → content | Suspend interception |
+| `RESUME_ARCRIFT` | popup → content | Resume interception |
 | `INJECT_NOW` | popup → content | One-time injection |
 | `PING` | popup → content | Check if content script is alive |
 | `REPORT_SELECTOR_FAILURE` | content → background | Report stale CSS selector |
@@ -213,17 +213,17 @@ All configured in `backend/.env`. Copy `backend/.env.example` to `backend/.env` 
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `GLIA_STORAGE_MODE` | No | `docker` | `sqlite` for Zero-Docker mode, `docker` for Chroma/Mongo/Neo4j |
-| `SQLITE_DB_PATH` | No | `./glia.db` | Path to the SQLite database file (SQLite mode only) |
+| `ARCRIFT_STORAGE_MODE` | No | `docker` | `sqlite` for Zero-Docker mode, `docker` for Chroma/Mongo/Neo4j |
+| `SQLITE_DB_PATH` | No | `./ArcRift.db` | Path to the SQLite database file (SQLite mode only) |
 | `NEO4J_URI` | Docker only | `bolt://localhost:7687` | Neo4j Bolt connection |
 | `NEO4J_USER` | Docker only | `neo4j` | Neo4j username |
 | `NEO4J_PASSWORD` | Docker only | — | Neo4j password |
-| `MONGO_URI` | Docker only | `mongodb://localhost:27017/gliadb` | MongoDB connection |
+| `MONGO_URI` | Docker only | `mongodb://localhost:27017/arcriftdb` | MongoDB connection |
 | `CHROMA_URL` | Docker only | `http://localhost:8000` | ChromaDB base URL |
 | `GROQ_API_KEY` | No | — | Groq fallback key for graph extraction (if Ollama unavailable) |
 | `GRAPH_BACKEND` | No | auto-detect | `ollama` or `groq` — overrides auto-detection |
 | `OLLAMA_URL` | No | `http://localhost:11434` | Ollama base URL |
 | `OLLAMA_MODEL` | No | `llama3.1:8b` | LLM model for graph extraction |
 | `OLLAMA_EMBED_MODEL` | No | `nomic-embed-text` | Embedding model (must be 768-dim) |
-| `GLIA_PROFILE` | No | auto-detect | `full` or `lite` — overrides Docker RAM detection |
+| `ARCRIFT_PROFILE` | No | auto-detect | `full` or `lite` — overrides Docker RAM detection |
 | `PORT` | No | `3001` | Backend server port |
