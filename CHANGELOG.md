@@ -4,6 +4,21 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.5.3] — 2026-05-23 — The ArcRift Overhaul: Rebrand & Premium "Monolith" UI
+
+### 🔄 Comprehensive Rebrand (Glia → ArcRift)
+- **Codebase Sweep** — Executed a 100% complete search-and-replace of all legacy brand references to "ArcRift" across the frontend, backend, and extension.
+- **Configuration Updates** — Updated environment variable namespaces (e.g., `ARCRIFT_STORAGE_MODE`), internal message types (`PAUSE_ARCRIFT`), Docker database names (`arcriftdb`), and core API files (`ArcRift.ts`) for case-sensitive Linux CI compliance.
+- **Documentation** — Completely rewrote the `README.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`, and all other Markdown files to reflect the new ArcRift identity.
+
+### ✨ Premium Monolith UI
+- **Color Palette & Typography** — Implemented a new Deep Slate (`#020617`), Orange (`#F97316`), and Emerald (`#10B981`) palette. Integrated Google Fonts *Outfit* and *Inter* for a high-end developer tool aesthetic.
+- **Dynamic Graph Enhancements** — Updated knowledge graph edges to use fluid `quadraticCurveTo` bezier curves and added a persistent top-center indigo radial glow to unify the graph background with the global search view.
+- **Extension UI Parity** — Completely rewrote `popup.css` so the Chrome extension perfectly mirrors the dashboard's new dark-glass aesthetic, including the grid background and status pill designs.
+- **UI/UX Polish** — Fixed text overflow issues in the System Health component and configured the Job Queue to display a cleaner `-` state when empty.
+
+---
+
 ## [1.5.2] — 2026-05-20 — Global Search, Observability & Extension Hardening
 
 ### Dashboard

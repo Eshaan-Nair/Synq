@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# ArcRift v1.5.2 - Smart Installer (Linux/macOS)
+# ArcRift - Smart Installer (Linux/macOS)
 # -------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  ArcRift v1.5.2 - Smart Installer"
+echo "  ArcRift - Smart Installer"
 echo " ==================================="
 echo ""
 

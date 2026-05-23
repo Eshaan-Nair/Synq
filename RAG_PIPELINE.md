@@ -52,7 +52,7 @@ User types → keydown/click intercepted (debounced 300ms)
 → Slice to topN (default: 3)
 ```
 
-### 4. Sanitisation (on every retrieval — v1.5.2)
+### 4. Sanitisation (on every retrieval — v1.5.3)
 
 Before the chunks are injected into the prompt:
 
@@ -75,7 +75,7 @@ The context block is prepended to the user's prompt using the Selection API and 
 
 ---
 
-## Hybrid Search (v1.5.2)
+## Hybrid Search (v1.5.3)
 
 ArcRift now uses a **Hybrid Retrieval** strategy that combines the best of both worlds:
 

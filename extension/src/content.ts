@@ -1,5 +1,5 @@
 /**
- * ArcRift content.ts — v1.5.2
+ * ArcRift content.ts — v1.5.3
  *
  * feat: Selector failure detection — reports stale input selectors to popup.
  * 
@@ -117,7 +117,7 @@ function handleUrlChange() {
 
 async function init() {
   seenMessageFingerprints.clear();
-  log.info(`[ArcRift] v1.5.2 active on: ${platform}`);
+  log.info(`[ArcRift] v1.5.3 active on: ${platform}`);
 
   const activeData = await sendMessage({ type: "GET_ACTIVE_SESSION" });
   if (activeData?.activeSession) {

@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=ArcRift"
 
 echo.
 echo  ===================================
-echo   ArcRift v1.5.2 - Starting up
+echo   ArcRift - Starting up
 echo  ===================================
 echo.
 

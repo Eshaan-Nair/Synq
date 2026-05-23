@@ -8,9 +8,9 @@ A weekly CI job ([`.github/workflows/selector-check.yml`](.github/workflows/sele
 
 ---
 
-## How the Selector System Works (v1.5.2)
+## How the Selector System Works (v1.5.3)
 
-As of v1.5.2, **input box selectors** use a multi-strategy resolver defined centrally in `extension/src/platform/resolver.ts`.
+As of v1.5.3, **input box selectors** use a multi-strategy resolver defined centrally in `extension/src/platform/resolver.ts`.
 
 Each platform has an ordered array of strategies. The resolver tries each in sequence and returns the first match:
 

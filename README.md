@@ -13,7 +13,7 @@
 [![Forks](https://img.shields.io/github/forks/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/ARCRIFT/forks)
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/ARCRIFT/issues)
 [![Downloads](https://img.shields.io/npm/dt/ARCRIFT-setup?style=for-the-badge&logo=npm&labelColor=0B0E14&color=CB3837)](https://www.npmjs.com/package/ARCRIFT-setup)
-[![Version](https://img.shields.io/badge/version-1.5.2-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.3-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 
 <br/>
@@ -63,7 +63,7 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 - [Quality-of-Life Details](#quality-of-life-details)
 - [Architecture](#architecture)
 - [Privacy and Security](#privacy-and-security)
-- [What's New in v1.5.2](#whats-new-in-v152)
+- [What's New in v1.5.3](#whats-new-in-v153)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -631,7 +631,7 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## What's New in v1.5.2
+## What's New in v1.5.3
 
 - **Global Search Bar** — New debounced global search in the dashboard header querying across all projects with combined vector chunks and graph facts.
 - **Knowledge Graph Pruning** — Click a node in the graph to prune it instantly without a page reload.

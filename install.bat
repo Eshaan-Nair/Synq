@@ -8,7 +8,7 @@ set "COMPOSE_PROJECT_NAME=ArcRift"
 
 echo.
 echo  ===================================
-echo   ArcRift v1.5.2 - Smart Installer
+echo   ArcRift - Smart Installer
 echo  ===================================
 echo.
 

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# ArcRift v1.5.2 - Startup Script (Linux/macOS)
+# ArcRift v1.5.3 - Startup Script (Linux/macOS)
 # ------------------------------------------
 
 set -e
 
 echo ""
 echo " ==================================="
-echo "  ArcRift v1.5.2 - Starting up"
+echo "  ArcRift - Starting up"
 echo " ==================================="
 echo ""
 
