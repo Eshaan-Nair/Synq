@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { sessionStore, vectorStore } from "../services/storage";
+import { sessionStore } from "../services/storage";
 import { logger } from "../utils/logger";
 import { getSettings } from "../utils/settings";
 
