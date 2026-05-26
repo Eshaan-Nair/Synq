@@ -17,6 +17,7 @@ import ragRoutes from "./routes/rag";
 import sessionRoutes from "./routes/session";
 import jobsRoutes from "./routes/jobs";
 import healthRoutes from "./routes/health";
+import settingsRoutes from "./routes/settings";
 
 
 // ── #9: .env validation — fail fast with a clear message ──────────
@@ -118,6 +119,7 @@ app.use("/api/rag", ragRoutes);
 app.use("/api/session", sessionRoutes);
 app.use("/api/jobs", jobsRoutes);
 app.use("/api/health", healthRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // Health check — includes service status
 app.get("/health", (_req, res) => {

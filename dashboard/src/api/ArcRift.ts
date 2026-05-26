@@ -66,4 +66,19 @@ export async function pruneGraphNode(nodeId: string, sessionId?: string) {
   return res.data;
 }
 
+export async function fetchSettings() {
+  const res = await apiClient.get("/api/settings");
+  return res.data as {
+    ollamaReachable: boolean;
+    availableModels: string[];
+    activeEmbeddingModel: string;
+    activeExtractionModel: string;
+  };
+}
+
+export async function updateSettings(data: { activeEmbeddingModel: string; activeExtractionModel: string }) {
+  const res = await apiClient.post("/api/settings", data);
+  return res.data;
+}
+
 export { extractErrorMessage, apiClient };

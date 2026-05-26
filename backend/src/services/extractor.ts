@@ -1,5 +1,6 @@
 import axios from "axios";
 import { logger } from "../utils/logger";
+import { getSettings } from "../utils/settings";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export interface Triple {
@@ -128,7 +129,8 @@ async function callGroq(prompt: string, maxTokens = 1000): Promise<string> {
 // ── Ollama LLM call ───────────────────────────────────────────────
 async function callOllama(prompt: string, maxTokens = 1000): Promise<string> {
   const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
-  const model = process.env.OLLAMA_MODEL ?? "llama3.1:8b";
+  const settings = getSettings();
+  const model = settings.ollamaExtractionModel || process.env.OLLAMA_MODEL || "llama3.1:8b";
 
   const response = await axios.post(
     `${ollamaUrl}/api/generate`,

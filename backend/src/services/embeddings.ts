@@ -3,11 +3,13 @@
 
 import axios from "axios";
 import { logger } from "../utils/logger";
+import { getSettings } from "../utils/settings";
 
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 
 export async function generateEmbedding(text: string, task: "query" | "document" = "query"): Promise<number[]> {
-  const EMBED_MODEL = process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text";
+  const settings = getSettings();
+  const EMBED_MODEL = settings.ollamaEmbeddingModel || process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text";
   const MAX_RETRIES = 3;
 
   // nomic-embed-text requires specific prefixes for optimal performance

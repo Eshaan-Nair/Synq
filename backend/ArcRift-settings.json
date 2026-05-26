@@ -1,0 +1,4 @@
+{
+  "ollamaEmbeddingModel": "nomic-embed-text:latest",
+  "ollamaExtractionModel": "llama3.1:8b"
+}

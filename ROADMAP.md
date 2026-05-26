@@ -33,11 +33,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
   project, de-duplicating overlapping chunks and combining their knowledge
   graphs. Useful when a long project spans many separate conversations.
 
-- **Ollama Model Switcher** — A dropdown in the dashboard to change the
+- **Ollama Model Switcher** [Completed] — A dropdown in the dashboard to change the
   active embedding or extraction model without editing `.env` and restarting.
-
-- **Export / Import** — Export a project's memory to a `.json` file and
-  import it on another machine. Enables portable knowledge bases.
 
 ---
 

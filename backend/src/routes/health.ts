@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { sessionStore, vectorStore } from "../services/storage";
 import { logger } from "../utils/logger";
+import { getSettings } from "../utils/settings";
 
 const router = Router();
 
@@ -33,6 +34,9 @@ router.get("/", async (_req: Request, res: Response) => {
       ollamaReachable = false;
     }
 
+    const settings = getSettings();
+    const activeExtractionModel = settings.ollamaExtractionModel || process.env.OLLAMA_MODEL || "llama3.1:8b";
+
     res.json({
       storageMode,
       sessionCount,
@@ -41,7 +45,7 @@ router.get("/", async (_req: Request, res: Response) => {
       graphBackend: (process.env.GRAPH_BACKEND || "ollama").toUpperCase(),
       ollama: {
         reachable: ollamaReachable,
-        model: process.env.OLLAMA_MODEL || "nomic-embed-text",
+        model: activeExtractionModel,
       },
     });
   } catch (err: any) {
