@@ -182,4 +182,13 @@ export class SqliteGraphStore implements IGraphStore {
     const result = this.db.prepare(query).run(sessionId, ...entities, ...entities);
     return result.changes;
   }
+
+  async mergeSession(sourceId: string, targetId: string): Promise<void> {
+    // We update session_id of facts. If a duplicate fact (same subject, relation, object, sessionId)
+    // arises because both sessions had it, INSERT/UPDATE OR IGNORE will skip the duplicate.
+    this.db.transaction(() => {
+      this.db.prepare("UPDATE OR IGNORE facts SET sessionId = ? WHERE sessionId = ?").run(targetId, sourceId);
+      this.db.prepare("DELETE FROM facts WHERE sessionId = ?").run(sourceId);
+    })();
+  }
 }

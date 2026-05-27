@@ -121,3 +121,22 @@ export async function deleteTriples(entities: string[], sessionId: string): Prom
     await session.close();
   }
 }
+
+export async function mergeSession(sourceId: string, targetId: string): Promise<void> {
+  const d = getDriver();
+  const session = d.session();
+  try {
+    // Cypher doesn't dynamically merge relationship types well. 
+    // The simplest and cleanest approach is to update the sessionId property on the relationship.
+    await session.run(
+      `
+      MATCH (s:Entity)-[r:RELATION {sessionId: $sourceId}]->(o:Entity)
+      SET r.sessionId = $targetId
+      `,
+      { sourceId, targetId }
+    );
+    logger.info(`Merged Knowledge Graph triples in Neo4j from ${sourceId} to ${targetId}`);
+  } finally {
+    await session.close();
+  }
+}

@@ -235,6 +235,32 @@ export class SqliteSessionStore implements ISessionStore {
     this.db.prepare("DELETE FROM jobs").run();
   }
 
+  async mergeSession(sourceId: string, targetId: string): Promise<void> {
+    const sourceSession = await this.getSession(sourceId);
+    if (!sourceSession) return;
+    
+    const targetSession = await this.getSession(targetId);
+    if (targetSession) {
+      const newTopicCount = (targetSession.topicCount || 0) + (sourceSession.topicCount || 0);
+      const newTripleCount = (targetSession.tripleCount || 0) + (sourceSession.tripleCount || 0);
+      await this.updateSession(targetId, { topicCount: newTopicCount, tripleCount: newTripleCount });
+    }
+
+    const sourceChat = await this.getFullChat(sourceId);
+    if (sourceChat) {
+      const targetChat = await this.getFullChat(targetId);
+      if (targetChat) {
+        const mergedText = `${targetChat.rawText}\n\n--- MERGED SESSION ---\n\n${sourceChat.rawText}`;
+        const newMsgCount = targetChat.messageCount + sourceChat.messageCount;
+        await this.updateFullChat(targetId, { rawText: mergedText, messageCount: newMsgCount });
+      } else {
+        await this.saveFullChat(targetId, sourceChat.rawText, sourceChat.messageCount, sourceChat.platform);
+      }
+    }
+
+    await this.deleteSession(sourceId);
+  }
+
   private mapRowToSession(row: any): Session {
     return {
       _id: row.id,

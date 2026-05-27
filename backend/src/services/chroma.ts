@@ -222,5 +222,32 @@ export async function deleteChunksByQuery(query: string, sessionId: string): Pro
   }
 }
 
+export async function mergeSession(sourceId: string, targetId: string): Promise<void> {
+  if (!collectionId) return;
+  try {
+    const res = await axios.post(`${COLL_BASE}/${collectionId}/get`, {
+      where: { sessionId: sourceId },
+      include: ["embeddings", "documents", "metadatas"],
+    }, { timeout: 10000 });
+
+    const ids: string[] = res.data?.ids || [];
+    if (ids.length > 0) {
+      const embeddings = res.data.embeddings;
+      const documents = res.data.documents;
+      const metadatas = res.data.metadatas.map((m: any) => ({ ...m, sessionId: targetId }));
+
+      await axios.post(`${COLL_BASE}/${collectionId}/update`, {
+        ids,
+        embeddings,
+        documents,
+        metadatas
+      }, { timeout: 10000 });
+      logger.info(`Merged ${ids.length} vector chunks in ChromaDB from ${sourceId} to ${targetId}`);
+    }
+  } catch (err) {
+    logger.error("ChromaDB merge session failed:", err);
+  }
+}
+
 // Keep backward-compat export name so any existing import of storeTopicChunks still compiles
 export { storeWindowChunks as storeTopicChunks };

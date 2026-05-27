@@ -62,6 +62,7 @@ export interface ISessionStore {
   getSessionByExternalId(externalChatId: string): Promise<Session | null>;
   updateSession(id: string, update: Partial<Session>): Promise<void>;
   deleteSession(id: string): Promise<void>;
+  mergeSession(sourceId: string, targetId: string): Promise<void>;
 
   // Active Session
   getActiveSessionId(): Promise<string | null>;
@@ -90,6 +91,7 @@ export interface IGraphStore {
   findRelatedTriples(entities: string[], sessionId: string): Promise<Triple[]>;
   findRelatedTriplesGlobal(entities: string[]): Promise<Triple[]>;
   deleteTriples(entities: string[], sessionId: string): Promise<number>;
+  mergeSession(sourceId: string, targetId: string): Promise<void>;
 }
 
 export interface IVectorStore {
@@ -99,4 +101,5 @@ export interface IVectorStore {
   hybridSearch(query: string, sessionId: string, topN?: number): Promise<RetrievedChunk[]>;
   deleteChunksBySession(sessionId: string): Promise<void>;
   deleteChunksByQuery(query: string, sessionId: string): Promise<number>;
+  mergeSession(sourceId: string, targetId: string): Promise<void>;
 }

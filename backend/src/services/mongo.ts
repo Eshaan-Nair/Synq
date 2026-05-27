@@ -78,7 +78,41 @@ const jobSchema = new mongoose.Schema({
 
 // Index for the worker to find pending jobs quickly
 jobSchema.index({ status: 1, createdAt: 1 });
-// Index for checking session-specific processing status
 jobSchema.index({ "payload.sessionId": 1, status: 1 });
 
 export const Job = mongoose.model("Job", jobSchema);
+
+export async function mergeSession(sourceId: string, targetId: string): Promise<void> {
+  const sourceSession = await Session.findById(sourceId);
+  if (!sourceSession) return;
+  
+  const targetSession = await Session.findById(targetId);
+  if (targetSession) {
+    targetSession.topicCount = (targetSession.topicCount || 0) + (sourceSession.topicCount || 0);
+    targetSession.tripleCount = (targetSession.tripleCount || 0) + (sourceSession.tripleCount || 0);
+    await targetSession.save();
+  }
+
+  const sourceChat = await FullChat.findOne({ sessionId: sourceId });
+  if (sourceChat) {
+    const targetChat = await FullChat.findOne({ sessionId: targetId });
+    if (targetChat) {
+      targetChat.rawText = `${targetChat.rawText}\n\n--- MERGED SESSION ---\n\n${sourceChat.rawText}`;
+      targetChat.messageCount = (targetChat.messageCount || 0) + (sourceChat.messageCount || 0);
+      await targetChat.save();
+    } else {
+      sourceChat.sessionId = targetId;
+      await sourceChat.save();
+    }
+  }
+
+  await Session.findByIdAndDelete(sourceId);
+  if (sourceChat && targetSession) {
+      // If we saved it to target, we don't delete it.
+      // Wait, we modified sourceChat.sessionId to targetId. 
+      // If we didn't do that (if targetChat existed), then we should delete the old sourceChat.
+      await FullChat.deleteOne({ sessionId: sourceId });
+  } else {
+      await FullChat.deleteOne({ sessionId: sourceId });
+  }
+}

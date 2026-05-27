@@ -140,6 +140,9 @@ class DockerSessionStore implements ISessionStore {
   async clearJobs() {
     await mongoService.Job.deleteMany({});
   }
+  async mergeSession(sourceId: string, targetId: string) {
+    await mongoService.mergeSession(sourceId, targetId);
+  }
 }
 
 class DockerGraphStore implements IGraphStore {
@@ -299,6 +302,9 @@ class DockerGraphStore implements IGraphStore {
   async deleteTriples(entities: string[], sessionId: string): Promise<number> {
     return neo4jService.deleteTriples(entities, sessionId);
   }
+  async mergeSession(sourceId: string, targetId: string) {
+    await neo4jService.mergeSession(sourceId, targetId);
+  }
 }
 
 class DockerVectorStore implements IVectorStore {
@@ -319,6 +325,9 @@ class DockerVectorStore implements IVectorStore {
   }
   async deleteChunksByQuery(query: string, sessionId: string): Promise<number> {
     return chromaService.deleteChunksByQuery(query, sessionId);
+  }
+  async mergeSession(sourceId: string, targetId: string) {
+    await chromaService.mergeSession(sourceId, targetId);
   }
 }
 

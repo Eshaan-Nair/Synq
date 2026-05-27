@@ -310,4 +310,9 @@ export class SqliteVectorStore implements IVectorStore {
 
     return deletedIds.length;
   }
+
+  async mergeSession(sourceId: string, targetId: string): Promise<void> {
+    this.db.prepare("UPDATE chunk_metadata SET sessionId = ? WHERE sessionId = ?").run(targetId, sourceId);
+    logger.info(`Merged vector chunks from session ${sourceId} to ${targetId}`);
+  }
 }

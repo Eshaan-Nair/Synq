@@ -93,4 +93,35 @@ router.post("/import", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/session/merge
+router.post("/merge", async (req: Request, res: Response) => {
+  const { sourceId, targetId } = req.body;
+
+  if (!sourceId || !targetId || sourceId === targetId) {
+    res.status(400).json({ error: "Invalid sourceId or targetId" });
+    return;
+  }
+
+  try {
+    const sourceSession = await sessionStore.getSession(sourceId);
+    const targetSession = await sessionStore.getSession(targetId);
+
+    if (!sourceSession || !targetSession) {
+      res.status(404).json({ error: "Source or Target session not found" });
+      return;
+    }
+
+    await vectorStore.mergeSession(sourceId, targetId);
+    await graphStore.mergeSession(sourceId, targetId);
+    await sessionStore.mergeSession(sourceId, targetId);
+
+    const updatedTarget = await sessionStore.getSession(targetId);
+    logger.success(`Successfully merged session ${sourceId} into ${targetId}`);
+    res.json({ success: true, session: updatedTarget });
+  } catch (err) {
+    logger.error("Merge error:", err);
+    res.status(500).json({ error: "Failed to merge sessions" });
+  }
+});
+
 export default router;
