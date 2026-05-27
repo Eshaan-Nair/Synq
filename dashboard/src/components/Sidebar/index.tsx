@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import SidebarHeader from "./SidebarHeader";
 import ProjectList from "./ProjectList";
 import Legend from "./Legend";
+import MergeModal from "./MergeModal";
 import { SystemHealth } from "../SystemHealth";
 import type { Session } from "../../types";
+import { mergeSessions } from "../../api/ArcRift";
 
 interface SidebarProps {
   sessions: Session[];
@@ -36,6 +38,23 @@ const Sidebar: React.FC<SidebarProps> = ({
   graphTypeFilter,
   onFilterToggle,
 }) => {
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+
+  const handleMergeClick = () => {
+    setIsMergeModalOpen(true);
+  };
+
+  const handleMerge = async (sourceId: string) => {
+    if (!activeSessionId) return;
+    try {
+      await mergeSessions(sourceId, activeSessionId);
+      // Let the main App refetch sessions through its own polling or we can force a reload
+      window.location.reload(); 
+    } catch (err) {
+      console.error("Failed to merge sessions", err);
+    }
+  };
+
   return (
     <aside className="sidebar">
       <SidebarHeader />
@@ -66,6 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onSessionSelect={onSessionSelect}
             onDeleteSession={onDeleteSession}
             onImport={onImport}
+            onMergeClick={handleMergeClick}
           />
         ) : (
           <Legend
@@ -79,6 +99,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-footer">
         <SystemHealth />
       </div>
+
+      {activeSessionId && (
+        <MergeModal
+          isOpen={isMergeModalOpen}
+          onClose={() => setIsMergeModalOpen(false)}
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          onMerge={handleMerge}
+        />
+      )}
     </aside>
   );
 };

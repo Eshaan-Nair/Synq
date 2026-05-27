@@ -33,14 +33,18 @@ const Header: React.FC<HeaderProps> = ({
           Knowledge Graph
         </button>
         <button 
-          className={`tab-btn ${!isClosed && activeSideTab === "history" ? "active" : ""}`} 
-          onClick={() => { setActiveSideTab("history"); setIsClosed(false); }}
+          className={`tab-btn ${!isClosed && activeSideTab === "history" && activeMainTab === "graph" ? "active" : ""}`} 
+          onClick={() => { setActiveSideTab("history"); setIsClosed(false); setActiveMainTab("graph"); }}
+          disabled={activeMainTab !== "graph"}
+          style={activeMainTab !== "graph" ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
         >
           Facts
         </button>
         <button 
-          className={`tab-btn ${!isClosed && activeSideTab === "chat" ? "active" : ""}`} 
-          onClick={() => { setActiveSideTab("chat"); setIsClosed(false); }}
+          className={`tab-btn ${!isClosed && activeSideTab === "chat" && activeMainTab === "graph" ? "active" : ""}`} 
+          onClick={() => { setActiveSideTab("chat"); setIsClosed(false); setActiveMainTab("graph"); }}
+          disabled={activeMainTab !== "graph"}
+          style={activeMainTab !== "graph" ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
         >
           Chat
         </button>

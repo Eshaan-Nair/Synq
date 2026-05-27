@@ -81,4 +81,9 @@ export async function updateSettings(data: { activeEmbeddingModel: string; activ
   return res.data;
 }
 
+export async function mergeSessions(sourceId: string, targetId: string) {
+  const res = await apiClient.post("/api/session/merge", { sourceId, targetId });
+  return res.data;
+}
+
 export { extractErrorMessage, apiClient };

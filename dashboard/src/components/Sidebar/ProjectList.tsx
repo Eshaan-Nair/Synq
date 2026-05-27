@@ -11,6 +11,7 @@ interface ProjectListProps {
   onSessionSelect: (session: Session) => void;
   onDeleteSession: (e: React.MouseEvent, sessionId: string) => void;
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onMergeClick: (sessionId: string) => void;
 }
 
 const ProjectList: React.FC<ProjectListProps> = ({
@@ -22,6 +23,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
   onSessionSelect,
   onDeleteSession,
   onImport,
+  onMergeClick,
 }) => {
   return (
     <div className="session-list">
@@ -66,14 +68,26 @@ const ProjectList: React.FC<ProjectListProps> = ({
                   {session.projectName}
                 </div>
                 <div className="session-actions" style={{ display: "flex", gap: "4px" }}>
-                  <button className="action-btn" onClick={(e) => { e.stopPropagation(); exportSession(session._id); }}>
+                  {isActive && (
+                    <button className="action-btn" title="Merge Another Session" onClick={(e) => { e.stopPropagation(); onMergeClick(session._id); }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M8 6h13"></path>
+                        <path d="M8 12h13"></path>
+                        <path d="M8 18h13"></path>
+                        <path d="M3 6l0 .01"></path>
+                        <path d="M3 12l0 .01"></path>
+                        <path d="M3 18l0 .01"></path>
+                      </svg>
+                    </button>
+                  )}
+                  <button className="action-btn" title="Export Session" onClick={(e) => { e.stopPropagation(); exportSession(session._id); }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                       <polyline points="7 10 12 15 17 10"></polyline>
                       <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
                   </button>
-                  <button className="action-btn delete-btn" onClick={(e) => onDeleteSession(e, session._id)}>
+                  <button className="action-btn delete-btn" title="Delete Session" onClick={(e) => onDeleteSession(e, session._id)}>
                     {deletingId === session._id ? "..." : (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M3 6h18"></path>
