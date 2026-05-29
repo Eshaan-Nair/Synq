@@ -183,6 +183,32 @@ export class SqliteGraphStore implements IGraphStore {
     return result.changes;
   }
 
+  async renameNode(oldName: string, newName: string, sessionId?: string): Promise<number> {
+    if (!oldName || !newName) return 0;
+    
+    let totalChanges = 0;
+    this.db.transaction(() => {
+      if (sessionId) {
+        totalChanges += this.db.prepare("UPDATE facts SET subject = ? WHERE subject = ? AND sessionId = ?").run(newName, oldName, sessionId).changes;
+        totalChanges += this.db.prepare("UPDATE facts SET object = ? WHERE object = ? AND sessionId = ?").run(newName, oldName, sessionId).changes;
+      } else {
+        totalChanges += this.db.prepare("UPDATE facts SET subject = ? WHERE subject = ?").run(newName, oldName).changes;
+        totalChanges += this.db.prepare("UPDATE facts SET object = ? WHERE object = ?").run(newName, oldName).changes;
+      }
+    })();
+    return totalChanges;
+  }
+
+  async deleteEdge(source: string, target: string, relation: string, sessionId?: string): Promise<number> {
+    if (!source || !target || !relation) return 0;
+    
+    if (sessionId) {
+      return this.db.prepare("DELETE FROM facts WHERE subject = ? AND object = ? AND relation = ? AND sessionId = ?").run(source, target, relation, sessionId).changes;
+    } else {
+      return this.db.prepare("DELETE FROM facts WHERE subject = ? AND object = ? AND relation = ?").run(source, target, relation).changes;
+    }
+  }
+
   async mergeSession(sourceId: string, targetId: string): Promise<void> {
     // We update session_id of facts. If a duplicate fact (same subject, relation, object, sessionId)
     // arises because both sessions had it, INSERT/UPDATE OR IGNORE will skip the duplicate.

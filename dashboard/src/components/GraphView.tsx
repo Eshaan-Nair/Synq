@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import type { Node, Link } from "../types";
 import { TYPE_COLORS } from "../constants";
-import { pruneGraphNode } from "../api/ArcRift";
+import { pruneGraphNode, renameGraphNode, deleteGraphEdge } from "../api/ArcRift";
 
 interface Props {
   nodes: Node[];
@@ -54,6 +54,10 @@ export default function GraphView({
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isPruning, setIsPruning] = useState(false);
   const [prunedNodes, setPrunedNodes] = useState<Set<string>>(new Set());
+  const [prunedEdges, setPrunedEdges] = useState<Set<string>>(new Set());
+  
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, node: Node } | null>(null);
+  const [edgeManagerNode, setEdgeManagerNode] = useState<Node | null>(null);
   
   const transformRef = useRef(d3.zoomIdentity);
   const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null);
@@ -148,7 +152,8 @@ export default function GraphView({
       links: links.filter(l => {
         const sid = typeof l.source === "string" ? l.source : (l.source as any).id;
         const tid = typeof l.target === "string" ? l.target : (l.target as any).id;
-        return !prunedNodes.has(sid) && !prunedNodes.has(tid);
+        const edgeKey = `${sid}-${l.relation}-${tid}`;
+        return !prunedNodes.has(sid) && !prunedNodes.has(tid) && !prunedEdges.has(edgeKey);
       }).map(link => {
         const s = typeof link.source === "string" ? link.source : (link.source as any).id;
         const t = typeof link.target === "string" ? link.target : (link.target as any).id;
@@ -527,7 +532,19 @@ export default function GraphView({
       canvas.style.cursor = node ? "pointer" : "default";
     };
 
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const node = findNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      if (node) {
+        setContextMenu({ x: e.clientX, y: e.clientY, node: node as Node });
+      } else {
+        setContextMenu(null);
+      }
+    };
+
     d3.select(canvas).on("click", (e: MouseEvent) => {
+      setContextMenu(null);
       const rect = canvas.getBoundingClientRect();
       const node = findNodeAt(e.clientX - rect.left, e.clientY - rect.top);
       if (node) {
@@ -562,11 +579,13 @@ export default function GraphView({
 
     d3.select(canvas).call(drag as any);
     canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("contextmenu", handleContextMenu);
 
     draw();
 
     return () => {
       canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("contextmenu", handleContextMenu);
       d3.select(canvas).on("click", null);
     };
   }, [processedData, getNodeRadius, hoveredNodeId, selectedNodeId, filterType]);
@@ -662,6 +681,156 @@ export default function GraphView({
           </button>
         )}
       </div>
+
+      {/* Context Menu Overlay */}
+      {contextMenu && (
+        <div style={{
+          position: "fixed",
+          top: contextMenu.y,
+          left: contextMenu.x,
+          background: "var(--surface)",
+          border: "1px solid var(--border-dim)",
+          borderRadius: "8px",
+          padding: "6px",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+          zIndex: 100,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: "150px"
+        }}>
+          <div style={{ padding: "6px 10px", fontSize: "11px", fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", borderBottom: "1px solid var(--border-dim)", marginBottom: "4px" }}>
+            {contextMenu.node.id.length > 20 ? contextMenu.node.id.slice(0, 18) + "..." : contextMenu.node.id}
+          </div>
+          <button 
+            className="context-menu-item"
+            onClick={async () => {
+              const oldName = contextMenu.node.id;
+              setContextMenu(null);
+              const newName = window.prompt(`Rename "${oldName}" to:`, oldName);
+              if (newName && newName.trim() !== "" && newName !== oldName) {
+                try {
+                  await renameGraphNode(oldName, newName.trim(), activeSessionId);
+                  // Refresh via window location for now to re-fetch the entire graph and restart sim properly
+                  window.location.reload();
+                } catch (err: any) {
+                  alert("Failed to rename node: " + err.message);
+                }
+              }
+            }}
+            style={{ textAlign: "left", padding: "8px 10px", fontSize: "13px", color: "var(--text-primary)", background: "transparent", border: "none", borderRadius: "4px", cursor: "pointer" }}
+          >
+            Rename Node
+          </button>
+          <button 
+            className="context-menu-item"
+            onClick={() => {
+              setEdgeManagerNode(contextMenu.node);
+              setContextMenu(null);
+            }}
+            style={{ textAlign: "left", padding: "8px 10px", fontSize: "13px", color: "var(--text-primary)", background: "transparent", border: "none", borderRadius: "4px", cursor: "pointer" }}
+          >
+            Manage Edges
+          </button>
+          <button 
+            className="context-menu-item"
+            onClick={async () => {
+              const nodeId = contextMenu.node.id;
+              setContextMenu(null);
+              if (window.confirm(`Delete "${nodeId}" and its connections?`)) {
+                try {
+                  await pruneGraphNode(nodeId, activeSessionId);
+                  setPrunedNodes(prev => new Set(prev).add(nodeId));
+                  onNodeClick?.(null);
+                } catch (err: any) {
+                  alert("Failed to delete node: " + err.message);
+                }
+              }
+            }}
+            style={{ textAlign: "left", padding: "8px 10px", fontSize: "13px", color: "var(--error)", background: "transparent", border: "none", borderRadius: "4px", cursor: "pointer", marginTop: "2px", borderTop: "1px solid var(--border-dim)" }}
+          >
+            Delete Node
+          </button>
+        </div>
+      )}
+
+      {/* Edge Manager Modal */}
+      {edgeManagerNode && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 200
+        }}>
+          <div style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border-main)",
+            borderRadius: "12px",
+            width: "500px",
+            maxWidth: "90vw",
+            maxHeight: "80vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
+          }}>
+            <div style={{ padding: "20px", borderBottom: "1px solid var(--border-main)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "var(--text-primary)" }}>
+                Edges for "{edgeManagerNode.id.length > 25 ? edgeManagerNode.id.slice(0, 25) + "..." : edgeManagerNode.id}"
+              </h3>
+              <button onClick={() => setEdgeManagerNode(null)} style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "20px" }}>×</button>
+            </div>
+            <div style={{ padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
+              {processedData.links.filter((l: any) => l.source.id === edgeManagerNode.id || l.target.id === edgeManagerNode.id).length === 0 ? (
+                <div style={{ color: "var(--text-dim)", textAlign: "center", padding: "20px" }}>No edges found.</div>
+              ) : (
+                processedData.links.filter((l: any) => l.source.id === edgeManagerNode.id || l.target.id === edgeManagerNode.id).map((link: any) => {
+                  const s = link.source.id;
+                  const t = link.target.id;
+                  const r = link.relation;
+                  const edgeKey = `${s}-${r}-${t}`;
+                  if (prunedEdges.has(edgeKey)) return null;
+
+                  return (
+                    <div key={edgeKey} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "8px",
+                      border: "1px solid var(--border-dim)"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--text-secondary)", overflow: "hidden" }}>
+                        <span style={{ color: s === edgeManagerNode.id ? "var(--primary)" : "var(--text-primary)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "120px" }} title={s}>{s}</span>
+                        <span style={{ color: "var(--text-dim)", fontSize: "11px", fontWeight: 700, padding: "2px 6px", background: "rgba(0,0,0,0.2)", borderRadius: "4px" }}>{r}</span>
+                        <span style={{ color: t === edgeManagerNode.id ? "var(--primary)" : "var(--text-primary)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "120px" }} title={t}>{t}</span>
+                      </div>
+                      <button 
+                        title="Delete Edge"
+                        onClick={async () => {
+                          if (window.confirm(`Delete edge: ${s} -> ${t}?`)) {
+                            try {
+                              await deleteGraphEdge(s, t, r, activeSessionId);
+                              setPrunedEdges(prev => new Set(prev).add(edgeKey));
+                            } catch (err: any) {
+                              alert("Failed to delete edge: " + err.message);
+                            }
+                          }
+                        }}
+                        style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "var(--error)", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSettings && (
         <div className="graph-settings-panel">

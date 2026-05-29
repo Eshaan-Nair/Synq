@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { fetchSettings, updateSettings, extractErrorMessage } from "../api/ArcRift";
+import React, { useEffect, useState, useMemo } from "react";
+import { fetchSettings, updateSettings, extractErrorMessage, fetchSessions } from "../api/ArcRift";
 
 const SettingsView: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<"config" | "analytics">("config");
+  const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -36,6 +38,9 @@ const SettingsView: React.FC = () => {
         extraction: data.activeExtractionModel,
         contextMode: fetchedMode,
       });
+
+      const sessionData = await fetchSessions();
+      setSessions(sessionData.sessions || []);
     } catch (err) {
       setError(`Failed to load settings: ${extractErrorMessage(err)}`);
     } finally {
@@ -77,6 +82,10 @@ const SettingsView: React.FC = () => {
     activeExtractionModel !== originalSettings.extraction ||
     contextMode !== originalSettings.contextMode;
 
+  const totalTokensSaved = useMemo(() => sessions.reduce((sum, s) => sum + (s.tokensSaved || 0), 0), [sessions]);
+  const totalRetrievals = useMemo(() => sessions.reduce((sum, s) => sum + (s.retrievalCount || 0), 0), [sessions]);
+  const costSaved = ((totalTokensSaved / 1000000) * 3.00).toFixed(4);
+
   if (loading) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: "40px", color: "var(--text-secondary)" }}>
@@ -117,7 +126,35 @@ const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Switcher Card */}
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: "16px", marginBottom: "24px" }}>
+        <button
+          onClick={() => setActiveTab("config")}
+          style={{
+            padding: "10px 24px", borderRadius: "8px", fontSize: "14px", fontWeight: 600,
+            background: activeTab === "config" ? "var(--primary)" : "transparent",
+            color: activeTab === "config" ? "#fff" : "var(--text-secondary)",
+            border: activeTab === "config" ? "1px solid transparent" : "1px solid var(--border-main)",
+            cursor: "pointer", transition: "all 0.2s"
+          }}
+        >
+          Configuration
+        </button>
+        <button
+          onClick={() => setActiveTab("analytics")}
+          style={{
+            padding: "10px 24px", borderRadius: "8px", fontSize: "14px", fontWeight: 600,
+            background: activeTab === "analytics" ? "var(--primary)" : "transparent",
+            color: activeTab === "analytics" ? "#fff" : "var(--text-secondary)",
+            border: activeTab === "analytics" ? "1px solid transparent" : "1px solid var(--border-main)",
+            cursor: "pointer", transition: "all 0.2s"
+          }}
+        >
+          Session Analytics
+        </button>
+      </div>
+
+      {activeTab === "config" ? (
       <form onSubmit={handleSave} style={{ background: "var(--surface)", border: "1px solid var(--border-main)", borderRadius: "16px", backdropFilter: "var(--surface-blur)", padding: "32px", display: "flex", flexDirection: "column", gap: "28px" }}>
         
         {/* Ollama Offline Warning Banner */}
@@ -249,6 +286,39 @@ const SettingsView: React.FC = () => {
           </button>
         </div>
       </form>
+      ) : (
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border-main)", borderRadius: "16px", backdropFilter: "var(--surface-blur)", padding: "32px", display: "flex", flexDirection: "column", gap: "28px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>Global Telemetry</h2>
+            <p style={{ fontSize: "14px", color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
+              ArcRift automatically reduces your AI prompt costs by contextually extracting and injecting only the precise information needed for the active turn.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+            {/* Stat Card 1 */}
+            <div style={{ background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-dim)", borderRadius: "12px", padding: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Tokens Saved</div>
+              <div style={{ fontSize: "32px", fontWeight: 800, color: "var(--primary)", lineHeight: 1 }}>{totalTokensSaved.toLocaleString()}</div>
+              <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>Tokens stripped from raw context</div>
+            </div>
+
+            {/* Stat Card 2 */}
+            <div style={{ background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-dim)", borderRadius: "12px", padding: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Estimated Savings</div>
+              <div style={{ fontSize: "32px", fontWeight: 800, color: "var(--success)", lineHeight: 1 }}>${costSaved}</div>
+              <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>Calculated at $3.00 per 1M input tokens</div>
+            </div>
+
+            {/* Stat Card 3 */}
+            <div style={{ background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-dim)", borderRadius: "12px", padding: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Retrievals</div>
+              <div style={{ fontSize: "32px", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1 }}>{totalRetrievals.toLocaleString()}</div>
+              <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>Successful context injections</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -103,4 +103,47 @@ router.post("/prune", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/graph/rename-node
+router.post("/rename-node", async (req: Request, res: Response) => {
+  const { oldName, newName, sessionId } = req.body;
+  if (!oldName || !newName) {
+    res.status(400).json({ error: "oldName and newName are required" });
+    return;
+  }
+  
+  try {
+    const changes = await graphStore.renameNode(oldName, newName, sessionId);
+    res.json({ success: true, changes, message: `Renamed ${oldName} to ${newName}` });
+  } catch (err) {
+    logger.error("Graph node rename failed:", err);
+    res.status(500).json({ error: "Failed to rename node" });
+  }
+});
+
+// POST /api/graph/delete-edge
+router.post("/delete-edge", async (req: Request, res: Response) => {
+  const { source, target, relation, sessionId } = req.body;
+  if (!source || !target || !relation) {
+    res.status(400).json({ error: "source, target, and relation are required" });
+    return;
+  }
+  
+  try {
+    const changes = await graphStore.deleteEdge(source, target, relation, sessionId);
+    if (sessionId && changes > 0) {
+      const session = await sessionStore.getSession(sessionId);
+      if (session) {
+        await sessionStore.updateSession(sessionId, {
+          tripleCount: Math.max(0, (session.tripleCount || 0) - changes),
+          updatedAt: new Date()
+        });
+      }
+    }
+    res.json({ success: true, changes, message: `Deleted edge ${source} -[${relation}]-> ${target}` });
+  } catch (err) {
+    logger.error("Graph edge deletion failed:", err);
+    res.status(500).json({ error: "Failed to delete edge" });
+  }
+});
+
 export default router;

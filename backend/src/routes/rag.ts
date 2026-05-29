@@ -1,7 +1,7 @@
 // rag.ts (backend route) — v1.5.1
 
 import { Router, Request, Response } from "express";
-import { vectorStore, graphStore, RetrievedChunk } from "../services/storage";
+import { vectorStore, graphStore, sessionStore, RetrievedChunk } from "../services/storage";
 import { extractEntitiesFromQuery, summarizeContext } from "../services/extractor";
 import { logger } from "../utils/logger";
 import { wrapInContextBlock, sanitizeChunks } from "../middleware/sanitize";
@@ -87,6 +87,31 @@ router.post("/retrieve", async (req: Request, res: Response) => {
     if (!contextBlock) {
       res.json({ found: false, chunks: [], graphFacts: [] });
       return;
+    }
+
+    // Analytics: Tokens saved calculation
+    try {
+      const session = await sessionStore.getSession(sessionId);
+      const fullChat = await sessionStore.getFullChat(sessionId);
+      
+      if (session && fullChat) {
+        // Approximate 1 token = 4 characters
+        const fullTokens = Math.floor(fullChat.rawText.length / 4);
+        const injectedTokens = Math.floor(contextBlock.length / 4);
+        const tokensSavedThisTurn = Math.max(0, fullTokens - injectedTokens);
+
+        const newTokensSaved = (session.tokensSaved || 0) + tokensSavedThisTurn;
+        const newRetrievalCount = (session.retrievalCount || 0) + 1;
+        
+        await sessionStore.updateSession(sessionId, { 
+          tokensSaved: newTokensSaved, 
+          retrievalCount: newRetrievalCount 
+        });
+        
+        logger.debug(`Analytics updated for ${sessionId}: +${tokensSavedThisTurn} tokens saved.`);
+      }
+    } catch (analyticsErr) {
+      logger.warn(`Failed to update session analytics: ${analyticsErr}`);
     }
 
     logger.success(`RAG: Budget filled (${currentChars}/${MAX_TOTAL_CHARS} chars). ${sanitized.length} chunks used.`);

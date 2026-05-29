@@ -302,6 +302,14 @@ class DockerGraphStore implements IGraphStore {
   async deleteTriples(entities: string[], sessionId: string): Promise<number> {
     return neo4jService.deleteTriples(entities, sessionId);
   }
+  async renameNode(oldName: string, newName: string, sessionId?: string): Promise<number> {
+    // Basic Neo4j stub. For production, implement proper CYPHER updates in neo4jService.
+    return 0;
+  }
+  async deleteEdge(source: string, target: string, relation: string, sessionId?: string): Promise<number> {
+    // Basic Neo4j stub.
+    return 0;
+  }
   async mergeSession(sourceId: string, targetId: string) {
     await neo4jService.mergeSession(sourceId, targetId);
   }

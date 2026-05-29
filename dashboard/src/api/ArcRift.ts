@@ -23,6 +23,8 @@ export async function fetchSessions() {
       tripleCount: number;
       topicCount?: number;
       hasFullChat?: boolean;
+      tokensSaved?: number;
+      retrievalCount?: number;
       createdAt: string;
       updatedAt: string;
     }[];
@@ -63,6 +65,16 @@ export async function searchGlobal(prompt: string) {
 
 export async function pruneGraphNode(nodeId: string, sessionId?: string) {
   const res = await apiClient.post(`/api/graph/prune`, { nodeId, sessionId });
+  return res.data;
+}
+
+export async function renameGraphNode(oldName: string, newName: string, sessionId?: string) {
+  const res = await apiClient.post(`/api/graph/rename-node`, { oldName, newName, sessionId });
+  return res.data;
+}
+
+export async function deleteGraphEdge(source: string, target: string, relation: string, sessionId?: string) {
+  const res = await apiClient.post(`/api/graph/delete-edge`, { source, target, relation, sessionId });
   return res.data;
 }
 

@@ -21,7 +21,7 @@
 
 **MCP (AI Coding Tools):** Claude Code · Cursor · Windsurf · Claude Desktop
 
-https://github.com/user-attachments/assets/c39e63ba-fb1b-489d-9455-2bbe885d4c0f
+https://www.youtube.com/watch?v=58zbSxzQ94U
 
 The Demo only showcases the main function of ArcRift, there are a lot of features for you to Explore!
 
@@ -58,32 +58,10 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 
 ---
 
-## Comparison with Alternatives
-
-While tools like Mem0, Zep, and Letta focus heavily on providing memory APIs for agent developers, **ArcRift is built directly for end-users and human-in-the-loop workflows.**
-
-| Feature | ArcRift | Mem0 | Zep | Letta (MemGPT) | LangGraph |
-|:---|:---|:---|:---|:---|:---|
-| **Primary Audience** | **End-users & Devs** | Agent Devs | Agent Devs | Agent Devs | Agent Devs |
-| **Cross-Platform Chat UX** | **Yes (Injects directly into ChatGPT, Claude, etc)**| Bring your own UI | Bring your own UI | Bring your own UI | Bring your own UI |
-| **Visual Knowledge Graph** | **Yes (D3 Dashboard)** | API Only | API Only | No | Optional / Custom |
-| **Context Retrieval Precision**| **Surgical Sentence Trimming (95% noise reduction)** | Full Chunk | Full Chunk | Full Chunk | Varies by implementation |
-| **Setup Complexity** | **1 command (`npx`)** | Requires DB / API | Requires DB / Docker | Docker / Python env | Code-heavy (Framework) |
-| **Storage Backend** | **SQLite (Zero config)** | PostgreSQL / Qdrant | PostgreSQL / Redis | PostgreSQL / Chroma | Any (BYO Database) |
-| **Local vs Cloud** | **100% Local (Ollama)** | Cloud-first (Local avail) | Both | Both | Both |
-| **Native IDE Integration**| **Yes (via MCP)**| API Only | API Only | API Only | API Only |
-| **MCP Support** | **Yes** | Yes | Yes | Yes | Yes |
-| **License** | MIT | Apache 2.0 | Apache 2.0 | Apache 2.0 | MIT |
-
----
-
 ## Table of Contents
 
-- [How the Two Modes Work](#how-the-two-modes-work)
-- [Comparison with Alternatives](#comparison-with-alternatives)
-- [Key Features](#key-features)
-- [Performance Benchmarks](#performance-benchmarks)
-- [System Requirements](#system-requirements)
+- [One Command Setup](#one-command-setup)
+- [The Problem](#the-problem)
 - [Installation](#installation)
   - [Web Extension Setup](#web-extension-setup)
   - [MCP Server Setup](#mcp-server-setup)
@@ -92,194 +70,19 @@ While tools like Mem0, Zep, and Letta focus heavily on providing memory APIs for
   - [Using the Browser Extension](#using-the-browser-extension)
   - [Using the MCP Tools](#using-the-mcp-tools)
   - [Dashboard](#dashboard)
-- [How It Works](#how-it-works)
-- [Quality-of-Life Details](#quality-of-life-details)
+- [System Requirements](#system-requirements)
+- [Key Features](#key-features)
 - [Architecture](#architecture)
+- [Quality-of-Life Details](#quality-of-life-details)
+- [How It Works](#how-it-works)
+- [How the Two Modes Work](#how-the-two-modes-work)
+- [Performance Benchmarks](#performance-benchmarks)
 - [Privacy and Security](#privacy-and-security)
+- [Comparison with Alternatives](#comparison-with-alternatives)
 - [What's New in v1.5.4](#whats-new-in-v154)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
-
----
-
-## How the Two Modes Work
-
-ArcRift has two complementary modes that share the same memory store. You can use one, the other, or both at the same time.
-
-### Mode 1 — Browser Extension (Web)
-
-The extension lives inside Chrome and works on any AI chat website. When you save a conversation, it scrapes the page, scrubs PII, chunks and embeds the text locally, and sends it to the ArcRift backend. On every subsequent prompt you type, the extension intercepts the input, queries the backend for relevant context, and prepends it to your message automatically — before the request hits the AI.
-
-Best for: Claude, ChatGPT, Gemini, DeepSeek, Grok, Microsoft Copilot, and Mistral web interfaces.
-
-### Mode 2 — MCP Server (Coding Tools)
-
-The MCP server exposes ArcRift as a set of tools that coding agents can call directly. Instead of intercepting DOM events, the AI tool calls `recall_context` at the start of a session to pull in relevant memory, and `store_memory` after completing work to save decisions and context for future sessions.
-
-Best for: Claude Code, Cursor, Windsurf — anywhere you write code with an AI coding agent.
-
-### Shared Memory
-
-Both modes write to and read from the same backend database. A conversation you save via the browser extension is immediately available to `recall_context` in your coding tool, and vice versa. They are two interfaces into one unified knowledge base.
-
----
-
-## Key Features
-
-### Core Retrieval Engine
-
-| Feature | Detail |
-|:---|:---|
-| **Three-Layer Hybrid Search** | Sentence vectors, chunk vectors, and FTS5 keyword search run in parallel. Results are fused and ranked by a combined score. |
-| **Surgical Sentence Trimming** | Chunks are split into individual sentences at index time. On retrieval, only the sentences that directly match the query are returned — not the entire surrounding paragraph. Reduces prompt noise by up to 95%. |
-| **HyDE (Hypothetical Document Embedding)** | Before querying the vector store, ArcRift generates a hypothetical answer to your query and uses that embedding alongside the raw query. This dramatically improves recall for rephrased or indirect questions. |
-| **Small-to-Big Retrieval** | High-precision sentence match triggers fetching the parent chunk for broader context. Precision of a sentence search, context of a full paragraph. |
-| **Knowledge Graph Layer** | Every saved conversation is processed to extract subject-relation-object triples (22 entity types, 20+ relation types). Graph facts are fused with vector results on every recall. |
-| **Background Indexing** | Sentence-level embedding is offloaded to a background job queue so Save is instant. The deep index is built asynchronously without blocking the UI. |
-
-### Extension Quality-of-Life
-
-| Feature | Detail |
-|:---|:---|
-| **Auto-Connect** | Once a session is active, ArcRift re-attaches automatically on every page load. No clicking required — just type. |
-| **SPA Navigation Awareness** | Detects "New Chat" clicks in single-page apps (ChatGPT, Claude, Gemini) without a full page reload. Automatically resets the active session so context does not bleed between conversations. |
-| **Pause / Resume** | One click in the popup pauses auto-injection. Click again to resume. State persists across tabs. |
-| **Classic Inject** | One-time manual inject button for priming a cold start without enabling auto-connect. |
-| **FNV-1a Deduplication** | Identical conversation segments are fingerprinted and skipped — re-saving a chat never creates duplicate embeddings. |
-| **Multi-Strategy DOM Resolver** | Each platform has five ordered selector strategies. If one breaks after a UI update, the next activates automatically. |
-| **Restricted URL Guard** | Injection is blocked on `chrome://`, `about:`, and extension pages. Prevents crashes on non-chat pages. |
-
-### MCP Tool Quality-of-Life
-
-| Tool | What it does |
-|:---|:---|
-| `recall_context` | Retrieves the top-N most relevant memory chunks for a prompt, scoped to a project. Includes knowledge graph facts. |
-| `store_memory` | Saves text or a transcript to ArcRift Memory. Auto-creates the project if it does not exist. Triggers full background indexing. |
-| `search_memory` | Cross-project global search. Useful for finding decisions made in a different project that apply to the current one. |
-| `list_projects` | Lists all saved projects with metadata — chunk count, triple count, last updated. |
-| `get_project_summary` | Returns a structured knowledge graph summary for a project as readable markdown. |
-| `identify_active_project` | Matches a folder path against saved project names. Lets the AI agent auto-detect which project it is working on from the CWD. |
-| `prune_memory` | Surgically removes facts or chunks matching a description. Corrects outdated information without wiping an entire project. |
-
-### Infrastructure
-
-| Feature | Detail |
-|:---|:---|
-| **Zero-Docker Mode** | `ARCRIFT_STORAGE_MODE=sqlite` replaces all Docker services with a single `ArcRift.db` file. Full feature parity — vector search, knowledge graph, job queue, everything. |
-| **WAL Concurrency** | SQLite runs in Write-Ahead Logging mode, allowing simultaneous reads from the dashboard, extension, and MCP server without lock contention. |
-| **Dead Letter Queue** | Background jobs that fail are retried up to 5 times with exponential backoff. Failed jobs move to a dead letter queue visible in the dashboard — nothing is silently lost. |
-| **Ghost Job Cleanup** | On startup, any jobs stuck in PROCESSING state from a previous crashed run are automatically reset to PENDING. |
-| **Rate Limiting** | Save endpoint is rate-limited independently from read endpoints. Prevents accidental flooding from rapid saves. |
-| **Helmet Security Headers** | All responses include `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, and related headers. |
-
----
-
-## Performance Benchmarks
-
-Every release is stress-tested across four independent audits. All results are reproducible using the scripts in `backend/scripts/`.
-
-### Web Context Engine (Browser Extension)
-
-**Scale:** 1,000 chunks (~300,000 words) | **Needles:** 20 facts | **Queries:** 60 phrasings
-
-| Metric | Result | What it means |
-|:---|:---|:---|
-| **Recall @ 1** | **90.0%** | Correct fact was the top result in 54 of 60 searches |
-| **Mean Reciprocal Rank** | **0.806** | Correct answer appears at position 1.24 on average (1.0 is perfect) |
-| **Context Compression** | **95.0%** | Payload reduced from 55,350 chars to 2,784 chars before injection |
-| **Mean Relevance Score** | **0.464** | Average semantic similarity of retrieved results (0–1 scale) |
-
-Engine contribution across 54 successful recalls:
-
-| Engine | Hits | Role |
-|:---|:---|:---|
-| Sentence Vector | 50 | High-precision match against individual sentences |
-| Chunk Vector | 47 | Thematic match against full 150-word context windows |
-| FTS5 Keyword | 43 | Exact literal matching, boosts low-similarity vector results |
-
-The 6 misses were all on degenerate "Context on X?" queries with no semantic content. All natural-language and rephrased queries passed.
-
-Full report: [reports/benchmark_web.md](reports/benchmark_web.md)
-
----
-
-### MCP Context Engine (Coding Tools)
-
-**Scale:** 10 facts across real project memory | **Queries:** 30 (3 phrasings each) | **TopN:** 6
-
-| Metric | Result | Target | |
-|:---|:---|:---|:---|
-| **Total Recall** | **90%** | >90% | PASS |
-| **Context Compression** | **81.3%** | >75% | PASS |
-| **Noise Redacted** | **131,700 chars** | — | vs. returning 6 full chunks raw |
-
-Engine contribution across 27 successful recalls:
-
-| Engine | Hits | Contribution |
-|:---|:---|:---|
-| Sentence Vector | 26 | 100% of recalls |
-| FTS Keyword | 24 | 92.3% of recalls |
-| Chunk Vector | 9 | 34.6% of recalls |
-
-The 3 misses were all on highly rephrased semantic queries with no shared keywords. Standard and lowercase phrasings passed in every case.
-
-Full report: [reports/benchmark_mcp.md](reports/benchmark_mcp.md)
-
----
-
-### MCP Project Isolation Audit
-
-**Scale:** 10 simultaneous projects | **Checks:** Store + own-recall + cross-leak per project
-
-| Metric | Result | Status |
-|:---|:---|:---|
-| **Isolation Integrity** | **100%** | ELITE — zero cross-project leakage |
-| **Concurrent Access** | **Pass** | All projects readable under simultaneous load |
-| **Leak Detection** | **Negative** | No data from any project visible in another |
-
-Each project's vector space and knowledge graph is strictly siloed via `sessionId` constraints. Aggressive cleanup logic purges both IDs and Names between runs to prevent identity drift.
-
-Full report: [reports/mcp_stress_test.md](reports/mcp_stress_test.md)
-
----
-
-### Knowledge Graph Stress Audit
-
-**Scale:** 1,200+ nodes, 1,087 triples in a single session
-
-| Metric | Result | Status |
-|:---|:---|:---|
-| **Total Triples Stored** | **1,087** | PASS |
-| **Ingestion Throughput** | **4,056 triples/sec** | OPTIMIZED |
-| **Generation Time** | **0.3 seconds** | ELITE |
-| **Dashboard Load** | **< 1.5 seconds** | Physics-simulated D3.js render |
-| **Storage Cost** | **~0.2 MB** | SQLite increase for entire stress session |
-
-Graph structure: 5 major hubs (40+ edges each), 15 intermediate clusters, 400 mesh entities, 100 isolated standalone facts.
-
-Full report: [reports/graph_stress_test.md](reports/graph_stress_test.md)
-
----
-
-## System Requirements
-
-| Mode | Min RAM | Disk | Docker | What runs |
-|:---|:---|:---|:---|:---|
-| **SQLite (Recommended)** | 2 GB | 3 GB | Not required | All features — single `.db` file + Ollama |
-| **Full Docker** | 8 GB | 15 GB | Required | Neo4j + MongoDB + ChromaDB + Ollama |
-| **Lite Docker** | 4 GB | 10 GB | Required | MongoDB + ChromaDB (no knowledge graph) |
-
-SQLite mode is the recommended default. The installer detects Docker automatically and sets SQLite mode if Docker is not available.
-
-### Prerequisites
-
-| Requirement | Version | Notes |
-|:---|:---|:---|
-| Node.js | 20 LTS+ | [nodejs.org](https://nodejs.org) |
-| Ollama | Latest | [ollama.com](https://ollama.com) — required for local embeddings and extraction |
-| Docker Desktop | 24.0+ | [docker.com](https://docker.com) — only needed for Docker mode |
-| Groq API Key | — | [console.groq.com](https://console.groq.com) — free, used as fallback if Ollama is slow |
 
 ---
 
@@ -530,61 +333,74 @@ Open `http://localhost:3001` while the backend is running.
 | **Chat** | The full saved conversation rendered as color-coded chat bubbles, with platform attribution. |
 | **Job Queue** | Live view of background indexing jobs — pending, processing, completed, dead-lettered. |
 
----
+## System Requirements
 
-## How It Works
+| Mode | Min RAM | Disk | Docker | What runs |
+|:---|:---|:---|:---|:---|
+| **SQLite (Recommended)** | 2 GB | 3 GB | Not required | All features — single `.db` file + Ollama |
+| **Full Docker** | 8 GB | 15 GB | Required | Neo4j + MongoDB + ChromaDB + Ollama |
+| **Lite Docker** | 4 GB | 10 GB | Required | MongoDB + ChromaDB (no knowledge graph) |
 
-```
-SAVE
-  Browser scrapes conversation → FNV-1a dedup check
-  → PII scrub (API keys, JWTs, emails, IPs → [REDACTED])
-  → POST to backend
+SQLite mode is the recommended default. The installer detects Docker automatically and sets SQLite mode if Docker is not available.
 
-STORAGE (two parallel tracks)
+### Prerequisites
 
-  Vector Track                      Graph Track
-  Sliding window chunker            Text sent to Ollama llama3.1:8b
-  300 words, 80-word overlap        (Groq as fallback)
-  Embeds with nomic-embed-text      Extracts subject-relation-object triples
-  Stores in SQLite vec0             Stores in SQLite facts table
-  Background: sentence-level        Background: stores after chunk embedding
-  embedding job queued
-
-RECALL (on every prompt or tool call)
-  Query → HyDE (generate hypothetical answer → embed both)
-  → Sentence vector search (top 100, filter by session)
-  → Chunk vector search (top 20, filter by session)
-  → FTS5 keyword search (prefix match, filter by session)
-  → Fuse results, score, deduplicate
-  → Surgical trim (keep only matching sentences from each chunk)
-  → sanitizeChunks() (scan for injection patterns → redact)
-  → wrapInContextBlock() (lean text header)
-  → Prepend to prompt
-```
+| Requirement | Version | Notes |
+|:---|:---|:---|
+| Node.js | 20 LTS+ | [nodejs.org](https://nodejs.org) |
+| Ollama | Latest | [ollama.com](https://ollama.com) — required for local embeddings and extraction |
+| Docker Desktop | 24.0+ | [docker.com](https://docker.com) — only needed for Docker mode |
+| Groq API Key | — | [console.groq.com](https://console.groq.com) — free, used as fallback if Ollama is slow |
 
 ---
 
-## Quality-of-Life Details
+## Key Features
 
-These are the smaller decisions that make the system faster and more reliable in practice.
+### Core Retrieval Engine
 
-**Instant save, deep index later.** When you click Save, only the chunk-level embeddings are computed synchronously (1–2 embeddings). Sentence-level embeddings (20–40 embeddings per conversation) are offloaded to a background job. The UI confirms success immediately; the deep index catches up within seconds.
+| Feature | Detail |
+|:---|:---|
+| **Three-Layer Hybrid Search** | Sentence vectors, chunk vectors, and FTS5 keyword search run in parallel. Results are fused and ranked by a combined score. |
+| **Surgical Sentence Trimming** | Chunks are split into individual sentences at index time. On retrieval, only the sentences that directly match the query are returned — not the entire surrounding paragraph. Reduces prompt noise by up to 95%. |
+| **HyDE (Hypothetical Document Embedding)** | Before querying the vector store, ArcRift generates a hypothetical answer to your query and uses that embedding alongside the raw query. This dramatically improves recall for rephrased or indirect questions. |
+| **Small-to-Big Retrieval** | High-precision sentence match triggers fetching the parent chunk for broader context. Precision of a sentence search, context of a full paragraph. |
+| **Knowledge Graph Layer** | Every saved conversation is processed to extract subject-relation-object triples (22 entity types, 20+ relation types). Graph facts are fused with vector results on every recall. |
+| **Background Indexing** | Sentence-level embedding is offloaded to a background job queue so Save is instant. The deep index is built asynchronously without blocking the UI. |
 
-**Delete-then-insert for vector updates.** SQLite virtual tables do not support `UPDATE` on vector columns. ArcRift uses a delete-then-insert pattern to avoid `UNIQUE constraint` errors when re-saving a conversation.
+### Extension Quality-of-Life
 
-**Prefix keyword matching.** FTS5 queries use wildcard suffixes (`encrypt*` matches `encryption`, `encrypted`, `encryptor`). This significantly improves recall for technical terms where the exact suffix varies.
+| Feature | Detail |
+|:---|:---|
+| **Auto-Connect** | Once a session is active, ArcRift re-attaches automatically on every page load. No clicking required — just type. |
+| **SPA Navigation Awareness** | Detects "New Chat" clicks in single-page apps (ChatGPT, Claude, Gemini) without a full page reload. Automatically resets the active session so context does not bleed between conversations. |
+| **Pause / Resume** | One click in the popup pauses auto-injection. Click again to resume. State persists across tabs. |
+| **Classic Inject** | One-time manual inject button for priming a cold start without enabling auto-connect. |
+| **FNV-1a Deduplication** | Identical conversation segments are fingerprinted and skipped — re-saving a chat never creates duplicate embeddings. |
+| **Multi-Strategy DOM Resolver** | Each platform has five ordered selector strategies. If one breaks after a UI update, the next activates automatically. |
+| **Restricted URL Guard** | Injection is blocked on `chrome://`, `about:`, and extension pages. Prevents crashes on non-chat pages. |
 
-**Threshold set at 0.30, not 0.45.** Surgical trimming allows a lower similarity threshold. Even if a chunk is only loosely related, if the matching sentences are precise, the noise penalty is near zero.
+### MCP Tool Quality-of-Life
 
-**History-aware fallback.** If a query is detected as a history-seeking question ("what did we talk about", "what was decided"), the trimmer falls back to the first three sentences of the chunk rather than returning nothing.
+| Tool | What it does |
+|:---|:---|
+| `recall_context` | Retrieves the top-N most relevant memory chunks for a prompt, scoped to a project. Includes knowledge graph facts. |
+| `store_memory` | Saves text or a transcript to ArcRift Memory. Auto-creates the project if it does not exist. Triggers full background indexing. |
+| `search_memory` | Cross-project global search. Useful for finding decisions made in a different project that apply to the current one. |
+| `list_projects` | Lists all saved projects with metadata — chunk count, triple count, last updated. |
+| `get_project_summary` | Returns a structured knowledge graph summary for a project as readable markdown. |
+| `identify_active_project` | Matches a folder path against saved project names. Lets the AI agent auto-detect which project it is working on from the CWD. |
+| `prune_memory` | Surgically removes facts or chunks matching a description. Corrects outdated information without wiping an entire project. |
 
-**5-character minimum sentence filter.** The sentence splitter ignores fragments shorter than 5 characters. This prevents code snippets and punctuation artifacts from polluting the sentence index.
+### Infrastructure
 
-**WAL mode on all writes.** SQLite is opened in WAL mode on startup. The MCP server, HTTP backend, and dashboard can all read and write concurrently without database lock errors.
-
-**Ghost job recovery.** On startup, any jobs stuck in `PROCESSING` from a previous crash are reset to `PENDING` automatically. No manual intervention needed after an unclean shutdown.
-
-**CORS locked to localhost.** The backend only accepts requests from `localhost` origins. External requests are rejected before they reach any route handler.
+| Feature | Detail |
+|:---|:---|
+| **Zero-Docker Mode** | `ARCRIFT_STORAGE_MODE=sqlite` replaces all Docker services with a single `ArcRift.db` file. Full feature parity — vector search, knowledge graph, job queue, everything. |
+| **WAL Concurrency** | SQLite runs in Write-Ahead Logging mode, allowing simultaneous reads from the dashboard, extension, and MCP server without lock contention. |
+| **Dead Letter Queue** | Background jobs that fail are retried up to 5 times with exponential backoff. Failed jobs move to a dead letter queue visible in the dashboard — nothing is silently lost. |
+| **Ghost Job Cleanup** | On startup, any jobs stuck in PROCESSING state from a previous crashed run are automatically reset to PENDING. |
+| **Rate Limiting** | Save endpoint is rate-limited independently from read endpoints. Prevents accidental flooding from rapid saves. |
+| **Helmet Security Headers** | All responses include `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, and related headers. |
 
 ---
 
@@ -645,6 +461,171 @@ ARCRIFT/
 
 ---
 
+## Quality-of-Life Details
+
+These are the smaller decisions that make the system faster and more reliable in practice.
+
+**Instant save, deep index later.** When you click Save, only the chunk-level embeddings are computed synchronously (1–2 embeddings). Sentence-level embeddings (20–40 embeddings per conversation) are offloaded to a background job. The UI confirms success immediately; the deep index catches up within seconds.
+
+**Delete-then-insert for vector updates.** SQLite virtual tables do not support `UPDATE` on vector columns. ArcRift uses a delete-then-insert pattern to avoid `UNIQUE constraint` errors when re-saving a conversation.
+
+**Prefix keyword matching.** FTS5 queries use wildcard suffixes (`encrypt*` matches `encryption`, `encrypted`, `encryptor`). This significantly improves recall for technical terms where the exact suffix varies.
+
+**Threshold set at 0.30, not 0.45.** Surgical trimming allows a lower similarity threshold. Even if a chunk is only loosely related, if the matching sentences are precise, the noise penalty is near zero.
+
+**History-aware fallback.** If a query is detected as a history-seeking question ("what did we talk about", "what was decided"), the trimmer falls back to the first three sentences of the chunk rather than returning nothing.
+
+**5-character minimum sentence filter.** The sentence splitter ignores fragments shorter than 5 characters. This prevents code snippets and punctuation artifacts from polluting the sentence index.
+
+**WAL mode on all writes.** SQLite is opened in WAL mode on startup. The MCP server, HTTP backend, and dashboard can all read and write concurrently without database lock errors.
+
+**Ghost job recovery.** On startup, any jobs stuck in `PROCESSING` from a previous crash are reset to `PENDING` automatically. No manual intervention needed after an unclean shutdown.
+
+**CORS locked to localhost.** The backend only accepts requests from `localhost` origins. External requests are rejected before they reach any route handler.
+
+---
+
+## How It Works
+
+```
+SAVE
+  Browser scrapes conversation → FNV-1a dedup check
+  → PII scrub (API keys, JWTs, emails, IPs → [REDACTED])
+  → POST to backend
+
+STORAGE (two parallel tracks)
+
+  Vector Track                      Graph Track
+  Sliding window chunker            Text sent to Ollama llama3.1:8b
+  300 words, 80-word overlap        (Groq as fallback)
+  Embeds with nomic-embed-text      Extracts subject-relation-object triples
+  Stores in SQLite vec0             Stores in SQLite facts table
+  Background: sentence-level        Background: stores after chunk embedding
+  embedding job queued
+
+RECALL (on every prompt or tool call)
+  Query → HyDE (generate hypothetical answer → embed both)
+  → Sentence vector search (top 100, filter by session)
+  → Chunk vector search (top 20, filter by session)
+  → FTS5 keyword search (prefix match, filter by session)
+  → Fuse results, score, deduplicate
+  → Surgical trim (keep only matching sentences from each chunk)
+  → sanitizeChunks() (scan for injection patterns → redact)
+  → wrapInContextBlock() (lean text header)
+  → Prepend to prompt
+```
+
+---
+
+## How the Two Modes Work
+
+ArcRift has two complementary modes that share the same memory store. You can use one, the other, or both at the same time.
+
+### Mode 1 — Browser Extension (Web)
+
+The extension lives inside Chrome and works on any AI chat website. When you save a conversation, it scrapes the page, scrubs PII, chunks and embeds the text locally, and sends it to the ArcRift backend. On every subsequent prompt you type, the extension intercepts the input, queries the backend for relevant context, and prepends it to your message automatically — before the request hits the AI.
+
+Best for: Claude, ChatGPT, Gemini, DeepSeek, Grok, Microsoft Copilot, and Mistral web interfaces.
+
+### Mode 2 — MCP Server (Coding Tools)
+
+The MCP server exposes ArcRift as a set of tools that coding agents can call directly. Instead of intercepting DOM events, the AI tool calls `recall_context` at the start of a session to pull in relevant memory, and `store_memory` after completing work to save decisions and context for future sessions.
+
+Best for: Claude Code, Cursor, Windsurf — anywhere you write code with an AI coding agent.
+
+### Shared Memory
+
+Both modes write to and read from the same backend database. A conversation you save via the browser extension is immediately available to `recall_context` in your coding tool, and vice versa. They are two interfaces into one unified knowledge base.
+
+---
+
+## Performance Benchmarks
+
+Every release is stress-tested across four independent audits. All results are reproducible using the scripts in `backend/scripts/`.
+
+### Web Context Engine (Browser Extension)
+
+**Scale:** 1,000 chunks (~300,000 words) | **Needles:** 20 facts | **Queries:** 60 phrasings
+
+| Metric | Result | What it means |
+|:---|:---|:---|
+| **Recall @ 1** | **90.0%** | Correct fact was the top result in 54 of 60 searches |
+| **Mean Reciprocal Rank** | **0.806** | Correct answer appears at position 1.24 on average (1.0 is perfect) |
+| **Context Compression** | **95.0%** | Payload reduced from 55,350 chars to 2,784 chars before injection |
+| **Mean Relevance Score** | **0.464** | Average semantic similarity of retrieved results (0–1 scale) |
+
+Engine contribution across 54 successful recalls:
+
+| Engine | Hits | Role |
+|:---|:---|:---|
+| Sentence Vector | 50 | High-precision match against individual sentences |
+| Chunk Vector | 47 | Thematic match against full 150-word context windows |
+| FTS5 Keyword | 43 | Exact literal matching, boosts low-similarity vector results |
+
+The 6 misses were all on degenerate "Context on X?" queries with no semantic content. All natural-language and rephrased queries passed.
+
+Full report: [reports/benchmark_web.md](reports/benchmark_web.md)
+
+---
+
+### MCP Context Engine (Coding Tools)
+
+**Scale:** 10 facts across real project memory | **Queries:** 30 (3 phrasings each) | **TopN:** 6
+
+| Metric | Result | Target | |
+|:---|:---|:---|:---|
+| **Total Recall** | **90%** | >90% | PASS |
+| **Context Compression** | **81.3%** | >75% | PASS |
+| **Noise Redacted** | **131,700 chars** | — | vs. returning 6 full chunks raw |
+
+Engine contribution across 27 successful recalls:
+
+| Engine | Hits | Contribution |
+|:---|:---|:---|
+| Sentence Vector | 26 | 100% of recalls |
+| FTS Keyword | 24 | 92.3% of recalls |
+| Chunk Vector | 9 | 34.6% of recalls |
+
+The 3 misses were all on highly rephrased semantic queries with no shared keywords. Standard and lowercase phrasings passed in every case.
+
+Full report: [reports/benchmark_mcp.md](reports/benchmark_mcp.md)
+
+---
+
+### MCP Project Isolation Audit
+
+**Scale:** 10 simultaneous projects | **Checks:** Store + own-recall + cross-leak per project
+
+| Metric | Result | Status |
+|:---|:---|:---|
+| **Isolation Integrity** | **100%** | ELITE — zero cross-project leakage |
+| **Concurrent Access** | **Pass** | All projects readable under simultaneous load |
+| **Leak Detection** | **Negative** | No data from any project visible in another |
+
+Each project's vector space and knowledge graph is strictly siloed via `sessionId` constraints. Aggressive cleanup logic purges both IDs and Names between runs to prevent identity drift.
+
+Full report: [reports/mcp_stress_test.md](reports/mcp_stress_test.md)
+
+---
+
+### Knowledge Graph Stress Audit
+
+**Scale:** 1,200+ nodes, 1,087 triples in a single session
+
+| Metric | Result | Status |
+|:---|:---|:---|
+| **Total Triples Stored** | **1,087** | PASS |
+| **Ingestion Throughput** | **4,056 triples/sec** | OPTIMIZED |
+| **Generation Time** | **0.3 seconds** | ELITE |
+| **Dashboard Load** | **< 1.5 seconds** | Physics-simulated D3.js render |
+| **Storage Cost** | **~0.2 MB** | SQLite increase for entire stress session |
+
+Graph structure: 5 major hubs (40+ edges each), 15 intermediate clusters, 400 mesh entities, 100 isolated standalone facts.
+
+Full report: [reports/graph_stress_test.md](reports/graph_stress_test.md)
+
+---
+
 ## Privacy and Security
 
 ArcRift was designed with a local-first philosophy from the ground up. Your conversations never leave your machine unless you explicitly configure a cloud LLM.
@@ -661,6 +642,25 @@ ArcRift was designed with a local-first philosophy from the ground up. Your conv
 | **No Shared Secret** | The pre-v1.4.7 shared secret requirement has been removed. The extension communicates directly with the local backend. |
 
 See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability reporting policy.
+
+---
+
+## Comparison with Alternatives
+
+While tools like Mem0, Zep, and Letta focus heavily on providing memory APIs for agent developers, **ArcRift is built directly for end-users and human-in-the-loop workflows.**
+
+| Feature | ArcRift | Mem0 | Zep | Letta (MemGPT) | LangGraph |
+|:---|:---|:---|:---|:---|:---|
+| **Primary Audience** | **End-users & Devs** | Agent Devs | Agent Devs | Agent Devs | Agent Devs |
+| **Cross-Platform Chat UX** | **Yes (Injects directly into ChatGPT, Claude, etc)**| Bring your own UI | Bring your own UI | Bring your own UI | Bring your own UI |
+| **Visual Knowledge Graph** | **Yes (D3 Dashboard)** | API Only | API Only | No | Optional / Custom |
+| **Context Retrieval Precision**| **Surgical Sentence Trimming (95% noise reduction)** | Full Chunk | Full Chunk | Full Chunk | Varies by implementation |
+| **Setup Complexity** | **1 command (`npx`)** | Requires DB / API | Requires DB / Docker | Docker / Python env | Code-heavy (Framework) |
+| **Storage Backend** | **SQLite (Zero config)** | PostgreSQL / Qdrant | PostgreSQL / Redis | PostgreSQL / Chroma | Any (BYO Database) |
+| **Local vs Cloud** | **100% Local (Ollama)** | Cloud-first (Local avail) | Both | Both | Both |
+| **Native IDE Integration**| **Yes (via MCP)**| API Only | API Only | API Only | API Only |
+| **MCP Support** | **Yes** | Yes | Yes | Yes | Yes |
+| **License** | MIT | Apache 2.0 | Apache 2.0 | Apache 2.0 | MIT |
 
 ---
 

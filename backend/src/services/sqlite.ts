@@ -63,6 +63,13 @@ function createTables() {
       db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_externalChatId ON sessions(externalChatId)");
       logger.info("Database migration: Added externalChatId column and unique index");
     }
+
+    const hasTokens = tableInfo.some(col => col.name === "tokensSaved");
+    if (!hasTokens) {
+      db.exec("ALTER TABLE sessions ADD COLUMN tokensSaved INTEGER DEFAULT 0");
+      db.exec("ALTER TABLE sessions ADD COLUMN retrievalCount INTEGER DEFAULT 0");
+      logger.info("Database migration: Added analytics columns to sessions (v1.5.5)");
+    }
   } catch (e) {
     logger.warn(`Database migration warning: ${e instanceof Error ? e.message : String(e)}`);
   }

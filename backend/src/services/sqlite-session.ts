@@ -19,14 +19,16 @@ export class SqliteSessionStore implements ISessionStore {
       tripleCount: 0,
       topicCount: 0,
       hasFullChat: false,
+      tokensSaved: 0,
+      retrievalCount: 0,
       createdAt: new Date(now),
       updatedAt: new Date(now)
     };
 
     this.db.prepare(`
-      INSERT INTO sessions (id, projectName, platform, tripleCount, topicCount, hasFullChat, createdAt, updatedAt, externalChatId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, projectName, platform, 0, 0, 0, now, now, externalChatId || null);
+      INSERT INTO sessions (id, projectName, platform, tripleCount, topicCount, hasFullChat, tokensSaved, retrievalCount, createdAt, updatedAt, externalChatId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, projectName, platform, 0, 0, 0, 0, 0, now, now, externalChatId || null);
 
     return session;
   }
@@ -270,6 +272,8 @@ export class SqliteSessionStore implements ISessionStore {
       tripleCount: row.tripleCount,
       topicCount: row.topicCount,
       hasFullChat: row.hasFullChat === 1,
+      tokensSaved: row.tokensSaved,
+      retrievalCount: row.retrievalCount,
       externalChatId: row.externalChatId,
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt)
