@@ -74,9 +74,9 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 - [Key Features](#key-features)
 - [Architecture](#architecture)
 - [Quality-of-Life Details](#quality-of-life-details)
+- [How It Works](#how-it-works)
 - [How the Two Modes Work](#how-the-two-modes-work)
 - [Performance Benchmarks](#performance-benchmarks)
-- [How It Works](#how-it-works)
 - [Privacy and Security](#privacy-and-security)
 - [Comparison with Alternatives](#comparison-with-alternatives)
 - [What's New in v1.5.4](#whats-new-in-v154)
@@ -485,6 +485,38 @@ These are the smaller decisions that make the system faster and more reliable in
 
 ---
 
+## How It Works
+
+```
+SAVE
+  Browser scrapes conversation → FNV-1a dedup check
+  → PII scrub (API keys, JWTs, emails, IPs → [REDACTED])
+  → POST to backend
+
+STORAGE (two parallel tracks)
+
+  Vector Track                      Graph Track
+  Sliding window chunker            Text sent to Ollama llama3.1:8b
+  300 words, 80-word overlap        (Groq as fallback)
+  Embeds with nomic-embed-text      Extracts subject-relation-object triples
+  Stores in SQLite vec0             Stores in SQLite facts table
+  Background: sentence-level        Background: stores after chunk embedding
+  embedding job queued
+
+RECALL (on every prompt or tool call)
+  Query → HyDE (generate hypothetical answer → embed both)
+  → Sentence vector search (top 100, filter by session)
+  → Chunk vector search (top 20, filter by session)
+  → FTS5 keyword search (prefix match, filter by session)
+  → Fuse results, score, deduplicate
+  → Surgical trim (keep only matching sentences from each chunk)
+  → sanitizeChunks() (scan for injection patterns → redact)
+  → wrapInContextBlock() (lean text header)
+  → Prepend to prompt
+```
+
+---
+
 ## How the Two Modes Work
 
 ArcRift has two complementary modes that share the same memory store. You can use one, the other, or both at the same time.
@@ -591,38 +623,6 @@ Full report: [reports/mcp_stress_test.md](reports/mcp_stress_test.md)
 Graph structure: 5 major hubs (40+ edges each), 15 intermediate clusters, 400 mesh entities, 100 isolated standalone facts.
 
 Full report: [reports/graph_stress_test.md](reports/graph_stress_test.md)
-
----
-
-## How It Works
-
-```
-SAVE
-  Browser scrapes conversation → FNV-1a dedup check
-  → PII scrub (API keys, JWTs, emails, IPs → [REDACTED])
-  → POST to backend
-
-STORAGE (two parallel tracks)
-
-  Vector Track                      Graph Track
-  Sliding window chunker            Text sent to Ollama llama3.1:8b
-  300 words, 80-word overlap        (Groq as fallback)
-  Embeds with nomic-embed-text      Extracts subject-relation-object triples
-  Stores in SQLite vec0             Stores in SQLite facts table
-  Background: sentence-level        Background: stores after chunk embedding
-  embedding job queued
-
-RECALL (on every prompt or tool call)
-  Query → HyDE (generate hypothetical answer → embed both)
-  → Sentence vector search (top 100, filter by session)
-  → Chunk vector search (top 20, filter by session)
-  → FTS5 keyword search (prefix match, filter by session)
-  → Fuse results, score, deduplicate
-  → Surgical trim (keep only matching sentences from each chunk)
-  → sanitizeChunks() (scan for injection patterns → redact)
-  → wrapInContextBlock() (lean text header)
-  → Prepend to prompt
-```
 
 ---
 
