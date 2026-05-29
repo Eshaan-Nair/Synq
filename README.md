@@ -21,7 +21,7 @@
 
 **MCP (AI Coding Tools):** Claude Code · Cursor · Windsurf · Claude Desktop
 
-https://www.youtube.com/watch?v=58zbSxzQ94U
+[![ArcRift Demo](https://img.youtube.com/vi/58zbSxzQ94U/maxresdefault.jpg)](https://www.youtube.com/watch?v=58zbSxzQ94U)
 
 The Demo only showcases the main function of ArcRift, there are a lot of features for you to Explore!
 
