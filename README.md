@@ -12,7 +12,7 @@
 [![Stars](https://img.shields.io/github/stars/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/ARCRIFT/stargazers)
 [![Forks](https://img.shields.io/github/forks/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/ARCRIFT/forks)
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/ARCRIFT/issues)
-[![Version](https://img.shields.io/badge/version-1.5.3-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.4-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 
 <br/>
@@ -96,7 +96,7 @@ While tools like Mem0, Zep, and Letta focus heavily on providing memory APIs for
 - [Quality-of-Life Details](#quality-of-life-details)
 - [Architecture](#architecture)
 - [Privacy and Security](#privacy-and-security)
-- [What's New in v1.5.3](#whats-new-in-v153)
+- [What's New in v1.5.4](#whats-new-in-v154)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -664,13 +664,12 @@ See [SECURITY.md](SECURITY.md) for the full threat model and vulnerability repor
 
 ---
 
-## What's New in v1.5.3
+## What's New in v1.5.4
 
-- **Global Search Bar** — New debounced global search in the dashboard header querying across all projects with combined vector chunks and graph facts.
-- **Knowledge Graph Pruning** — Click a node in the graph to prune it instantly without a page reload.
-- **System Health Panel** — Live SQLite metrics, session count, job queue status, and Ollama connectivity pinned to the dashboard sidebar.
-- **Selector Warning Badge** — The extension popup now shows an amber warning banner if it fails to locate the chat input element due to a stale CSS selector.
-- **SQLite-Native CI Tests** — Refactored integration tests to use the Unified Storage Interface (`initStorage()`), automatically falling back to SQLite and removing Docker service container requirements in CI.
+- **Multi-turn Context Summarisation** — Added a toggle to intercept and summarize raw context chunks via local LLMs before injection, drastically reducing token bloat on massive projects.
+- **Session Merging** — You can now seamlessly merge legacy sessions into your active project via the dashboard sidebar, completely de-duplicating graph data and mapping vector chunks to a single record.
+- **Ollama Model Switcher** — A new Settings tab allows you to dynamically switch active Embedding and Extraction models on the fly without restarting the backend.
+- **Cross-Storage Architecture** — Merging supports both Zero-Docker SQLite and heavy Docker instances (Mongo/Neo4j/Chroma) out of the box.
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
 

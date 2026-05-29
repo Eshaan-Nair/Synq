@@ -4,6 +4,24 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.5.4] — 2026-05-29 — Session Merging & Context Summarisation
+
+### 🧠 Multi-turn Context Summarisation
+- **Hybrid Context Mode** — Added a configuration toggle in the Settings tab to switch between "Raw Chunks" and "Summarized Context" in the RAG pipeline.
+- **Token Efficiency** — In Summarized Mode, retrieved chunks and graph facts are intercepted and fed into the local LLM to generate a concise, cohesive prose summary before injection, saving thousands of tokens per turn on large projects.
+- **Automatic Fallbacks** — The backend automatically falls back to raw chunk injection if the summarization LLM fails or times out.
+
+### 🔄 Session Merging (Cross-Storage)
+- **Unified Projects** — You can now merge older or duplicate sessions directly into your active project via a new Merge Modal in the dashboard sidebar.
+- **Data De-duplication** — The system safely merges knowledge graph relationships (dropping duplicates), re-maps vector chunk metadata, and concatenates chat logs into a single historical record.
+- **Cross-Ecosystem Support** — Merging logic is natively implemented across both Zero-Docker (SQLite) and Docker (Chroma/Neo4j/Mongo) storage modes.
+
+### ⚙️ Dashboard Settings & Configuration
+- **Ollama Model Switcher** — Added a dedicated Settings UI to dynamically change the active Embedding and Extraction models on the fly, without needing to restart the backend or edit `.env`.
+- **UI State Hardening** — The dashboard visually disables irrelevant side-panels (Facts/Chat) when navigating to global views like Settings or Global Search to prevent UI deadlocks.
+
+---
+
 ## [1.5.3] — 2026-05-23 — The ArcRift Overhaul: Rebrand & Premium "Monolith" UI
 
 ### 🔄 Comprehensive Rebrand (Glia → ArcRift)

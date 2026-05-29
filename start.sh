@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ArcRift v1.5.3 - Startup Script (Linux/macOS)
+# ArcRift - Startup Script (Linux/macOS)
 # ------------------------------------------
 
 set -e

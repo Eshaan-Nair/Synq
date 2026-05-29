@@ -23,18 +23,10 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ---
 
-## v1.5.4 — Planned
+## v1.5.4 — Released
 
-- **Multi-turn Context Summarisation** — Instead of injecting raw chunks,
-  generate a short prose summary of the most relevant project context and
-  inject that. Reduces token usage and improves readability for the AI.
-
-- **Session Merging** [Completed] — Allow two saved sessions to be merged into one
-  project, de-duplicating overlapping chunks and combining their knowledge
-  graphs. Useful when a long project spans many separate conversations.
-
-- **Ollama Model Switcher** [Completed] — A dropdown in the dashboard to change the
-  active embedding or extraction model without editing `.env` and restarting.
+Multi-turn context summarisation, session merging, and Ollama model switcher.
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ---
 
