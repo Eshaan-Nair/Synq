@@ -29,7 +29,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
   generate a short prose summary of the most relevant project context and
   inject that. Reduces token usage and improves readability for the AI.
 
-- **Session Merging** — Allow two saved sessions to be merged into one
+- **Session Merging** [Completed] — Allow two saved sessions to be merged into one
   project, de-duplicating overlapping chunks and combining their knowledge
   graphs. Useful when a long project spans many separate conversations.
 
