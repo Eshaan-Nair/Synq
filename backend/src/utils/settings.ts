@@ -5,6 +5,7 @@ import { logger } from "./logger";
 export interface Settings {
   ollamaEmbeddingModel?: string;
   ollamaExtractionModel?: string;
+  contextMode?: "raw" | "summarized";
 }
 
 const SETTINGS_PATH = path.join(process.cwd(), "ArcRift-settings.json");

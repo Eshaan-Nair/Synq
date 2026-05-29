@@ -10,10 +10,12 @@ const SettingsView: React.FC = () => {
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [activeEmbeddingModel, setActiveEmbeddingModel] = useState("nomic-embed-text");
   const [activeExtractionModel, setActiveExtractionModel] = useState("llama3.1:8b");
+  const [contextMode, setContextMode] = useState<"raw" | "summarized">("raw");
 
   const [originalSettings, setOriginalSettings] = useState({
     embedding: "nomic-embed-text",
     extraction: "llama3.1:8b",
+    contextMode: "raw",
   });
 
   const [saving, setSaving] = useState(false);
@@ -27,9 +29,12 @@ const SettingsView: React.FC = () => {
       setAvailableModels(data.availableModels);
       setActiveEmbeddingModel(data.activeEmbeddingModel);
       setActiveExtractionModel(data.activeExtractionModel);
+      const fetchedMode = data.contextMode === "summarized" ? "summarized" : "raw";
+      setContextMode(fetchedMode);
       setOriginalSettings({
         embedding: data.activeEmbeddingModel,
         extraction: data.activeExtractionModel,
+        contextMode: fetchedMode,
       });
     } catch (err) {
       setError(`Failed to load settings: ${extractErrorMessage(err)}`);
@@ -51,10 +56,12 @@ const SettingsView: React.FC = () => {
       await updateSettings({
         activeEmbeddingModel,
         activeExtractionModel,
+        contextMode,
       });
       setOriginalSettings({
         embedding: activeEmbeddingModel,
         extraction: activeExtractionModel,
+        contextMode,
       });
       setSuccessMessage("Configuration saved successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -67,7 +74,8 @@ const SettingsView: React.FC = () => {
 
   const hasUnsavedChanges =
     activeEmbeddingModel !== originalSettings.embedding ||
-    activeExtractionModel !== originalSettings.extraction;
+    activeExtractionModel !== originalSettings.extraction ||
+    contextMode !== originalSettings.contextMode;
 
   if (loading) {
     return (
@@ -188,6 +196,25 @@ const SettingsView: React.FC = () => {
                 </option>
               ))
             )}
+          </select>
+        </div>
+
+        {/* Context Mode Config */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)", display: "flex", justifyContent: "space-between" }}>
+            <span>Context Injection Mode</span>
+          </label>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)", lineHeight: "1.4", marginBottom: "4px" }}>
+            Controls how memory chunks are injected into your RAG queries. <strong>Raw</strong> is faster and exact. <strong>Summarized</strong> reduces token consumption for large context windows.
+          </p>
+          <select
+            className="settings-select"
+            value={contextMode}
+            onChange={(e) => setContextMode(e.target.value as "raw" | "summarized")}
+            style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", fontSize: "14px", background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-main)", color: "white", outline: "none", cursor: "pointer" }}
+          >
+            <option value="raw">Raw Chunks (Fast & High Fidelity)</option>
+            <option value="summarized">Summarized Context (Token Efficient & Cohesive)</option>
           </select>
         </div>
 

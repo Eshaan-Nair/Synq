@@ -73,10 +73,11 @@ export async function fetchSettings() {
     availableModels: string[];
     activeEmbeddingModel: string;
     activeExtractionModel: string;
+    contextMode: string;
   };
 }
 
-export async function updateSettings(data: { activeEmbeddingModel: string; activeExtractionModel: string }) {
+export async function updateSettings(data: { activeEmbeddingModel?: string; activeExtractionModel?: string; contextMode?: string }) {
   const res = await apiClient.post("/api/settings", data);
   return res.data;
 }

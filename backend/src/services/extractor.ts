@@ -567,3 +567,39 @@ Relevant parts:`;
     return chunks.join("\n...\n").slice(0, 2500);
   }
 }
+
+// ── Multi-turn Context Summarisation ──────────────────────────────
+export async function summarizeContext(query: string, chunks: string[], facts: string[]): Promise<string> {
+  if (chunks.length === 0 && facts.length === 0) return "";
+
+  const prompt = `You are a highly capable summarization assistant for a memory-augmented AI.
+The user is asking a query. You have retrieved several raw memory chunks and knowledge graph facts that might contain the answer.
+Your job is to read these raw fragments and synthesize a single, cohesive, highly-condensed prose summary that directly answers or relates to the user's query.
+Do NOT just list the facts. Weave them into a tight narrative paragraph.
+Exclude any fragments that are completely irrelevant to the query.
+If none of the fragments are relevant to the query, simply reply "No relevant context found."
+
+USER QUERY:
+"${query}"
+
+RAW GRAPH FACTS:
+${facts.length > 0 ? facts.join("\n") : "None"}
+
+RAW MEMORY CHUNKS:
+${chunks.length > 0 ? chunks.map((c, i) => `[Chunk ${i+1}]: ${c}`).join("\n\n") : "None"}
+
+SUMMARY:`;
+
+  try {
+    const summary = await llm(prompt, 1000);
+    return summary.trim();
+  } catch (err: any) {
+    logger.warn(`[Extractor] Context summarisation failed: ${err?.message || "Unknown error"}`);
+    // Fallback to joining raw chunks
+    let fallback = chunks.join("\n\n");
+    if (facts.length > 0) {
+      fallback = `Facts:\n${facts.join("\n")}\n\n${fallback}`;
+    }
+    return fallback;
+  }
+}

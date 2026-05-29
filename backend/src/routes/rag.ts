@@ -2,10 +2,11 @@
 
 import { Router, Request, Response } from "express";
 import { vectorStore, graphStore, RetrievedChunk } from "../services/storage";
-import { extractEntitiesFromQuery } from "../services/extractor";
+import { extractEntitiesFromQuery, summarizeContext } from "../services/extractor";
 import { logger } from "../utils/logger";
 import { wrapInContextBlock, sanitizeChunks } from "../middleware/sanitize";
 import { isValidObjectId } from "../utils/validators";
+import { getSettings } from "../utils/settings";
 
 const router = Router();
 
@@ -67,10 +68,19 @@ router.post("/retrieve", async (req: Request, res: Response) => {
     const sanitized = sanitizeChunks(safeChunks);
 
     // v1.4.4 style: inject raw chunks directly (no LLM extraction step)
-    let contextBlockRaw = wrapInContextBlock(sanitized);
-    if (relatedTriples.length > 0) {
-      const graphText = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`).join("\n");
-      contextBlockRaw = `RELATED KNOWLEDGE:\n${graphText}\n\nRETRIEVED CONTEXT:\n${contextBlockRaw}`;
+    let contextBlockRaw = "";
+    
+    if (getSettings().contextMode === "summarized") {
+      const chunksContent = sanitized.map(c => c.content);
+      const factsContent = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`);
+      const summary = await summarizeContext(String(prompt), chunksContent, factsContent);
+      contextBlockRaw = `SUMMARIZED CONTEXT:\n${summary}`;
+    } else {
+      contextBlockRaw = wrapInContextBlock(sanitized);
+      if (relatedTriples.length > 0) {
+        const graphText = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`).join("\n");
+        contextBlockRaw = `RELATED KNOWLEDGE:\n${graphText}\n\nRETRIEVED CONTEXT:\n${contextBlockRaw}`;
+      }
     }
 
     const contextBlock = contextBlockRaw.trim();
@@ -138,10 +148,19 @@ router.post("/global", async (req: Request, res: Response) => {
 
     const sanitized = sanitizeChunks(safeChunks);
     
-    let contextBlockRaw = wrapInContextBlock(sanitized);
-    if (relatedTriples.length > 0) {
-      const graphText = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`).join("\n");
-      contextBlockRaw = `RELATED KNOWLEDGE:\n${graphText}\n\nRETRIEVED CONTEXT:\n${contextBlockRaw}`;
+    let contextBlockRaw = "";
+    
+    if (getSettings().contextMode === "summarized") {
+      const chunksContent = sanitized.map(c => c.content);
+      const factsContent = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`);
+      const summary = await summarizeContext(String(prompt), chunksContent, factsContent);
+      contextBlockRaw = `SUMMARIZED CONTEXT:\n${summary}`;
+    } else {
+      contextBlockRaw = wrapInContextBlock(sanitized);
+      if (relatedTriples.length > 0) {
+        const graphText = relatedTriples.map(t => `- ${t.subject} ${t.relation} ${t.object}`).join("\n");
+        contextBlockRaw = `RELATED KNOWLEDGE:\n${graphText}\n\nRETRIEVED CONTEXT:\n${contextBlockRaw}`;
+      }
     }
     
     const contextBlock = contextBlockRaw.trim();
