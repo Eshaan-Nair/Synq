@@ -44,14 +44,14 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ---
 
-## v1.5.7 — Planned
+## v1.6.0 — Released
 
 - **Direct Codebase Indexing (Local File RAG)** — An expansion to the MCP server that allows ArcRift to scan and index the user's actual project files into the graph, bridging the gap between conversational memory and actual code architecture.
 - **Native Desktop App wrapper (Tauri)** — Package the Node backend and React Dashboard into a lightweight Tauri desktop app with a menu-bar icon, eliminating the need to keep a terminal window open.
 
 ---
 
-## v1.6.0 — Planned (Major Release)
+## v1.6.1 — Planned (Major Release)
 
 - **1. Team "Hive-Mind" Memory (Enterprise Sync)** — Optional remote database support (Turso/Postgres) allowing an entire engineering team to share a unified memory graph. If one developer solves an issue, the rest of the team's IDEs instantly recall the solution.
 - **2. Automated Memory Decay (Forgetting)** — Implementing an automated algorithmic "decay" system where outdated or conflicting facts slowly fade from the graph over time if they aren't frequently accessed or reinforced, keeping the memory retrieval lightning fast and contextually pure over years of use.

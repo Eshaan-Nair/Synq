@@ -12,7 +12,7 @@
 [![Stars](https://img.shields.io/github/stars/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/ARCRIFT/stargazers)
 [![Forks](https://img.shields.io/github/forks/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/ARCRIFT/forks)
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/ARCRIFT/issues)
-[![Version](https://img.shields.io/badge/version-1.5.6-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.6.0-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 
 <br/>
@@ -81,7 +81,7 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 - [Performance Benchmarks](#performance-benchmarks)
 - [Privacy and Security](#privacy-and-security)
 - [Comparison with Alternatives](#comparison-with-alternatives)
-- [What's New in v1.5.6](#whats-new-in-v156)
+- [What's New in v1.6.0](#whats-new-in-v160)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -679,12 +679,16 @@ While tools like Mem0, Zep, and Letta focus heavily on providing memory APIs for
 
 ---
 
-## What's New in v1.5.6
+## What's New in v1.6.0
 
-- **Multi-turn Context Summarisation** — Added a toggle to intercept and summarize raw context chunks via local LLMs before injection, drastically reducing token bloat on massive projects.
-- **Session Merging** — You can now seamlessly merge legacy sessions into your active project via the dashboard sidebar, completely de-duplicating graph data and mapping vector chunks to a single record.
-- **Ollama Model Switcher** — A new Settings tab allows you to dynamically switch active Embedding and Extraction models on the fly without restarting the backend.
-- **Cross-Storage Architecture** — Merging supports both Zero-Docker SQLite and heavy Docker instances (Mongo/Neo4j/Chroma) out of the box.
+This release marks ArcRift's transition from a CLI-based tool to a fully native, highly-optimized desktop application, alongside a brand new Local Codebase Indexing feature.
+
+- **Native Tauri Desktop App**: ArcRift now runs as a lightweight native desktop application that lives quietly in your system tray. The backend operates seamlessly as a hidden Rust sidecar process, drastically improving performance and user experience.
+- **Direct Codebase Indexing**: You can now point ArcRift directly at any local folder. It will scan, chunk, embed, and ingest your entire codebase into its Knowledge Graph instantly, allowing you to query massive projects effortlessly.
+- **Esbuild Backend Engine**: The backend compiler was completely swapped from TypeScript to Esbuild, bringing start times down from over 60 seconds to ~0.1 seconds.
+- **GitHub Actions Auto-Releases**: Full CI/CD pipeline integrated to automatically cross-compile installers for Mac, Windows, and Linux on every release.
+
+*(Note: If you were testing `v1.5.7-beta` locally, all changes are included in this stable `v1.6.0` release).*
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
 

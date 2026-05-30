@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "ArcRift",
-  "version": "1.5.7",
+  "productName": "ArcRift Dashboard",
+  "version": "1.6.0",
   "identifier": "dev.arcrift.app",
   "build": {
     "frontendDist": "../dist",
