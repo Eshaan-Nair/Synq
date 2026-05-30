@@ -1,6 +1,6 @@
-import { initSqlite } from "c:/Code/ArcRift/backend/src/services/sqlite";
-import { runBackupCheck } from "c:/Code/ArcRift/backend/src/services/backup";
-import { logger } from "c:/Code/ArcRift/backend/src/utils/logger";
+import { initSqlite } from "../src/services/sqlite";
+import { runBackupCheck } from "../src/services/backup";
+import { logger } from "../src/utils/logger";
 import fs from "fs";
 import path from "path";
 
