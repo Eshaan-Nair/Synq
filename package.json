@@ -12,7 +12,8 @@
     "README.md"
   ],
   "scripts": {
-    "setup": "node bin/setup.js"
+    "setup": "node bin/setup.js",
+    "dev:desktop": "start cmd /c \"cd backend && npm run dev\" && cd dashboard && npm run tauri dev"
   },
   "repository": {
     "type": "git",
