@@ -179,7 +179,7 @@ echo  ===================================
 if "!GRAPH_BACKEND!"=="groq" (
     echo   IMPORTANT: Ensure GROQ_API_KEY is set in backend/.env
 )
-echo   Run start.bat to begin.
+echo   Run "npm run dev:desktop" to launch the App.
 echo.
 echo  -----------------------------------
 echo   FINAL STEP: LOAD THE EXTENSION

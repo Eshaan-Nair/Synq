@@ -337,6 +337,14 @@ class DockerVectorStore implements IVectorStore {
   async mergeSession(sourceId: string, targetId: string) {
     await chromaService.mergeSession(sourceId, targetId);
   }
+  async storeFileChunks(chunks: any[]) {
+    // Basic Docker stub. Implement Chroma equivalent if needed.
+    await chromaService.storeWindowChunks(chunks);
+  }
+  async deleteChunksByFile(filePath: string, sessionId: string): Promise<number> {
+    // Basic Docker stub.
+    return 0;
+  }
 }
 
 let sessionStore: ISessionStore;

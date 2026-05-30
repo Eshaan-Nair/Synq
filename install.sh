@@ -208,7 +208,7 @@ echo " ==================================="
 if [ "$GRAPH_BACKEND" == "groq" ]; then
     echo "  IMPORTANT: Ensure GROQ_API_KEY is set in backend/.env"
 fi
-echo "  Run ./start.sh to begin."
+echo "  Run \"npm run dev:desktop\" to launch the App."
 echo ""
 
 echo " -----------------------------------"

@@ -1,6 +1,6 @@
 {
   "name": "arcrift-setup",
-  "version": "1.5.6",
+  "version": "1.6.0",
   "description": "Smart, local-first RAG and Knowledge Graph for AI conversations.",
   "main": "index.js",
   "bin": {
@@ -12,7 +12,8 @@
     "README.md"
   ],
   "scripts": {
-    "setup": "node bin/setup.js"
+    "setup": "node bin/setup.js",
+    "dev:desktop": "cd backend && npm run build && cd ../dashboard && npm run tauri dev"
   },
   "repository": {
     "type": "git",

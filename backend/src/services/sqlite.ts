@@ -158,9 +158,24 @@ function createTables() {
       sessionId TEXT NOT NULL,
       chunkIndex INTEGER,
       content TEXT NOT NULL,
+      filePath TEXT,
+      fileHash TEXT,
       FOREIGN KEY(sessionId) REFERENCES sessions(id) ON DELETE CASCADE
     )
   `);
+  
+  // Migration: Add filePath and fileHash to chunk_metadata (v1.5.6)
+  try {
+    const tableInfo = db.prepare("PRAGMA table_info(chunk_metadata)").all() as any[];
+    if (!tableInfo.some(col => col.name === "filePath")) {
+      db.exec("ALTER TABLE chunk_metadata ADD COLUMN filePath TEXT");
+      db.exec("ALTER TABLE chunk_metadata ADD COLUMN fileHash TEXT");
+      logger.info("Database migration: Added filePath and fileHash to chunk_metadata (v1.5.6)");
+    }
+  } catch (e) {
+    logger.warn(`chunk_metadata migration warning: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
   db.exec("CREATE INDEX IF NOT EXISTS idx_chunks_session ON chunk_metadata(sessionId)");
 
   // High-precision Sentence Vectors (Small-to-Big Retrieval)

@@ -8,7 +8,7 @@ This guide covers custom configuration, port changes, backups, and running ArcRi
 
 | Service | Port | Change via |
 |---|---|---|
-| Backend + Dashboard | 3001 | `PORT=3002` in `backend/.env` |
+| Node Backend | 3001 | `PORT=3002` in `backend/.env` |
 | Neo4j HTTP | 7474 | `docker-compose.yml` ports section |
 | Neo4j Bolt | 7687 | `docker-compose.yml` ports section |
 | MongoDB | 27017 | `docker-compose.yml` ports section |

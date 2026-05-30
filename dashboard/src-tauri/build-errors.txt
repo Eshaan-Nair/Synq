@@ -1,0 +1,7 @@
+﻿cargo :     Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.51s
+At line:1 char:1
++ cargo build 2>&1 | Out-File -FilePath "C:\Code\ArcRift\dashboard\src- ...
++ ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Finished `d...get(s) in 4.51s:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

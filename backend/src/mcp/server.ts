@@ -11,7 +11,7 @@
  *   - list_projects       → list all saved project names
  *   - get_project_summary → get knowledge graph summary for a project
  *
- * Updated: v1.5.6
+ * Updated: v1.6.0
  */
 process.env.ARCRIFT_MCP_MODE = "true";
 
@@ -37,6 +37,7 @@ import { search } from "./tools/search";
 import { listProjects } from "./tools/projects";
 import { getSummary } from "./tools/summary";
 import { identifyProject } from "./tools/detector";
+import { indexCodebase } from "./tools/index_codebase";
 import { initStorage, sessionStore } from "../services/storage";
 import { logger } from "../utils/logger";
 
@@ -132,11 +133,29 @@ const TOOLS = [
       required: ["path"],
     },
   },
+  {
+    name: "index_codebase",
+    description: "Scans a local directory and indexes the raw source code files into the current session's memory graph. Call this to give the AI access to the actual codebase.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        directoryPath: {
+          type: "string",
+          description: "The absolute path to the directory to index (e.g., C:/Code/MyProject)."
+        },
+        sessionId: {
+          type: "string",
+          description: "(Optional) The target session ID. Defaults to the active project if omitted."
+        }
+      },
+      required: ["directoryPath"]
+    }
+  }
 ];
 
 // ── Server setup ────────────────────────────────────────────────────
 const server = new Server(
-  { name: "ArcRift-memory", version: "1.5.6" },
+  { name: "ArcRift-memory", version: "1.6.0" },
   { capabilities: { tools: {}, resources: {} } }
 );
 
@@ -222,6 +241,10 @@ server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolRes
       }
       case "identify_active_project": {
         const result = await identifyProject(args.path as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+      case "index_codebase": {
+        const result = await indexCodebase(args.directoryPath as string, args.sessionId as string | undefined);
         return { content: [{ type: "text", text: result }] };
       }
       default:

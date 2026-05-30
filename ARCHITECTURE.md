@@ -5,8 +5,8 @@
 ArcRift has three layers:
 
 1. **Chrome Extension** — scrapes AI conversations, intercepts prompts, injects context
-2. **Node.js Backend** — processes text, orchestrates services, handles RAG retrieval, serves the dashboard, runs the MCP server
-3. **React Dashboard** — visualizes the knowledge graph, manages sessions
+2. **Tauri Desktop App** — Native OS application (React/Vite frontend) that visualizes the knowledge graph and manages sessions.
+3. **Rust Sidecar (Node.js)** — Hidden background process that handles text processing, RAG retrieval, Esbuild compilation, and the MCP server.
 
 ---
 
@@ -98,7 +98,8 @@ AI tool (Cursor/Claude Code/etc.) → MCP stdio call
 
 | Service | Port | Technology | Notes |
 |---|---|---|---|
-| Backend + Dashboard | 3001 | Node.js, Express 5, sirv | API + static dashboard serving |
+| Node Backend | 3001 | Node.js (Esbuild), Express 5 | API + MCP Server |
+| Tauri App | GUI | Rust, Tauri, React | Native Desktop UI |
 | **SQLite (Default)** | — | better-sqlite3 | Sessions, Graph, Metadata (Zero-Docker) |
 | **SQLite-vec** | — | sqlite-vec | Vector storage (Zero-Docker) |
 | Neo4j | 7474 / 7687 | Neo4j 5.18 | Docker Mode Only |

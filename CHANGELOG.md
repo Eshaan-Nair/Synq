@@ -4,42 +4,54 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.6.0] — 2026-05-30 — Desktop App & Local File RAG
+
+This release marks ArcRift's transition from a CLI-based tool to a fully native, highly-optimized desktop application, alongside a brand new Local Codebase Indexing feature.
+
+### Major Features
+- **Native Tauri Desktop App**: ArcRift now runs as a lightweight native desktop application that lives quietly in your system tray. The backend operates seamlessly as a hidden Rust sidecar process.
+- **Direct Codebase Indexing**: You can now point ArcRift directly at any local folder. It will scan, chunk, embed, and ingest your entire codebase into its Knowledge Graph instantly, allowing you to query massive projects effortlessly.
+- **Esbuild Backend Engine**: The backend compiler was completely swapped from TypeScript to Esbuild, bringing start times down from over 60 seconds to ~0.1 seconds.
+- **GitHub Actions Auto-Releases**: Full CI/CD pipeline integrated to automatically cross-compile `.exe`, `.dmg`, and `.AppImage` installers on every release.
+
+---
+
 ## [1.5.6] — 2026-05-30 — Installer Patch
 
-### 📦 Setup Script Optimization
+### Setup Script Optimization
 - Removed the massive `playwright` dependency from the root `arcrift-setup` package, drastically reducing install times and preventing users from downloading gigabytes of unneeded browser binaries.
 
 ---
 
 ## [1.5.5] — 2026-05-30 — Analytics & Manual Graph Cleanups
 
-### 📊 Session Analytics & Telemetry
+### Session Analytics & Telemetry
 - **Settings Dashboard Tab** — Added a dedicated "Session Analytics" tab that tracks your lifetime token savings and API cost reductions.
 - **RAG Telemetry Calculation** — The backend now natively computes token efficiency on every retrieval turn (comparing the raw context length against the injected subset) and persists it directly to the active SQLite session.
 
-### 🕸️ Manual Graph Editing
+### Manual Graph Editing
 - **Interactive D3 Context Menus** — Right-clicking any node on the visual Knowledge Graph now spawns a custom, floating ArcRift context menu, completely eliminating the need to use the CLI for graph cleanup.
 - **Node Renaming** — You can instantly rename a node across all of its relationships via the new context menu.
 - **Edge Manager Modal** — A new sleek overlay allows you to view and selectively sever specific relationship edges connected to a node with a single click.
 
-### 💾 Background Auto-Backup
+### Background Auto-Backup
 - **Resilient Memory** — Implemented an automated background chron-job that silently dumps a complete `.sqlite` snapshot to a backup folder once a week, protecting your local knowledge graphs from corruption or unexpected data loss.
 
 ---
 
 ## [1.5.4] — 2026-05-29 — Session Merging & Context Summarisation
 
-### 🧠 Multi-turn Context Summarisation
+### Multi-turn Context Summarisation
 - **Hybrid Context Mode** — Added a configuration toggle in the Settings tab to switch between "Raw Chunks" and "Summarized Context" in the RAG pipeline.
 - **Token Efficiency** — In Summarized Mode, retrieved chunks and graph facts are intercepted and fed into the local LLM to generate a concise, cohesive prose summary before injection, saving thousands of tokens per turn on large projects.
 - **Automatic Fallbacks** — The backend automatically falls back to raw chunk injection if the summarization LLM fails or times out.
 
-### 🔄 Session Merging (Cross-Storage)
+### Session Merging (Cross-Storage)
 - **Unified Projects** — You can now merge older or duplicate sessions directly into your active project via a new Merge Modal in the dashboard sidebar.
 - **Data De-duplication** — The system safely merges knowledge graph relationships (dropping duplicates), re-maps vector chunk metadata, and concatenates chat logs into a single historical record.
 - **Cross-Ecosystem Support** — Merging logic is natively implemented across both Zero-Docker (SQLite) and Docker (Chroma/Neo4j/Mongo) storage modes.
 
-### ⚙️ Dashboard Settings & Configuration
+### Dashboard Settings & Configuration
 - **Ollama Model Switcher** — Added a dedicated Settings UI to dynamically change the active Embedding and Extraction models on the fly, without needing to restart the backend or edit `.env`.
 - **UI State Hardening** — The dashboard visually disables irrelevant side-panels (Facts/Chat) when navigating to global views like Settings or Global Search to prevent UI deadlocks.
 
@@ -47,12 +59,12 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ## [1.5.3] — 2026-05-23 — The ArcRift Overhaul: Rebrand & Premium "Monolith" UI
 
-### 🔄 Comprehensive Rebrand (Glia → ArcRift)
+### Comprehensive Rebrand (Glia → ArcRift)
 - **Codebase Sweep** — Executed a 100% complete search-and-replace of all legacy brand references to "ArcRift" across the frontend, backend, and extension.
 - **Configuration Updates** — Updated environment variable namespaces (e.g., `ARCRIFT_STORAGE_MODE`), internal message types (`PAUSE_ARCRIFT`), Docker database names (`arcriftdb`), and core API files (`ArcRift.ts`) for case-sensitive Linux CI compliance.
 - **Documentation** — Completely rewrote the `README.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`, and all other Markdown files to reflect the new ArcRift identity.
 
-### ✨ Premium Monolith UI
+### Premium Monolith UI
 - **Color Palette & Typography** — Implemented a new Deep Slate (`#020617`), Orange (`#F97316`), and Emerald (`#10B981`) palette. Integrated Google Fonts *Outfit* and *Inter* for a high-end developer tool aesthetic.
 - **Dynamic Graph Enhancements** — Updated knowledge graph edges to use fluid `quadraticCurveTo` bezier curves and added a persistent top-center indigo radial glow to unify the graph background with the global search view.
 - **Extension UI Parity** — Completely rewrote `popup.css` so the Chrome extension perfectly mirrors the dashboard's new dark-glass aesthetic, including the grid background and status pill designs.
