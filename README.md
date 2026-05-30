@@ -96,9 +96,15 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 npx arcrift-setup
 ```
 
-This is the recommended starting point for all users. It clones the repo, checks dependencies, pulls Ollama models, installs packages, and builds everything. Run it once and then use `start.bat` or `start.sh` for daily use.
+This is the recommended starting point for all users. It clones the repo, checks dependencies, pulls Ollama models, installs packages, and builds everything. Run it once and then use the desktop app command for daily use.
 
----
+### Launching the Desktop App
+
+ArcRift is a native desktop application with a hidden sidecar backend. To launch it:
+```bash
+npm run dev:desktop
+```
+This will start the backend seamlessly in the background and open the native ArcRift dashboard. When you close the window, it will minimize to your system tray. You can fully quit ArcRift from the tray menu.
 
 ### Web Extension Setup
 
