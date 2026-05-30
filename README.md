@@ -12,7 +12,7 @@
 [![Stars](https://img.shields.io/github/stars/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=6366F1)](https://github.com/Eshaan-Nair/ARCRIFT/stargazers)
 [![Forks](https://img.shields.io/github/forks/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=06B6D4)](https://github.com/Eshaan-Nair/ARCRIFT/forks)
 [![Issues](https://img.shields.io/github/issues/Eshaan-Nair/ARCRIFT?style=for-the-badge&logo=github&labelColor=0B0E14&color=02C39A)](https://github.com/Eshaan-Nair/ARCRIFT/issues)
-[![Version](https://img.shields.io/badge/version-1.5.4-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.5-6366F1?style=for-the-badge&labelColor=0B0E14)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F8FAFC?style=for-the-badge&labelColor=0B0E14)](LICENSE)
 
 <br/>
@@ -81,7 +81,7 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 - [Performance Benchmarks](#performance-benchmarks)
 - [Privacy and Security](#privacy-and-security)
 - [Comparison with Alternatives](#comparison-with-alternatives)
-- [What's New in v1.5.4](#whats-new-in-v154)
+- [What's New in v1.5.5](#whats-new-in-v155)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -666,7 +666,7 @@ While tools like Mem0, Zep, and Letta focus heavily on providing memory APIs for
 
 ---
 
-## What's New in v1.5.4
+## What's New in v1.5.5
 
 - **Multi-turn Context Summarisation** — Added a toggle to intercept and summarize raw context chunks via local LLMs before injection, drastically reducing token bloat on massive projects.
 - **Session Merging** — You can now seamlessly merge legacy sessions into your active project via the dashboard sidebar, completely de-duplicating graph data and mapping vector chunks to a single record.

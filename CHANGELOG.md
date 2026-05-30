@@ -4,6 +4,22 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.5.5] — 2026-05-30 — Analytics & Manual Graph Cleanups
+
+### 📊 Session Analytics & Telemetry
+- **Settings Dashboard Tab** — Added a dedicated "Session Analytics" tab that tracks your lifetime token savings and API cost reductions.
+- **RAG Telemetry Calculation** — The backend now natively computes token efficiency on every retrieval turn (comparing the raw context length against the injected subset) and persists it directly to the active SQLite session.
+
+### 🕸️ Manual Graph Editing
+- **Interactive D3 Context Menus** — Right-clicking any node on the visual Knowledge Graph now spawns a custom, floating ArcRift context menu, completely eliminating the need to use the CLI for graph cleanup.
+- **Node Renaming** — You can instantly rename a node across all of its relationships via the new context menu.
+- **Edge Manager Modal** — A new sleek overlay allows you to view and selectively sever specific relationship edges connected to a node with a single click.
+
+### 💾 Background Auto-Backup
+- **Resilient Memory** — Implemented an automated background chron-job that silently dumps a complete `.sqlite` snapshot to a backup folder once a week, protecting your local knowledge graphs from corruption or unexpected data loss.
+
+---
+
 ## [1.5.4] — 2026-05-29 — Session Merging & Context Summarisation
 
 ### 🧠 Multi-turn Context Summarisation

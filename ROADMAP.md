@@ -30,11 +30,10 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ---
 
-## v1.5.5 — Planned
+## v1.5.5 — Released
 
-- **Settings & Session Analytics Tab** — A dedicated settings page in the dashboard that displays per-session analytics (tokens saved, compression ratios, total API cost reduced), alongside configurations for Ollama models and context thresholds.
-- **Manual Graph Editing** — The ability to right-click a node on the D3.js visual dashboard and manually edit its name, or sever a specific relationship edge without using the CLI.
-- **Background Auto-Backup** — Automatically dump a `.sqlite` snapshot to a backup folder once a week to prevent memory corruption or loss.
+Session Analytics, Manual Graph Editing with D3 context menus, and Background Auto-Backups.
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ---
 

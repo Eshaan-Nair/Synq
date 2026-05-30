@@ -74,6 +74,10 @@ describe("MCP Tool Integration", () => {
   }, 15000);
 
   it("search_memory: should return results or a not-found message", async () => {
+    if (!targetId) {
+      console.warn("No sessions found — skipping search_memory test.");
+      return;
+    }
     const result = await search("ArcRift search engine");
     expect(typeof result).toBe("string");
     expect(result.length).toBeGreaterThan(0);

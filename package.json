@@ -1,6 +1,6 @@
 {
   "name": "arcrift-setup",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Smart, local-first RAG and Knowledge Graph for AI conversations.",
   "main": "index.js",
   "bin": {

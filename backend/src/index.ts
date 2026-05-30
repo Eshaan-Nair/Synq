@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import { startWorker, clearAllJobs } from "./services/jobs";
 import { initStorage } from "./services/storage";
+import { startAutoBackup } from "./services/backup";
 import { logger } from "./utils/logger";
 import contextRoutes from "./routes/context";
 import graphRoutes from "./routes/graph";
@@ -125,7 +126,7 @@ app.use("/api/settings", settingsRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "ArcRift backend running",
-    version: "1.5.4",
+    version: "1.5.5",
     services: {
       backend: "ok",
       port: PORT,
@@ -157,6 +158,9 @@ if (fs.existsSync(dashboardDist)) {
 async function start() {
   try {
     await initStorage();
+    
+    // Initialize auto-backup service
+    startAutoBackup();
 
     // Start background job worker for extraction tasks
     await startWorker();
