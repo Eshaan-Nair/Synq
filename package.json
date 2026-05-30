@@ -28,8 +28,5 @@
     "groq"
   ],
   "author": "Eshaan Nair",
-  "license": "MIT",
-  "dependencies": {
-    "playwright": "^1.60.0"
-  }
+  "license": "MIT"
 }
