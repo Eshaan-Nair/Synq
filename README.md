@@ -90,17 +90,24 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 
 ## Installation
 
-### One-Command Setup (All Platforms)
+### For Users (The Easy Way)
+1. Head over to the [Releases](https://github.com/Eshaan-Nair/ArcRift/releases) page.
+2. Download the latest `ArcRift_Installer.exe` (or your OS equivalent).
+3. Double-click the installer to install ArcRift on your machine.
+4. Launch ArcRift from your Start menu! The app will live entirely in your system tray and run seamlessly in the background.
 
+### For Developers (Building from Source)
+
+If you want to modify the code, build the project yourself, or use the MCP Tools:
+
+**1. One-Command Setup (All Platforms)**
 ```bash
 npx arcrift-setup
 ```
+This clones the repo, checks dependencies, pulls Ollama models, installs packages, and builds the backend.
 
-This is the recommended starting point for all users. It clones the repo, checks dependencies, pulls Ollama models, installs packages, and builds everything. Run it once and then use the desktop app command for daily use.
-
-### Launching the Desktop App
-
-ArcRift is a native desktop application with a hidden sidecar backend. To launch it:
+**2. Launching the Development Server**
+To launch the native desktop application in dev mode:
 ```bash
 npm run dev:desktop
 ```
