@@ -12,6 +12,8 @@ export interface WindowChunk {
   chunkIndex: number;
   wordStart: number;
   wordEnd: number;
+  filePath?: string;
+  fileHash?: string;
 }
 
 /**

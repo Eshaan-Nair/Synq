@@ -100,10 +100,12 @@ export interface IGraphStore {
 
 export interface IVectorStore {
   storeChunks(chunks: WindowChunk[]): Promise<void>;
+  storeFileChunks(chunks: WindowChunk[]): Promise<void>;
   retrieveRelevantChunks(query: string, sessionId: string, topN?: number, keywords?: string[]): Promise<RetrievedChunk[]>;
   retrieveGlobalChunks(query: string, topN?: number, keywords?: string[]): Promise<RetrievedChunk[]>;
   hybridSearch(query: string, sessionId: string, topN?: number): Promise<RetrievedChunk[]>;
   deleteChunksBySession(sessionId: string): Promise<void>;
+  deleteChunksByFile(filePath: string, sessionId: string): Promise<number>;
   deleteChunksByQuery(query: string, sessionId: string): Promise<number>;
   mergeSession(sourceId: string, targetId: string): Promise<void>;
 }

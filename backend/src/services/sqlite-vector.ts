@@ -72,7 +72,7 @@ export class SqliteVectorStore implements IVectorStore {
     const embeddings = await generateEmbeddings(contents, "document");
 
     const insertVec = this.db.prepare("INSERT OR REPLACE INTO vec_chunks (chunk_id, embedding) VALUES (?, ?)");
-    const insertMeta = this.db.prepare("INSERT OR REPLACE INTO chunk_metadata (chunk_id, sessionId, chunkIndex, content) VALUES (?, ?, ?, ?)");
+    const insertMeta = this.db.prepare("INSERT OR REPLACE INTO chunk_metadata (chunk_id, sessionId, chunkIndex, content, filePath, fileHash) VALUES (?, ?, ?, ?, ?, ?)");
     const insertFts = this.db.prepare("INSERT OR REPLACE INTO fts_chunks (chunk_id, content) VALUES (?, ?)");
     const insertSentVec = this.db.prepare("INSERT OR REPLACE INTO vec_sentences (sentence_id, embedding) VALUES (?, ?)");
     const insertSentMeta = this.db.prepare("INSERT OR REPLACE INTO sentence_metadata (sentence_id, chunk_id, content) VALUES (?, ?, ?)");
@@ -86,7 +86,7 @@ export class SqliteVectorStore implements IVectorStore {
 
       this.db.transaction(() => {
         insertVec.run(chunk.id, vector);
-        insertMeta.run(chunk.id, chunk.sessionId, chunk.chunkIndex, chunk.content);
+        insertMeta.run(chunk.id, chunk.sessionId, chunk.chunkIndex, chunk.content, chunk.filePath || null, chunk.fileHash || null);
         insertFts.run(chunk.id, chunk.content);
       })();
     }
@@ -96,6 +96,36 @@ export class SqliteVectorStore implements IVectorStore {
     import("./jobs").then(m => m.enqueueJob("sentence_indexing", { chunks }));
 
     logger.success(`Stored ${chunks.length} chunks (Sentence indexing queued in background)`);
+  }
+
+  async storeFileChunks(chunks: WindowChunk[]): Promise<void> {
+    if (chunks.length === 0) return;
+    
+    const filePath = chunks[0].filePath;
+    const sessionId = chunks[0].sessionId;
+    if (filePath) {
+      await this.deleteChunksByFile(filePath, sessionId);
+    }
+
+    const chunkEmbeddings = await generateEmbeddings(chunks.map(c => c.content), "document");
+
+    const insertVec = this.db.prepare("INSERT OR REPLACE INTO vec_chunks (chunk_id, embedding) VALUES (?, ?)");
+    const insertMeta = this.db.prepare("INSERT OR REPLACE INTO chunk_metadata (chunk_id, sessionId, chunkIndex, content, filePath, fileHash) VALUES (?, ?, ?, ?, ?, ?)");
+    const insertFts = this.db.prepare("INSERT OR REPLACE INTO fts_chunks (chunk_id, content) VALUES (?, ?)");
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const embedding = chunkEmbeddings[i];
+      const vector = Buffer.from(new Float32Array(embedding).buffer);
+
+      this.db.transaction(() => {
+        insertVec.run(chunk.id, vector);
+        insertMeta.run(chunk.id, chunk.sessionId, chunk.chunkIndex, chunk.content, chunk.filePath || null, chunk.fileHash || null);
+        insertFts.run(chunk.id, chunk.content);
+      })();
+    }
+
+    logger.success(`Stored ${chunks.length} chunks for file ${filePath}`);
   }
 
   async retrieveRelevantChunks(query: string, sessionId: string, topN = 3, keywords: string[] = []): Promise<RetrievedChunk[]> {
@@ -286,6 +316,27 @@ export class SqliteVectorStore implements IVectorStore {
     this.db.prepare(`DELETE FROM fts_chunks WHERE chunk_id NOT IN (SELECT chunk_id FROM chunk_metadata)`).run();
     this.db.prepare(`DELETE FROM vec_sentences WHERE sentence_id NOT IN (SELECT sentence_id FROM sentence_metadata)`).run();
     this.db.prepare(`DELETE FROM sentence_metadata WHERE chunk_id NOT IN (SELECT chunk_id FROM chunk_metadata)`).run();
+  }
+
+  async deleteChunksByFile(filePath: string, sessionId: string): Promise<number> {
+    const rows = this.db.prepare(`
+      SELECT chunk_id FROM chunk_metadata 
+      WHERE sessionId = ? AND filePath = ?
+    `).all(sessionId, filePath) as { chunk_id: string }[];
+    
+    const deletedIds = rows.map(r => r.chunk_id);
+    if (deletedIds.length === 0) return 0;
+
+    const placeholders = deletedIds.map(() => "?").join(",");
+    this.db.transaction(() => {
+      this.db.prepare(`DELETE FROM chunk_metadata WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      this.db.prepare(`DELETE FROM vec_chunks WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      this.db.prepare(`DELETE FROM fts_chunks WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      this.db.prepare(`DELETE FROM sentence_metadata WHERE chunk_id IN (${placeholders})`).run(...deletedIds);
+      this.db.prepare(`DELETE FROM vec_sentences WHERE sentence_id NOT IN (SELECT sentence_id FROM sentence_metadata)`).run();
+    })();
+
+    return deletedIds.length;
   }
 
   async deleteChunksByQuery(query: string, sessionId: string): Promise<number> {
