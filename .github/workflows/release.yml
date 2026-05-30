@@ -50,6 +50,28 @@ jobs:
           projectPath: ./dashboard
           tagName: app-v__VERSION__
           releaseName: 'ArcRift v__VERSION__'
-          releaseBody: 'See the assets below to download the latest ArcRift Desktop App for your OS!'
-          releaseDraft: true
+          releaseBody: |
+            ## ArcRift Desktop App (v__VERSION__)
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full release notes.
+
+            ### Installation (For Users)
+            Download the appropriate installer for your Operating System from the assets below:
+            - **Windows**: `ArcRift.Dashboard_x64-setup.exe`
+            - **Mac**: `ArcRift.Dashboard_aarch64.dmg`
+            - **Linux**: `ArcRift.Dashboard_amd64.AppImage`
+
+            ### Installation (For Developers / Headless)
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd ArcRift
+            npx arcrift-setup
+            ```
+
+            ### Load the Extension
+            1. After installation, open `chrome://extensions`
+            2. Enable **Developer mode**
+            3. **Load unpacked** → select `ARCRIFT/extension/dist`
+            4. The ArcRift badge will now appear on supported AI chat platforms.
+          releaseDraft: false
           prerelease: false
