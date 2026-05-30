@@ -4,6 +4,13 @@ All notable changes documented here. Format follows [Keep a Changelog](https://k
 
 ---
 
+## [1.5.6] — 2026-05-30 — Installer Patch
+
+### 📦 Setup Script Optimization
+- Removed the massive `playwright` dependency from the root `arcrift-setup` package, drastically reducing install times and preventing users from downloading gigabytes of unneeded browser binaries.
+
+---
+
 ## [1.5.5] — 2026-05-30 — Analytics & Manual Graph Cleanups
 
 ### 📊 Session Analytics & Telemetry

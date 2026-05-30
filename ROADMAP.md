@@ -37,7 +37,14 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ---
 
-## v1.5.6 — Planned
+## v1.5.6 — Released
+
+Installer Patch: Removed Playwright dependency from root `arcrift-setup` package.
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
+
+---
+
+## v1.5.7 — Planned
 
 - **Direct Codebase Indexing (Local File RAG)** — An expansion to the MCP server that allows ArcRift to scan and index the user's actual project files into the graph, bridging the gap between conversational memory and actual code architecture.
 - **Native Desktop App wrapper (Tauri)** — Package the Node backend and React Dashboard into a lightweight Tauri desktop app with a menu-bar icon, eliminating the need to keep a terminal window open.

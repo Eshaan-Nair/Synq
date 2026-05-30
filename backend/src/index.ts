@@ -126,7 +126,7 @@ app.use("/api/settings", settingsRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "ArcRift backend running",
-    version: "1.5.5",
+    version: "1.5.6",
     services: {
       backend: "ok",
       port: PORT,
