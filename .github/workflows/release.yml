@@ -55,6 +55,8 @@ jobs:
 
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full release notes.
 
+            > **Important Prerequisite**: You must have [Node.js](https://nodejs.org/) and [Ollama](https://ollama.com/) installed on your computer before running ArcRift. If you don't have them, use the Developer (One-Command) script below to install them automatically!
+
             ### Installation (For Users)
             Download the appropriate installer for your Operating System from the assets below:
             - **Windows**: `ArcRift.Dashboard_x64-setup.exe`

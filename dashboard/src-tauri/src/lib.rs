@@ -24,24 +24,35 @@ pub fn run() {
         )
         .setup(move |app| {
             // ── Spawn Node backend ────────────────────────────────────
-            // Resolve backend entry relative to the executable's location.
-            // Try multiple candidate paths (works for both dev and production).
+            // Resolve backend entry dynamically.
+            let resource_dir = app.path().resource_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
             let exe_dir = std::env::current_exe()
                 .map(|p| p.parent().unwrap_or(std::path::Path::new(".")).to_path_buf())
                 .unwrap_or_else(|_| std::path::PathBuf::from("."));
 
             let candidates = vec![
-                exe_dir.join("../../../../backend/dist/index.js"), // dev mode (from dashboard/src-tauri/target/debug)
-                exe_dir.join("../backend/dist/index.js"),          // packaged build
-                exe_dir.join("backend/dist/index.js"),             // flat layout
+                // 1. Production bundle (bundled via tauri.conf.json resources array)
+                resource_dir.join("backend/dist/index.js"),
+                // 2. Local dev mode (relative to cargo target dir)
+                exe_dir.join("../../../../backend/dist/index.js"),
             ];
 
             let backend_path = candidates.into_iter().find(|p| p.exists());
 
             if let Some(path) = backend_path {
-                log::info!("Starting ArcRift backend from: {:?}", path);
+                let backend_cwd = path.parent().unwrap().parent().unwrap();
+                log::info!("Starting ArcRift backend from: {:?} with CWD: {:?}", path, backend_cwd);
+                
                 let mut cmd = std::process::Command::new("node");
                 cmd.arg(&path);
+                cmd.current_dir(backend_cwd);
+
+                // Secure AppData storage for the SQLite database
+                if let Ok(app_data_dir) = app.path().app_data_dir() {
+                    let db_path = app_data_dir.join("ArcRift.db");
+                    log::info!("Setting SQLITE_DB_PATH to: {:?}", db_path);
+                    cmd.env("SQLITE_DB_PATH", db_path.to_str().unwrap());
+                }
 
                 // Suppress console window on Windows release builds
                 #[cfg(target_os = "windows")]

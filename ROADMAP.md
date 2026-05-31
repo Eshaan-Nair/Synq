@@ -51,7 +51,13 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ---
 
-## v1.6.1 — Planned (Major Release)
+## v1.6.1 — Released
+
+- **Tauri Fixes** — Fixed issues with the Tauri app not working on Windows. Packaged with backend dependencies and code files.
+
+---
+
+## v1.6.2 — Planned (Major Release)
 
 - **1. Team "Hive-Mind" Memory (Enterprise Sync)** — Optional remote database support (Turso/Postgres) allowing an entire engineering team to share a unified memory graph. If one developer solves an issue, the rest of the team's IDEs instantly recall the solution.
 - **2. Automated Memory Decay (Forgetting)** — Implementing an automated algorithmic "decay" system where outdated or conflicting facts slowly fade from the graph over time if they aren't frequently accessed or reinforced, keeping the memory retrieval lightning fast and contextually pure over years of use.

@@ -91,6 +91,10 @@ ArcRift stops the cycle. It captures your AI conversations, extracts structured 
 ## Installation
 
 ### For Users (The Easy Way)
+
+> [!IMPORTANT]
+> ArcRift is a powerful AI developer tool. Before installing the `.exe`, you must have [Node.js](https://nodejs.org/) and [Ollama](https://ollama.com/) installed on your computer to run the backend and local AI models. If you don't have these, use the *Developer (One-Command Setup)* below to automatically install them!
+
 1. Head over to the [Releases](https://github.com/Eshaan-Nair/ArcRift/releases) page.
 2. Download the latest `ArcRift_Installer.exe` (or your OS equivalent).
 3. Double-click the installer to install ArcRift on your machine.
