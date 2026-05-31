@@ -51,6 +51,7 @@ jobs:
           projectPath: ./dashboard
           tagName: v__VERSION__
           releaseName: 'ArcRift v__VERSION__'
+          args: ${{ matrix.platform == 'ubuntu-22.04' && '--bundles deb,rpm' || '' }}
           releaseBody: |
             ## ArcRift Desktop App (v__VERSION__)
 
