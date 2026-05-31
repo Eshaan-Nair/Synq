@@ -142,6 +142,9 @@ GROQ_API_KEY=gsk_your_key_here
 ```
 
 Start the backend:
+The easiest way is to simply launch your **ArcRift Desktop App** (which runs the backend natively). 
+
+Alternatively, if you are running in Headless/Developer mode:
 ```bash
 # Windows
 start.bat
@@ -150,7 +153,7 @@ start.bat
 ./start.sh
 ```
 
-The backend starts on `http://localhost:3001`. The dashboard is served from the same port.
+The backend starts on `http://localhost:3001`. The extension will automatically connect to it.
 
 **Step 2 — Build the extension**
 
@@ -175,8 +178,7 @@ This produces the `extension/dist/` folder.
 Navigate to Claude, ChatGPT, Gemini, DeepSeek, Grok, Copilot, or Mistral. Click the ArcRift popup, enter a project name, and click **Save Chat**. Auto-connect activates immediately.
 
 **Daily use:**
-- Windows: double-click `start.bat`
-- macOS/Linux: `./start.sh`
+Simply keep the **ArcRift Desktop App** running in your system tray! If you are in developer mode, double-click `start.bat` or `./start.sh`.
 
 ---
 
